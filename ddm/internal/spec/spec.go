@@ -98,7 +98,7 @@ func (s Step) Kind() string {
 // mounted on one or more hosts. Its map key in Spec.Sites is the name other
 // sites use in site://<name>/<path> links.
 type Site struct {
-	// Repo is "owner/name" on GitHub, or a full clone URL. Empty for
+	// Repo is "owner/name" on GitHub, a full clone URL, or an absolute path. Empty for
 	// generated sites such as the docs directory.
 	Repo   string `yaml:"repo"`
 	Branch string `yaml:"branch"`
@@ -148,7 +148,6 @@ const (
 // be validated before the workflow runner exists.
 var Builtins = map[string]bool{
 	"mkdocs-config":  true,
-	"lint-hidden":    true,
 	"rewrite-links":  true,
 	"site-directory": true,
 	"md-ssg":         true,

@@ -3,6 +3,7 @@ package spec
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -146,8 +147,8 @@ func (s *Spec) validateSites(p *problems) {
 		if !nameRE.MatchString(name) {
 			p.add("%s: name must match %s (it is used in site:// links and paths)", where, nameRE)
 		}
-		if site.Repo != "" && !repoRE.MatchString(site.Repo) && !strings.Contains(site.Repo, "://") && !strings.HasPrefix(site.Repo, "git@") {
-			p.add("%s: repo %q must be owner/name or a clone URL", where, site.Repo)
+		if site.Repo != "" && !repoRE.MatchString(site.Repo) && !strings.Contains(site.Repo, "://") && !strings.HasPrefix(site.Repo, "git@") && !filepath.IsAbs(site.Repo) {
+			p.add("%s: repo %q must be owner/name, a clone URL or an absolute path", where, site.Repo)
 		}
 		if site.Workflow != "" {
 			p.add("%s: use either workflow (one public view) or views, not both", where)
