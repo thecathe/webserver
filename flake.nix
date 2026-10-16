@@ -20,6 +20,9 @@
         caddy
         xcaddy
         git
+        # docs site (mkdocs.yml, docs/)
+        python3Packages.mkdocs
+        python3Packages.mkdocs-material
       ];
     };
   };

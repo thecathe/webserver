@@ -1,0 +1,18 @@
+/* Loose gruvbox palette, matching the default colours in the old deploy.yaml. */
+
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #3c3836;
+  --md-primary-fg-color--light: #504945;
+  --md-primary-fg-color--dark: #282828;
+  --md-primary-bg-color: #ebdbb2;
+  --md-accent-fg-color: #d65d0e;
+  --md-typeset-a-color: #af3a03;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1d2021;
+  --md-default-fg-color: #ebdbb2;
+  --md-typeset-a-color: #fe8019;
+  --md-accent-fg-color: #fabd2f;
+}

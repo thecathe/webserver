@@ -4,3 +4,6 @@ www
 webserver/work/
 webserver/webserver
 webserver/cmd/webserver/webserver
+
+# mkdocs build output
+site/
