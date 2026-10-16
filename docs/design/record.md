@@ -94,6 +94,19 @@ you learn to use the system fully without building it.
 
 ### D16. Integration: local `--no-ff` into `main` (2026-10-16)
 
+### D17. `ddm/` is built alongside the legacy `webserver/` (2026-10-16, M1)
+*Refines* the plan to rename `webserver` → `ddm`. The live droplet may be running the `webserver` binary as its
+Caddy (it embeds Caddy plus the Cloudflare DNS plugin), so `webserver/`, `deploy.yaml` and the `Caddyfile` stay
+untouched until cutover (M7) and are removed then. **Why:** blue/green applies to the code as well as the machine:
+nothing in this repo should change what the live box does until the new one is proven. A side effect is that `ddm/`
+depends only on `gopkg.in/yaml.v3`, not on Caddy's large dependency tree.
+
+### D18. `cathe.work` is redirected until it lapses, not deleted early (2026-10-16, M1)
+*Refines* D6. Removing the `cathe.work` blocks from the live `Caddyfile` in M1 would break existing links while the
+domain is still held. Instead, the generated Caddyfile (M3) redirects `cathe.work` and `*.cathe.work` to their new
+homes. The spec rejects new `cathe.work` mounts, because redirects are not mounts. Once the domain lapses, the
+redirect block is deleted.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

@@ -11,8 +11,8 @@ generated:
 
 !!! warning "Status: design"
     Most of what these pages describe is **designed but not built**. Today the live droplet runs a hand-maintained
-    `Caddyfile`, and a GitHub Action that only `git pull`s this repo. The Go code in `webserver/` can clone and
-    publish, but every build method is still a stub. Each page says which parts are real.
+    `Caddyfile`, and a GitHub Action that only `git pull`s this repo. The new `ddm/` can load and validate the
+    [site spec](usage/spec.md) (`ddm check`), but doesn't build or publish yet. Each page says which parts are real.
 
 ## What it is for
 

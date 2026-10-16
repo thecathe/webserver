@@ -17,6 +17,18 @@ generated:
   **Nothing is rebuilt or reloaded.** Site content is copied there by each content repo's own Action.
 - `webserver deploy --config deploy.yaml` exists, but fails for every repo (all build methods are stubs).
 
+## Available now (M1)
+
+From the repo root:
+
+```sh
+nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml   # validate the spec; one-line summary
+nix develop -c go -C ddm run ./cmd/ddm sites ../sites.yaml   # table of every mount
+nix develop -c go -C ddm test ./...                          # spec tests, including sites.yaml itself
+```
+
+Run `check` before committing a change to `sites.yaml`. Nothing else reads the file yet.
+
 ## Planned (once ddm runs, roadmap M6)
 
 | Command | Purpose |

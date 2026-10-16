@@ -15,27 +15,31 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | | Milestone | Status |
 |---|---|---|
 | M0 | Rules and docs: this site, the AI marking, `DEVELOPMENT.md`, global rules | **done** 2026-10-16 |
-| M1 | Spec v2 + `ddm` skeleton | next |
-| M2 | Workflow runner + built-ins | |
+| M1 | Spec v2 + `ddm` skeleton | **done** 2026-10-16 |
+| M2 | Workflow runner + built-ins | next |
 | M3 | Publish, links, Caddy generation, `docs.cathe.dev` | |
 | M4 | Forest side: `site.yaml`, views, the notes filter in the fork | |
 | M5 | NixOS host config | |
 | M6 | ddm daemon | |
 | M7 | Cutover | |
 
-## M1: spec v2 + `ddm` skeleton
-- Rename the Go module and binary `webserver` → `ddm`.
-- Rewrite `internal/config` for the [v2 spec](../usage/spec.md).
-- Validate: dangling site names, `use:` cycles, duplicate host+path per view, hosts outside `domains`.
-- Add `config_test.go`.
-- Drop `cathe.work` from the Caddyfile.
-- Retire the dead fields of the old schema (`auto_rebuild`, `email_notifications`, `flags`). Their intent moves to
+## M1: spec v2 + `ddm` skeleton (done)
+- A new `ddm/` Go module, built **alongside** the legacy `webserver/` rather than renaming it (D17). `webserver/`,
+  `deploy.yaml` and `Caddyfile` stay as they are until cutover.
+- `ddm/internal/spec` loads `sites.yaml`. Unknown keys are errors, defaults are filled, and every problem is reported at
+  once. It checks hosts outside `domains`, unknown workflows, views and builtins, `use:` cycles, duplicate host+path,
+  undeclared taxa, and malformed names, entries and access values. Tests: `ddm/internal/spec/spec_test.go`, including
+  one that keeps the repo's own `sites.yaml` valid.
+- `ddm check` and `ddm sites` commands.
+- The dead v1 fields (`auto_rebuild`, `email_notifications`, `flags`) have no v2 equivalent: their intent moved to
   `system.poll` and to the open question on notifications.
+- **Moved, not done:** dropping `cathe.work` from the live `Caddyfile`. It becomes a redirect in the generated
+  Caddyfile instead (M3, D18), so links keep working until the domain lapses.
 
 ## M2: workflow runner
 - `internal/workflow`: param substitution, `nix develop <env> -c`, `use:` inlining, `when`/`unless`, and the built-in
   registry.
-- Reuse the existing `syncRepo` (`internal/deploy/git.go`).
+- Port `syncRepo` from the legacy `webserver/internal/deploy/git.go` into `ddm/`.
 - Workflows in order:
   - **forester first**, since it's the landing page;
   - then `odoc`, `mkdocs`, `ocaml-notebook` (from `_example_yamls/`, moving `generate_docs.py` into `scripts/`).
@@ -45,6 +49,7 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - Versioned roots with a `current` symlink.
 - `rewrite-links`.
 - `internal/caddygen`: entry redirects, per-view roots, the `the.cathe.dev` bind + `forward_auth` block.
+- `cathe.work` and `*.cathe.work` become redirects to their new homes for as long as the domain is held (D18).
 - The `site-directory` built-in for `docs.cathe.dev`.
 - **This site goes live here.**
 

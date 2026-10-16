@@ -9,138 +9,111 @@ generated:
 
 # Site spec (v2)
 
-!!! warning "Design, not implemented"
-    This is the target schema for `sites.yaml`. The code still reads the old `deploy.yaml` schema
-    (`webserver/internal/config/config.go`: `repos[]` with `build_method` and `domain[]`). The field names here are
-    a starting point; see [open questions](../design/open-questions.md#spec-naming).
+!!! info "Status: validated, not yet acted on"
+    `sites.yaml` is loaded and validated by `ddm check` (roadmap M1, `ddm/internal/spec`). Nothing builds or
+    publishes from it yet: that's M2/M3. The live droplet still runs from the hand-written `Caddyfile` and the legacy
+    `webserver/` + `deploy.yaml`. Names may still change; see [open questions](../design/open-questions.md#spec-naming).
 
-The spec has four top-level parts: **system** (the server itself), **domains**, **workflows** (reusable build
-recipes) and **sites** (repo + workflow + where it's mounted).
+The spec has six top-level parts:
+- **system**: where the server's own config comes from;
+- **paths**: where ddm keeps things;
+- **domains**;
+- **taxa**: the vocabulary used to classify sites;
+- **workflows**: reusable build recipes;
+- **sites**: repo + workflow + where it's mounted.
 
-## A complete example
+## Checking it
+
+```sh
+nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml   # valid? one-line summary
+nix develop -c go -C ddm run ./cmd/ddm sites ../sites.yaml   # every mount: host, path, site, view, workflow, access
+```
+
+Every problem is reported at once, one per line, each naming exactly where it is (e.g.
+`sites.ddm.mounts[0]: host "ddm.cathe.work" is not under any declared domain`). Unknown keys are errors, so a typo
+like `reop:` fails instead of being silently ignored.
+
+## The current spec
+
+This is the repo's real `sites.yaml`, included verbatim:
 
 ```yaml
-system:
-  flake: github:thecathe/server-dots   # ddm rebuilds nixosConfigurations.<host> from the exact sha it saw
-  host: droplet
-  poll: 10m
-
-domains: [cathe.dev, jpears.me]        # every mount's host must fall under one of these
-
-taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
-
-workflows:
-  forester:
-    env: { flake: "{{repo}}" }          # use the content repo's own devShell
-    params: { view: public }
-    steps:
-      - run: forest-gen config --view {{view}}        # forest site.yaml → forest.{{view}}.toml
-      - run: forest-gen all --config forest.{{view}}.toml
-      - builtin: lint-hidden                          # fail closed if a hidden tree leaks into this view
-        unless: { view: private }
-      - run: forester build forest.{{view}}.toml
-      - output: output/
-
-  mkdocs:
-    env: { flake: "{{system}}#mkdocs" }  # toolchain pinned in this repo's flake
-    params: { input_dir: ./, theme: material }
-    steps:
-      - builtin: mkdocs-config           # write a minimal mkdocs.yml from params if the repo has none
-      - run: mkdocs build -d {{out}}
-
-  odoc:
-    env: { flake: "{{repo}}" }
-    steps:
-      - run: dune build @doc
-      - output: _build/default/_doc/_html
-
-  ocaml-notebook:                        # .ml files with doc comments → markdown → mkdocs
-    steps:
-      - run: python3 {{system}}/scripts/generate_docs.py {{input_dir}} docs/
-      - use: mkdocs
-
-  site-directory:
-    steps:
-      - builtin: site-directory
-        params: { domain: cathe.dev }
-
-sites:
-  forest:
-    repo: thecathe/forest
-    taxa: [personal, notes]
-    views:
-      public:  { workflow: forester, params: { view: public } }
-      notes:   { workflow: forester, params: { view: notes } }
-      private: { workflow: forester, params: { view: private } }
-    mounts:
-      - { host: forest.cathe.dev, entry: /index/ }
-      - { host: jpears.me,        entry: /@jpears/ }
-      - { host: notes.cathe.dev,  view: notes,   entry: /index/ }
-      - { host: the.cathe.dev,    view: private, entry: /index/, access: tailnet-owner }
-
-  docs:
-    workflow: site-directory
-    mounts: [ { host: docs.cathe.dev } ]
-
-  ddm-docs:                              # this site
-    repo: thecathe/server-dots
-    workflow: mkdocs
-    taxa: [docs, project, tool]
-    description: Design and usage docs for ddm
-    mounts: [ { host: ddm.cathe.dev } ]
-
-  cloakaml:
-    repo: thecathe/cloakaml
-    workflow: odoc
-    taxa: [docs, project, tool]
-    description: "..."
-    mounts: [ { host: cloakaml.cathe.dev } ]
+--8<-- "sites.yaml"
 ```
 
 ## Fields
 
 ### `system`
 
-| Field | Meaning |
-|---|---|
-| `flake` | The flake ddm rebuilds the server from. ddm always pins the exact commit it saw, never a branch. |
-| `host` | Which `nixosConfigurations.<host>` to switch to. |
-| `poll` | How often to check this repo and every site repo for new commits. |
+| Field | Default | Meaning |
+|---|---|---|
+| `flake` | none | The flake ddm rebuilds the server from. ddm always pins the exact commit it saw, never a branch. |
+| `host` | none (required if `flake` is set) | Which `nixosConfigurations.<host>` to switch to. |
+| `poll` | `10m` | How often to check this repo and every site repo for new commits. Go duration syntax: `90s`, `10m`, `1h`. |
+
+### `paths`
+
+| Field | Default | Meaning |
+|---|---|---|
+| `work` | `/var/lib/ddm/work` | Site checkouts and scratch build output. |
+| `www` | `/var/www` | Publish root: `<www>/<view>/<site>/<sha>/` plus a `current` symlink. |
+| `caddyfile` | `/var/lib/ddm/Caddyfile` | Where the generated Caddy config is written. |
 
 ### `domains`, `taxa`
 
-`domains` lists the apex domains ddm may publish under. A mount on any other host, for example a stale `cathe.work`
-entry, is a validation error. `taxa` declares the vocabulary that sites may classify themselves with. It drives the
-`docs.cathe.dev` directory.
+`domains` lists the apex domains ddm may publish under. Every mount's host must be a domain or a subdomain of one.
+A stale `cathe.work` mount is therefore an error, and so is a lookalike such as `notcathe.dev`.
+
+`taxa` declares the vocabulary that sites may classify themselves with. It drives the `docs.cathe.dev` directory.
+If `taxa` is omitted, any taxon is accepted.
 
 ### `workflows.<name>`
 
 | Field | Meaning |
 |---|---|
-| `env` | Where the build tools come from. `flake: "{{repo}}"` means the site repo's own devShell, and `"{{system}}#x"` means a devShell from this repo. Steps run inside `nix develop <ref> -c`. |
-| `params` | Defaults, which a site can override. Substituted as `{{name}}`. |
-| `steps` | Run in order. See [workflows](workflows.md) for the step kinds. |
+| `env.flake` | Where build tools come from. `"{{repo}}"` is the site repo's own devShell, and `"{{system}}"` (or `"{{system}}#name"`) a devShell of this repo. Steps run inside `nix develop <ref> -c`. Omit it for steps that need no tools. |
+| `params` | Defaults, which a site or view can override. Substituted as `{{name}}`. |
+| `steps` | Run in order. Each is **exactly one** of `run`, `builtin`, `use`, `output`. See [workflows](workflows.md). |
+
+Validation checks:
+- every `builtin` is one ddm knows (`mkdocs-config`, `lint-hidden`, `rewrite-links`, `site-directory`, `md-ssg`);
+- every `use` names an existing workflow, and there are no `use` cycles (reported as e.g. `a → b → a`);
+- `params` appear only on `builtin` steps.
 
 Built-in variables: `{{repo}}` (the checkout), `{{system}}` (this repo at the applied sha), `{{out}}` (the scratch
 output dir), `{{view}}`, `{{site}}`.
 
 ### `sites.<name>`
 
-The **name** is how other sites link here (see [links between sites](#links-between-sites)).
+The **name** is how other sites link here (see [links between sites](#links-between-sites)). It must be lowercase
+letters, digits and `-`, because it also becomes a directory name.
 
-| Field | Meaning |
-|---|---|
-| `repo` | `owner/name` on GitHub, cloned with the server's single read-only token. Omit it for generated sites (e.g. `docs`). |
-| `branch` | Default `main`. |
-| `workflow` + `params` | Shorthand for a single `public` view. |
-| `views.<view>` | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each has its own `workflow` + `params`. |
-| `mounts[]` | Where outputs are served: `host`, optional `path` (a prefix such as `/docs/x`, your "suffix" option), `view` (default `public`), `entry` (where `/` redirects to), and `access`. |
-| `taxa`, `description`, `indexed` | Used by the `docs.cathe.dev` directory. `indexed: false` hides the site from it. |
+| Field | Default | Meaning |
+|---|---|---|
+| `repo` | none | `owner/name` on GitHub, or a full clone URL, cloned with the server's single read-only token. Omit it for generated sites (e.g. `docs`). |
+| `branch` | `main` | |
+| `workflow` + `params` | | Shorthand for a single `public` view. Use either this or `views`, not both. |
+| `views.<view>` | | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each needs a `workflow`, and may have `params`. |
+| `mounts[]` | | Where outputs are served. At least one is required. See below. |
+| `taxa` | | Classification, from the declared `taxa`. |
+| `description` | | One line for the directory. |
+| `indexed` | `true` | `false` hides the site from the `docs.cathe.dev` directory. |
 
-`access: tailnet-owner` serves the mount only on the tailnet, and only to your Tailscale identity; see
-[architecture](../design/architecture.md#private-access).
+### `mounts[]`
+
+| Field | Default | Meaning |
+|---|---|---|
+| `host` | required | Must fall under a declared domain. |
+| `path` | `/` | A prefix under the host, e.g. `guide/` → `/guide`. |
+| `view` | `public` | Which of the site's views to serve. |
+| `entry` | none | Where `/` redirects to, e.g. `/@jpears/`. Must start with `/`. |
+| `access` | `public` | `public`, or `tailnet-owner`: served only on the tailnet, and only to your Tailscale identity (see [architecture](../design/architecture.md#private-access)). |
+
+Each `host` + `path` may be mounted only once across the whole spec, whatever the view.
 
 ## Links between sites
+
+!!! warning "Not implemented yet (M3)"
 
 In any source (a forest `.tree`, markdown, an odoc docstring), write
 

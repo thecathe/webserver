@@ -17,9 +17,14 @@ move it to the [decision record](record.md) and note it in the [development log]
 ## Spec naming
 
 - **Question:** are `views`, `mounts`, `entry`, `access`, `taxa` and `site://` the right words and shapes?
-- **Lean:** keep them until M1 forces a choice. Rename then, before anything depends on them.
-- **Decides it:** writing the first real `sites.yaml` with the forest, cloakaml and this site in it.
-- **Stake:** low now, high after M1, when names become config people have to edit.
+- **Status (M1):** the first real `sites.yaml` was written with these names, and nothing felt wrong. They are now
+  in code (`ddm/internal/spec`), but nothing depends on them outside this repo yet.
+- **Lean:** keep them. Revisit if building M2/M3 makes any of them awkward.
+- **Smaller points:**
+  - Should `system.flake` be derived from the repo this spec lives in, rather than stated?
+  - Should `params` be allowed on `use:` steps, to tweak an inlined workflow?
+  - Should `repo` accept other forges, or stay GitHub-only?
+- **Stake:** rising: renames get more expensive once the daemon and the Caddy generator read these names.
 
 ## `site://` survives every generator (spike S1)
 
@@ -115,7 +120,9 @@ move it to the [decision record](record.md) and note it in the [development log]
 - **Checklist:**
   - list everywhere that links to it (CV PDFs, profiles, email signatures, GitHub bios, papers);
   - redirect what can be redirected while the domain is still held;
-  - remove it from the Caddyfile and the spec (M1).
+  - decide each redirect target (e.g. `cathe.work` → `jpears.me`; `*.cathe.work` → the matching `*.cathe.dev`?).
+    The generated Caddyfile will redirect, not serve (D18). What is under `/var/www/cathe.work` today is unknown
+    from this repo; check on the droplet.
 - **Unknown:** when exactly it lapses.
 
 ## This site's host
