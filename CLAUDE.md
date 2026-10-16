@@ -4,11 +4,14 @@ This repo is the server repo for **ddm**, the deployment manager: it pulls site 
 workflows, publishes them under `cathe.dev` / `jpears.me`, and (planned) rebuilds the server's own NixOS config.
 The design lives in the docs site (`mkdocs.yml`, `docs/`), which is itself planned to be served at `ddm.cathe.dev`.
 
+Code: `ddm/` (Go; `nix develop -c go -C ddm test ./...`) reads `sites.yaml`. The legacy setup (`webserver/`,
+`deploy.yaml`, the hand-written `Caddyfile`, the `deploy-dots` Action) was deleted on 2026-10-16: the droplet will be
+wiped and reinstalled with NixOS, so nothing on it needs preserving.
+
 ## Git integration
 - Integration branch: `main`.
 - Integrate finished branches with a local `git merge --no-ff <branch>` into `main`. Never squash.
-- Do not push or open PRs unless explicitly asked. A push to `main` triggers `.github/workflows/deploy-dots.yml`,
-  which pulls this repo on the live droplet.
+- Do not push or open PRs unless explicitly asked.
 
 ## Working mode
 - Claude implements; the user is not working through the old curriculum (decided 2026-10-16). Explain decisions in

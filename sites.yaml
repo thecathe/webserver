@@ -1,0 +1,100 @@
+# The ddm site spec (v2). Reference: docs/usage/spec.md.
+# Check it with:  nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml
+#
+# Not live yet: ddm can validate and list this spec (roadmap M1) but does not
+# build or publish anything until M2/M3.
+
+system:
+  flake: github:cathe-org/dots   # becomes the personal-account repo after the transfer
+  host: droplet                  # nixosConfigurations.droplet, written in M5
+  poll: 10m
+
+domains: [cathe.dev, jpears.me]
+
+taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
+
+workflows:
+  # A forest built with the forester fork, using the forest repo's own devShell.
+  forester:
+    env: { flake: "{{repo}}" }
+    params: { view: public }
+    steps:
+      - run: forest-gen config --view {{view}}
+      - run: forest-gen all --config forest.{{view}}.toml
+      - builtin: lint-hidden
+        unless: { view: private }
+      - run: forester build forest.{{view}}.toml
+      - output: output/
+
+  mkdocs:
+    env: { flake: "{{system}}" }
+    params: { input_dir: ./, theme: material }
+    steps:
+      - builtin: mkdocs-config
+      - run: mkdocs build -d {{out}}
+
+  odoc:
+    env: { flake: "{{repo}}" }
+    steps:
+      - run: dune build @doc
+      - output: _build/default/_doc/_html
+
+  # .ml files with doc comments → markdown → mkdocs (was demos-deploy-docs.yml).
+  ocaml-notebook:
+    env: { flake: "{{system}}" }
+    params: { input_dir: ./ }
+    steps:
+      - run: python3 {{system}}/scripts/generate_docs.py {{input_dir}} docs/
+      - use: mkdocs
+
+  # A repo that already is a static site.
+  static:
+    params: { input_dir: ./ }
+    steps:
+      - output: "{{input_dir}}"
+
+  site-directory:
+    steps:
+      - builtin: site-directory
+        params: { domain: cathe.dev }
+
+sites:
+  forest:
+    repo: thecathe/forest
+    taxa: [personal, notes]
+    description: Notes, profile, CV, posts and papers
+    views:
+      public:  { workflow: forester, params: { view: public } }
+      notes:   { workflow: forester, params: { view: notes } }
+      private: { workflow: forester, params: { view: private } }
+    mounts:
+      - { host: forest.cathe.dev, entry: /index/ }
+      - { host: jpears.me, entry: /@jpears/ }
+      - { host: notes.cathe.dev, view: notes, entry: /index/ }
+      - { host: the.cathe.dev, view: private, entry: /index/, access: tailnet-owner }
+
+  docs:
+    workflow: site-directory
+    indexed: false
+    mounts: [ { host: docs.cathe.dev } ]
+
+  ddm:
+    repo: cathe-org/dots
+    workflow: mkdocs
+    taxa: [docs, project, tool]
+    description: Design and usage docs for ddm, the deployment manager behind these sites
+    mounts: [ { host: ddm.cathe.dev } ]
+
+  cloakaml:
+    repo: thecathe/cloakaml
+    workflow: odoc
+    taxa: [docs, project, tool]
+    description: cloakaml API documentation
+    mounts: [ { host: cloakaml.cathe.dev } ]
+
+  indimo:
+    repo: thecathe/INDIMO
+    workflow: mkdocs
+    taxa: [docs, notes, project]
+    description: INDIMO project notes
+    mounts: [ { host: indimo.cathe.dev } ]

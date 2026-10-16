@@ -10,9 +10,9 @@ generated:
 # ddm: the deployment manager
 
 !!! warning "Status: design"
-    Most of what these pages describe is **designed but not built**. Today the live droplet runs a hand-maintained
-    `Caddyfile`, and a GitHub Action that only `git pull`s this repo. The Go code in `webserver/` can clone and
-    publish, but every build method is still a stub. Each page says which parts are real.
+    Most of what these pages describe is **designed but not built**. The old droplet still runs the previous hand-made
+    setup, which will be wiped. `ddm/` can load and validate the
+    [site spec](usage/spec.md) (`ddm check`), but doesn't build or publish yet. Each page says which parts are real.
 
 ## What it is for
 
@@ -38,7 +38,7 @@ to stand up **project-specific sites** that a team can use, whether hosting mate
 | `<project>.cathe.dev` | project documentation (odoc, mkdocs, …) | public |
 | `ddm.cathe.dev` | this site | public |
 
-Only two domains remain: `cathe.dev` and `jpears.me`. `cathe.work` is being dropped.
+Only two domains remain: `cathe.dev` and `jpears.me`. `cathe.work` is dropped.
 
 ## Where to read next
 

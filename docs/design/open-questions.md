@@ -17,9 +17,14 @@ move it to the [decision record](record.md) and note it in the [development log]
 ## Spec naming
 
 - **Question:** are `views`, `mounts`, `entry`, `access`, `taxa` and `site://` the right words and shapes?
-- **Lean:** keep them until M1 forces a choice. Rename then, before anything depends on them.
-- **Decides it:** writing the first real `sites.yaml` with the forest, cloakaml and this site in it.
-- **Stake:** low now, high after M1, when names become config people have to edit.
+- **Status (M1):** the first real `sites.yaml` was written with these names, and nothing felt wrong. They are now
+  in code (`ddm/internal/spec`), but nothing depends on them outside this repo yet.
+- **Lean:** keep them. Revisit if building M2/M3 makes any of them awkward.
+- **Smaller points:**
+  - Should `system.flake` be derived from the repo this spec lives in, rather than stated?
+  - Should `params` be allowed on `use:` steps, to tweak an inlined workflow?
+  - Should `repo` accept other forges, or stay GitHub-only?
+- **Stake:** rising: renames get more expensive once the daemon and the Caddy generator read these names.
 
 ## `site://` survives every generator (spike S1)
 
@@ -77,8 +82,9 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## Infrastructure
 
-- **Droplet:** provider and size. Stay on DigitalOcean? The NixOS image: a community image, or `nixos-infect` on a
-  fresh box?
+- **Droplet:** reinstalled in place (D21). Open: nixos-anywhere (kexec into an installer, partition with disko,
+  fully declarative) or DigitalOcean rebuild + nixos-infect (simpler, less declarative disk layout). The lean is
+  nixos-anywhere. Also: is the current droplet size enough for forester and odoc builds?
 - **Secrets:** agenix or sops-nix. The lean is agenix, which is simpler; the droplet's host key decrypts.
 - **Repo name** after the transfer (`server-dots` is a placeholder).
 - **DNS:** a wildcard `*.cathe.dev` plus explicit `the.cathe.dev` (pointing at the tailnet IP) and `jpears.me`.
@@ -112,11 +118,8 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## `cathe.work` sunset
 
-- **Checklist:**
-  - list everywhere that links to it (CV PDFs, profiles, email signatures, GitHub bios, papers);
-  - redirect what can be redirected while the domain is still held;
-  - remove it from the Caddyfile and the spec (M1).
-- **Unknown:** when exactly it lapses.
+Dropped outright (D20): no redirects, and it disappears with the old droplet. Remaining, a personal checklist:
+update anything that links to it (CV PDFs, profiles, email signatures, GitHub bios, papers) before it lapses.
 
 ## This site's host
 

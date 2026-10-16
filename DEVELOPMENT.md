@@ -134,13 +134,74 @@ A patch was saved to the session scratchpad only, which is not durable.
 - `b6cf86c`: **Tooling.** mkdocs and mkdocs-material in the devShell.
 - `fa45e4a`: **Docs.** Project `CLAUDE.md`: integration method, working mode, update-the-docs-before-closing, and
   the AI marking convention.
-- **Docs.** This site: the overview, usage (the v2 spec, adding a site, workflows, operations), and design (the
+- `cd247e5`, `9c41127`: **Docs.** This site: the overview, usage (the v2 spec, adding a site, workflows, operations), and design (the
   decision record, architecture, open questions, roadmap). `initial-curriculum.md`, `porting-guide.md` and the
   untracked session-3 curriculum are folded into it and removed.
-- **Feature (docs site).** The AI-generated page marker, as a trial. Pages with `generated` front matter turn pale
+- `7cda625`: **Feature (docs site).** The AI-generated page marker, as a trial. Pages with `generated` front matter turn pale
   yellow, with the generating model, effort and dates drawn large and faded behind the text.
-- In `thecathe/dots`: global Claude rules for design write-ups and AI-content marking.
+- `5bb8115`: **Docs.** This log.
+- In `thecathe/dots`: `47640eb` (merged as `441d40d`), global Claude rules for design write-ups and AI-content
+  marking. This branch merged here as `956c8e5`.
 
 **Open questions raised:** see `docs/design/open-questions.md`. Its headings are spec naming, S1–S4, the notes
 view, `site.yaml` scope, workflow envs, ddm runtime, infrastructure, team project sites, AI marking beyond this
 site, the `cathe.work` sunset, and this site's host.
+
+---
+
+## 2026-10-16 (later): M1, spec v2 + ddm skeleton
+
+Branch `feat/ddm-spec-v2`. **Feature** + **Docs**.
+
+**What was built.**
+- `d57e689`: **Feature.** `sites.yaml` at the repo root, the first real v2 spec. It has the two domains, the taxa,
+  six workflows (`forester`, `mkdocs`, `odoc`, `ocaml-notebook`, `static`, `site-directory`) and five sites:
+  - `forest`, with three views on four hosts;
+  - `docs`, the generated directory;
+  - `ddm`, this site;
+  - `cloakaml` and `indimo`, carried over from the old `deploy.yaml`.
+- `e130850`: **Feature.** A new `ddm/` Go module.
+  - `internal/spec` parses the spec with unknown keys rejected, fills defaults, and reports **every** problem in one
+    go, each with an exact location (`sites.ddm.mounts[0]: host "ddm.cathe.work" is not under any declared domain`).
+  - The `ddm check` / `ddm sites` CLI.
+  - A table of 18 invalid-spec cases, a cycle test, and a test that keeps the repo's own `sites.yaml` valid.
+- **Docs.**
+  - The spec page now includes the real `sites.yaml` through a snippet, so docs and file can't drift. It also
+    documents every default and validation rule.
+  - Operations has the commands that work today.
+  - The roadmap marks M1 done, the decision record gains D17/D18, and the open questions are updated.
+
+**Design notes.**
+- *Alongside, not renamed (D17).* The plan said to rename `webserver` → `ddm`. But the live droplet may run the
+  `webserver` binary as its Caddy: it embeds Caddy and the Cloudflare DNS plugin, which plain nixpkgs Caddy lacks.
+  Renaming or deleting it would make this repo's `main` diverge from what the droplet expects, so blue/green now
+  applies to the code too. A nice side effect: `ddm/` depends only on `yaml.v3`.
+- *`cathe.work` redirected, not deleted (D18).* Dropping it from the live Caddyfile in M1 would break links while the
+  domain is still held. The generated Caddyfile will redirect it instead. Redirects are not mounts, so the spec still
+  rejects `cathe.work` hosts.
+- *One host+path, one owner.* The plan said "duplicate host+path per view", but a URL can only serve one thing
+  whatever its view, so uniqueness is global.
+- *Loud by default.* `KnownFields(true)` makes a typo'd key an error rather than a silently ignored field, in line
+  with your "prefer loud warnings" constraint from the forester work.
+- *The shorthand is resolved at load time.* `workflow:` on a site becomes `views.public` immediately, so nothing
+  downstream needs to know the shorthand exists.
+
+**Deviations from the approved plan:** D17 and D18 above. Both mean doing less to the live setup, not more.
+
+**Open questions raised:** a few smaller spec points (derive `system.flake`? `params` on `use:` steps? other
+forges?), and the redirect targets for `cathe.work`, which need a look at what's on the droplet.
+
+**Addendum: the droplet can be wiped.** Asked whether to merge with D17/D18, you explained that everything on the
+droplet is in git or generated from git, so the whole point of ddm is to reset it. That removed the reason for both
+deviations, and for blue/green too:
+- **D19:** the legacy setup (`webserver/`, `deploy.yaml`, the hand-written `Caddyfile`, the `deploy-dots` Action)
+  was deleted in this branch. The old Caddyfile's useful ideas (wildcard DNS-01 certs, a shared 404 page, odoc's
+  root rewrite) were carried into roadmap M3. Its filesystem probing is not carried over.
+- **D20:** `cathe.work` is simply dropped, with no redirects.
+- **D21:** the droplet is reinstalled in place rather than swapped blue/green: same IP, no DNS change, one droplet.
+  The cost is downtime, kept short by proving M5/M6 in a VM first.
+
+Along the way we went over why Caddy was ever entangled with the Go code. Wildcard certificates come from Cloudflare
+DNS-01, which needs a Caddy plugin, and plugins must be compiled in. `webserver/` was therefore a custom Caddy build
+with a `deploy` subcommand bolted on. Under NixOS, `caddy.withPlugins` builds that Caddy declaratively, so ddm and
+Caddy can be separate services (D4).

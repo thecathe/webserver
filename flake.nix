@@ -18,7 +18,6 @@
         # delve
         pkg-config
         caddy
-        xcaddy
         git
         # docs site (mkdocs.yml, docs/)
         python3Packages.mkdocs

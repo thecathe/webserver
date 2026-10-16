@@ -26,7 +26,8 @@ ddm pulls this repo and switches the droplet to `nixosConfigurations.<host>` at 
 server's toolchains, Caddy and ddm itself are then all versioned with the spec that uses them. How it survives
 updating itself is in [architecture](architecture.md#self-update).
 
-### D3. The droplet goes straight to NixOS, by blue/green swap (2026-10-16)
+### D3. The droplet goes straight to NixOS (2026-10-16)
+*The blue/green part is superseded by D21* (reinstall in place).
 *Supersedes the 2026-09 phased plan* (home-manager on Ubuntu first, NixOS later). **Why:** a manager that rebuilds
 the system config needs a system config to own, and home-manager on Ubuntu can't own system services. Blue/green:
 build a new droplet, validate it, cut DNS over, retire the old one. Never convert the live box in place.
@@ -94,6 +95,38 @@ you learn to use the system fully without building it.
 
 ### D16. Integration: local `--no-ff` into `main` (2026-10-16)
 
+### D17. `ddm/` is built alongside the legacy `webserver/` (2026-10-16, M1)
+*Superseded by D19 the same day*, once it was clear the droplet can be wiped.
+*Refines* the plan to rename `webserver` → `ddm`. The live droplet may be running the `webserver` binary as its
+Caddy (it embeds Caddy plus the Cloudflare DNS plugin), so `webserver/`, `deploy.yaml` and the `Caddyfile` stay
+untouched until cutover (M7) and are removed then. **Why:** blue/green applies to the code as well as the machine:
+nothing in this repo should change what the live box does until the new one is proven. A side effect is that `ddm/`
+depends only on `gopkg.in/yaml.v3`, not on Caddy's large dependency tree.
+
+### D18. `cathe.work` is redirected until it lapses, not deleted early (2026-10-16, M1)
+*Superseded by D20 the same day.*
+*Refines* D6. Removing the `cathe.work` blocks from the live `Caddyfile` in M1 would break existing links while the
+domain is still held. Instead, the generated Caddyfile (M3) redirects `cathe.work` and `*.cathe.work` to their new
+homes. The spec rejects new `cathe.work` mounts, because redirects are not mounts. Once the domain lapses, the
+redirect block is deleted.
+
+### D19. The legacy setup is deleted (2026-10-16, M1)
+`webserver/`, `deploy.yaml`, the hand-written `Caddyfile` and the `deploy-dots` Action are removed; `ddm/` is the
+only code. **Why:** nothing on the droplet needs preserving (it is all in git or generated from git), so there is
+no live setup to protect. The old Caddyfile's useful ideas (an odoc root rewrite, a shared 404 page) are carried
+into roadmap M3.
+
+### D20. `cathe.work` is simply dropped (2026-10-16)
+No redirects. It disappears with the old droplet. The spec still rejects `cathe.work` hosts, and updating external
+links to it remains a personal checklist item.
+
+### D21. The droplet is reinstalled in place (2026-10-16)
+*Supersedes the blue/green part of D3.* When M5 is ready, the existing droplet is wiped and NixOS installed on it
+(e.g. nixos-anywhere, or DigitalOcean rebuild + nixos-infect). **Why:** nothing on it needs preserving, it keeps the
+same IP so DNS doesn't change, and there is no second droplet to pay for. The cost is downtime between wipe and
+first successful deploy, which is acceptable. Everything is first proven in a local NixOS VM test (M5/M6), to keep
+that window short.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
@@ -118,7 +151,8 @@ instructions.
 | Builds in `builders.go`, a fixed method map | D5 (the "not Nix derivations" part stays) |
 | Rebuild via the GH Action calling `webserver deploy`, plus a systemd timer | D2 + D14 (ddm polls; the Action is at most a "poke now") |
 | Domain roles: `cathe.dev` dev, `cathe.work` professional, `jpears.me` personal | D6 / D7 |
-| Caddyfile hand-maintained, filesystem probing per subdomain | Generated from mounts (roadmap M3) |
+| Caddyfile hand-maintained, filesystem probing per subdomain | Generated from mounts (roadmap M3); old file deleted (D19) |
+| Blue/green droplet swap | D21 (reinstall in place) |
 | `DomainLink` placeholder links | D13 |
 | `ocaml` method chains into mkdocs; `generate_docs.py` stays Python | Kept, as the `ocaml-notebook` workflow |
 | Curriculum mode | D15 |

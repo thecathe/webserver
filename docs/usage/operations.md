@@ -9,13 +9,27 @@ generated:
 
 # Operations
 
-## Today (the live droplet)
+## Today (the old droplet)
 
-- Ubuntu droplet, with Caddy configured by this repo's `Caddyfile` (hand-maintained) and certificates from
-  Cloudflare DNS-01.
-- A push to `main` runs `.github/workflows/deploy-dots.yml`, which SSHes in and runs `git pull` in `~/dots`.
-  **Nothing is rebuilt or reloaded.** Site content is copied there by each content repo's own Action.
-- `webserver deploy --config deploy.yaml` exists, but fails for every repo (all build methods are stubs).
+The old Ubuntu droplet still runs the previous hand-made setup: a Caddy config, plus content copied there by each
+content repo's own GitHub Action. That setup has been removed from this repo (it is in git history before
+2026-10-16), and the droplet will be **wiped and reinstalled** with NixOS in M7. Nothing on it needs preserving:
+everything is either in a git repo or generated from one.
+
+The `deploy-dots` Action is gone, so pushing to `main` no longer touches the droplet. Its GitHub secrets
+(`WEBSERVER_*`) are still set in the repo settings. They are harmless, but can be deleted.
+
+## Available now (M1)
+
+From the repo root:
+
+```sh
+nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml   # validate the spec; one-line summary
+nix develop -c go -C ddm run ./cmd/ddm sites ../sites.yaml   # table of every mount
+nix develop -c go -C ddm test ./...                          # spec tests, including sites.yaml itself
+```
+
+Run `check` before committing a change to `sites.yaml`. Nothing else reads the file yet.
 
 ## Planned (once ddm runs, roadmap M6)
 
