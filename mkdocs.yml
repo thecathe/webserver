@@ -1,0 +1,58 @@
+site_name: ddm
+site_description: Design and usage docs for ddm, the deployment manager behind cathe.dev and jpears.me
+site_url: https://ddm.cathe.dev/ # planned host; see docs/design/open-questions.md
+repo_url: https://github.com/cathe-org/dots
+edit_uri: ""
+
+docs_dir: docs
+
+theme:
+  name: material
+  custom_dir: overrides
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - stylesheets/theme.css
+  - stylesheets/ai-generated.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+
+nav:
+  - Overview: index.md
+  - Usage:
+      - Site spec (v2): usage/spec.md
+      - Adding a site: usage/adding-a-site.md
+      - Workflows: usage/workflows.md
+      - Operations: usage/operations.md
+  - Design:
+      - Decision record: design/record.md
+      - Architecture: design/architecture.md
+      - Open questions: design/open-questions.md
+      - Roadmap: design/roadmap.md
+  - Development log: development.md
