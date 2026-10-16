@@ -51,11 +51,20 @@ move it to the [decision record](record.md) and note it in the [development log]
     failure, or a link to the public copy via `site://`.
   - Is the home tree the right exemption?
 
-## Forest `site.yaml` scope
+## Forest configs: `forest-public.toml` now, `site.yaml` later?
 
-- **Question:** what moves out of `forest.toml`, and does the generator also write the dev config that the editor
-  and `build-forest` use?
-- **Lean:** the yaml holds views and the content model, and every TOML (dev included) is generated and gitignored.
+- **Decided (D26):** start with a hand-made `forest-public.toml` next to `forest.toml`.
+- **Open: expressing "only these people".** Today the meta rules are per key and per taxon
+  (`[forest.meta.redirect.Person]`), so the public config can redirect *every* `Person`. How do `@jpears` and
+  `@cathe` stay visible? Options:
+  - drop `\meta{redirect}` from those two trees, so the rule has nothing to act on;
+  - a tag (e.g. `public-person`) with its own behaviour;
+  - a small fork addition for per-address exceptions.
+
+  The lean is the first, since it needs no code. Check what the redirect target on those trees is for before
+  removing it.
+- **Later question:** whether to generate the TOMLs from a forest `site.yaml` (D12). Only worth it if the two hand-kept
+  files drift. If so, the yaml holds views and the content model, and every TOML (dev included) is generated.
 - **Stake:** editor tooling (forest-keeper, vscode-forester) must keep finding a config. Check what it reads before
   moving anything.
 
@@ -108,6 +117,27 @@ move it to the [decision record](record.md) and note it in the [development log]
   - **Contribution:** can teammates trigger rebuilds, or only push to the content repo and wait for the poll?
   - **Branding:** per-project theming via workflow `params`?
 - **Lean:** public sites and redirect mounts first, then Tailscale sharing for restricted ones.
+
+## Shared styling across sites
+
+- **Goal (D27):** a consistent look across the forest, mkdocs sites, odoc output and anything later, plus
+  cross-linking between subdomains.
+- **Questions:**
+  - **Source of truth:** one CSS file of design tokens (palette, fonts, spacing) plus the AI-marker styles? Where is
+    it served from: an `assets` site on its own host, or a path on an existing one?
+  - **Delivery:** link to it at runtime (one fetch, always current, but cross-origin) or copy it into each build
+    (self-contained and versioned with the build)? The lean is copying, via a `theme` built-in run after every
+    build, which also suits `rewrite-links`.
+  - **Per generator:**
+    - mkdocs: `extra_css` plus Material palette overrides;
+    - forester: the base-theme fork's CSS and XSLT;
+    - odoc: replace `odoc.support/odoc.css`.
+
+    How far can each go before fighting its generator's own design?
+  - **Shared chrome:** a common header or footer linking `cathe.dev`, `jpears.me`, `docs.cathe.dev`?
+  - **Light and dark:** all generators should honour `prefers-color-scheme`, with the same token names.
+- **Stake:** the more sites go live with their own default looks, the more retrofitting there is. Worth designing
+  before or alongside M3.
 
 ## AI marking beyond this site
 

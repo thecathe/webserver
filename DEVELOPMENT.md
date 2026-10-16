@@ -264,3 +264,49 @@ Branch `feat/ddm-workflows`. **Feature** + **Tooling** + **Docs**. Also, merged 
 - Should a site be able to override its workflow's env?
 - Should root-absolute workflows be declared `root_only`, so validation rejects path prefixes?
 - odoc and `site://`.
+
+---
+
+## 2026-10-16 (wrap-up): forest-public.toml, cathe.dev, shared styling
+
+Branch `docs/session-wrap-up`. **Design** + **Docs**. The only spec change is one new mount.
+
+**Decided.**
+- **D26:** the public and notes views will use a hand-made **`forest-public.toml`**. The only people pages it
+  exposes are `@jpears` and `@cathe`; every other `Person` redirects as redirect-meta intended. This is the
+  smallest fix for D25's people-profile leak, and it puts the `site.yaml` generator (D12) on hold unless the two
+  configs drift. Open: how to say "every Person except these two". The lean is removing `\meta{redirect}` from those
+  two trees, so the per-taxon rule has nothing to act on.
+- **D7 updated:** `cathe.dev` lands on the forest's `/@cathe/`, with content to come. It is now a mount in
+  `sites.yaml`.
+- **D27:** two motivations behind ddm made explicit:
+  - a **consistent look** across every site and generated output;
+  - **cross-linking between subdomains**.
+
+  `site://` already covers the linking. The styling has a new open-questions section and a roadmap entry: one
+  source of truth for palette, typography and the AI marker, with an adapter per generator (mkdocs `extra_css`, the
+  forester base theme, odoc's `odoc.css`), and possibly shared chrome. It is worth designing before or alongside
+  M3, while few sites are live.
+
+**For you (added to the to-dos page):** decide what `cathe.dev`/`@cathe` shows, and how `@jpears`/`@cathe` stay
+public in `forest-public.toml`.
+
+**Where the next session starts.** M3 (publish, `rewrite-links`, Caddyfile generation, `docs.cathe.dev`) and the
+first forest step of M4 (`forest-public.toml`) are both ready to begin. The shared-styling design affects M3's
+`theme`/`rewrite-links` post-build steps, so it may be worth discussing first. The open questions page has it.
+
+**Session in review** (as the global rule suggests). Today went from an idea to a spec, a validator and a working
+build runner, with every workflow proven on a real repo. What held up:
+- separate builds per view;
+- `site://` links (S1 confirmed them);
+- builds outside Nix derivations;
+- caller-wins param resolution.
+
+What changed on contact with reality:
+- blue/green became reinstall-in-place once the droplet was known to be disposable;
+- `lint-hidden` became the forest's own `--strict-private`;
+- the forest's public view turned out to expose people's profiles. That was the most valuable finding: it would
+  have shipped silently without a real build.
+
+Worth revisiting: whether hand-kept forest configs stay manageable, and whether styling should shape M3 rather than
+follow it.

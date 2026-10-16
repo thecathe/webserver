@@ -95,18 +95,18 @@ All three views build from the same checkout, with different generated configs:
 
 | View | Config | Effect |
 |---|---|---|
-| public | `forest.public.toml` | `[forest.tag.private] behaviour = "hide"`, plus the redirect meta rules |
-| notes | `forest.notes.toml` | public rules, plus *keep only trees tagged `notes`* (the home tree exempt) |
-| private | `forest.private.toml` | nothing hidden; redirect meta shown as external links |
+| public | `forest-public.toml` (D26) | `[forest.tag.private] behaviour = "hide"`, plus redirect meta rules that expose only the `@jpears` and `@cathe` people pages |
+| notes | `forest-public.toml` + the notes filter | public rules, plus *keep only trees tagged `notes`* (the home tree exempt) |
+| private | `forest.toml` (today's dev config) | nothing hidden; redirect meta shown as external links |
 
 The "keep only tagged" rule doesn't exist yet. It is a small addition to the forester fork (`thecathe/ocaml-forester`,
 next to the existing tag-hide code in `lib/compiler/State.ml`'s `plant_article` and
 `lib/frontend/Forest_util.ml`). It warns loudly instead of changing behaviour silently, which matches the fork's own
 guiding constraint.
 
-The three TOMLs are generated from the forest's `site.yaml` by the scripts in `thecathe/vscode-forester` (which
-already provide `forest_gen.py` / `build-forest`). They are written at the forest repo root, because forester failed
-with a config in a subdirectory.
+For now the two configs are kept by hand (D26). Both live at the forest repo root, because forester failed with a
+config in a subdirectory. If they start to drift, the scripts in `thecathe/vscode-forester` (which already provide
+`forest_gen.py` / `build-forest`) could generate both from a forest `site.yaml` (D12).
 
 ## Secrets
 

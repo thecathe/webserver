@@ -77,6 +77,7 @@ sites:
       notes:   { workflow: forester }
       private: { workflow: forester }
     mounts:
+      - { host: cathe.dev, entry: /@cathe/ }
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: jpears.me, entry: /@jpears/ }
       - { host: notes.cathe.dev, view: notes, entry: /index/ }

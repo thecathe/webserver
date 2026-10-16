@@ -17,8 +17,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | M0 | Rules and docs: this site, the AI marking, `DEVELOPMENT.md`, global rules | **done** 2026-10-16 |
 | M1 | Spec v2 + `ddm` skeleton | **done** 2026-10-16 |
 | M2 | Workflow runner + built-ins | **done** 2026-10-16 |
-| M3 | Publish, links, Caddy generation, `docs.cathe.dev` | next |
-| M4 | Forest side: `site.yaml`, views, the notes filter in the fork | |
+| M3 | Publish, links, Caddy generation, `docs.cathe.dev` | next (consider the shared-styling design first) |
+| M4 | Forest side: `forest-public.toml`, views, the notes filter in the fork | |
 | M5 | NixOS host config | |
 | M6 | ddm daemon | |
 | M7 | Cutover | |
@@ -64,10 +64,15 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 
 ## M4: forest side
 Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
-- **forest**: `site.yaml`; taxa for posts, papers and works.
-- **vscode-forester**: the YAML reader and per-view TOML generator.
+- **forest, first**: `forest-public.toml` (D26), exposing only the `@jpears` and `@cathe` people pages, with `url`
+  set to the public host. Point the public and notes views in `sites.yaml` at it (`params: { config:
+  forest-public.toml }`), then rebuild and check that no other `@…` directory appears in the output. **This unblocks
+  publishing the public views (D25).**
+- **forest**: taxa for posts, papers and works. A start on `@cathe` (the `cathe.dev` landing page) whenever you've
+  decided what goes there.
+- **vscode-forester** *(only if the hand-kept configs drift)*: a `site.yaml` reader and per-view TOML generator (D12).
 - **ocaml-forester**: the notes-view tag filter.
-- Set the forest's `url` per view (it is still the template's `https://www.my-great-forest.net/`), so the
+- Set the forest's `url` in each config (it is still the template's `https://www.my-great-forest.net/`), so the
   `uri` attributes and "copy link" point at the real host.
 - **Required before the forest's public and notes views go live (D25).**
 
@@ -85,6 +90,15 @@ Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
 Reinstall the existing droplet in place (D21): wipe it, install NixOS from this flake, let ddm build every site. DNS
 keeps pointing at the same IP. Downtime lasts from the wipe until the first deploy, kept short by proving M5/M6 in a
 VM first. Then point teammates at project sites.
+
+## Shared styling (not yet scheduled; D27)
+- One source of truth for the palette (today: loose gruvbox in `docs/stylesheets/theme.css`), typography and the
+  AI-generated marker, served from one place (e.g. an `assets` site, or a path on `ddm.cathe.dev`).
+- Adapters per generator: mkdocs `extra_css`, the forester theme (`thecathe/forester-base-theme` XSLT and CSS), and
+  odoc's `odoc.css` (`--theme-uri` or a post-build override).
+- Possibly a shared header or nav linking the sites, using `site://` links.
+- Likely after M3, since the shared assets need somewhere to be served from. To be designed in its own session;
+  see [open questions](open-questions.md#shared-styling-across-sites).
 
 ## Later
 - The identity widget (after S4).
