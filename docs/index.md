@@ -26,12 +26,20 @@ One repo (this one) is the **only** place with GitHub secrets or CI. Everything 
 Adding a new project means adding a spec entry, with no per-repo Actions, keys or secrets. That also makes it cheap
 to stand up **project-specific sites** that a team can use, whether hosting material directly or redirecting to it.
 
+Two more goals run through the design:
+
+- **Consistent styling** across every site and every kind of generated output (forest, mkdocs, odoc, …), from one
+  shared palette and set of styles rather than per-site copies.
+- **Cross-linking between subdomains**: any site can link to any other by name (`site://<name>/<path>`), resolved
+  per view, so links survive hosts and paths changing.
+
 ## The sites (planned)
 
 | Host | What | View |
 |---|---|---|
 | `jpears.me` | the forest, landing on `/@jpears/` (profile, CV pages, the CV itself) | public |
-| `forest.cathe.dev` (maybe also `cathe.dev`) | the forest, landing on `/index/` | public |
+| `cathe.dev` | the forest, landing on `//` (content to come) | public |
+| `forest.cathe.dev` | the forest, landing on `/index/` | public |
 | `notes.cathe.dev` | forest trees tagged `notes` (and not `private`) | notes |
 | `the.cathe.dev` | the whole forest, private trees included; tailnet-only, your identity only | private |
 | `docs.cathe.dev` | a generated directory of every site under `cathe.dev`, grouped by taxon | public |

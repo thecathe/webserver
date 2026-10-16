@@ -25,6 +25,10 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   papers.
 - [ ] **Activate the new global Claude rules** (design write-ups, AI-content marking) by rebuilding/switching from
   `thecathe/dots` (merged there as `441d40d`).
+- [ ] **Decide what `cathe.dev` shows** (added 2026-10-16). It lands on the forest's `@cathe` page (D7), which
+  is yours to write.
+- [ ] **Decide how `@jpears` and `@cathe` stay public** in `forest-public.toml` (added 2026-10-16). See open
+  questions, "Forest configs". The lean is removing `\meta{redirect}` from those two trees.
 - [ ] *(optional)* **Tell Claude the session's effort level**, so generated pages can show it instead of
   `unrecorded`.
 

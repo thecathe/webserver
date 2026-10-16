@@ -47,7 +47,8 @@ declared domains. Before it lapses, update anything that links to `cathe.work`.
 
 ### D7. Hosts (2026-10-16)
 - `jpears.me` → forest `/@jpears/` (profile; CV pages, with the CV transcluding parts of them).
-- `forest.cathe.dev` → forest `/index/`. `cathe.dev` itself is undecided.
+- `cathe.dev` → forest `//` (decided 2026-10-16; its content is yours to decide later).
+- `forest.cathe.dev` → forest `/index/`.
 - `notes.cathe.dev` → the notes view.
 - `the.cathe.dev` → the private view.
 - `docs.cathe.dev` → the generated directory.
@@ -149,6 +150,20 @@ The first real build showed that the public view, built from today's `forest.tom
 `redirect` means "show as external"), includes full pages for people's profiles (`trees/people/@*.tree`). Avoiding
 that was the whole reason for redirect-meta. `private`-tagged trees *are* excluded. So publishing these two views
 waits for M4's per-view configs, while the private view (tailnet-only) and the other sites can go live in M3.
+
+### D26. A hand-made `forest-public.toml` for the public views (2026-10-16)
+*Refines* D12 and D25. The forest gets a second config, `forest-public.toml`, used by the public and notes views.
+The only people pages it exposes are `@jpears` and `@cathe`; every other `Person` redirects (or is hidden) as
+redirect-meta intended. `forest.toml` stays the dev and private config. **Why:** it is the smallest change that
+unblocks publishing (D25), and it uses the fork's existing per-taxon meta rules. Generating per-view TOMLs from a
+`site.yaml` (D12) remains the longer-term shape, if the hand-kept pair starts to drift. Open: how to express
+"all Persons except these two" (a per-tree override, a tag, or a new rule); see open questions.
+
+### D27. Consistent styling and cross-linking are core goals (2026-10-16)
+One motivation for ddm is a **consistent look** across every site and generated output (forest, mkdocs, odoc, …),
+alongside **cross-linking between subdomains**. `site://` links (D13) cover the linking. The styling needs a shared
+source of truth: palette, typography, the AI-generated marker, possibly a common header or nav. Each generator then
+gets an adapter. The design is open; see open questions and the roadmap.
 
 ## AI-generated content marking
 
