@@ -16,8 +16,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 |---|---|---|
 | M0 | Rules and docs: this site, the AI marking, `DEVELOPMENT.md`, global rules | **done** 2026-10-16 |
 | M1 | Spec v2 + `ddm` skeleton | **done** 2026-10-16 |
-| M2 | Workflow runner + built-ins | next |
-| M3 | Publish, links, Caddy generation, `docs.cathe.dev` | |
+| M2 | Workflow runner + built-ins | **done** 2026-10-16 |
+| M3 | Publish, links, Caddy generation, `docs.cathe.dev` | next |
 | M4 | Forest side: `site.yaml`, views, the notes filter in the fork | |
 | M5 | NixOS host config | |
 | M6 | ddm daemon | |
@@ -35,15 +35,18 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   `system.poll` and to the open question on notifications.
 - `cathe.work` is gone from the repo along with the old Caddyfile (D20).
 
-## M2: workflow runner
-- `internal/workflow`: param substitution, `nix develop <env> -c`, `use:` inlining, `when`/`unless`, and the built-in
-  registry.
-- Rewrite repo sync in `ddm/`: clone, or fetch + hard reset to `origin/<branch>`, as the deleted `webserver/` did,
-  but at an exact sha.
-- Workflows in order:
-  - **forester first**, since it's the landing page;
-  - then `odoc`, `mkdocs`, `ocaml-notebook` (from `_example_yamls/`, moving `generate_docs.py` into `scripts/`).
-- Spikes S1 and S3 happen here.
+## M2: workflow runner (done)
+- `ddm/internal/gitsync`: finds a branch's commit (`git ls-remote`) and checks out exactly that commit, cleaned of
+  untracked files.
+- `ddm/internal/workflow`: resolves a site view into a flat plan (params, `use:`, `when`/`unless`), then runs it in
+  `nix develop <env>`. Built-in registry: `mkdocs-config` works; `rewrite-links` and `site-directory` are
+  placeholders for M3.
+- `ddm build` (via `bin/ddm`) builds one view into `.ddm/out/<site>/<view>/<commit>/`.
+- Every workflow was verified on a real repo: forester (`forest`), odoc (`cloakaml`, `docs` branch), mkdocs (`indimo`,
+  this site), ocaml-notebook (`demos`).
+- Spikes: S1 and S3 pass, and S2 was answered here too (see [Spikes](#spikes)).
+- **Found:** the forest's public and notes views currently publish people's profiles (D25). M4 must land before
+  they go live.
 
 ## M3: publish, links, Caddy
 - Versioned roots with a `current` symlink.
@@ -56,14 +59,17 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   - odoc's root rewrite, since odoc output nests under the package name. This is now just `entry:` on the mount.
   - Drop its per-request filesystem probing (`@has_odoc` / `@has_site`): each mount knows its root.
 - The `site-directory` built-in for `docs.cathe.dev`.
-- **This site goes live here.**
+- **This site goes live here.** So can every site except the forest's public and notes views, which wait for M4
+  (D25). The private view can go live, behind its tailnet-only host.
 
 ## M4: forest side
 Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
 - **forest**: `site.yaml`; taxa for posts, papers and works.
 - **vscode-forester**: the YAML reader and per-view TOML generator.
 - **ocaml-forester**: the notes-view tag filter.
-- Spike S2 happens here.
+- Set the forest's `url` per view (it is still the template's `https://www.my-great-forest.net/`), so the
+  `uri` attributes and "copy link" point at the real host.
+- **Required before the forest's public and notes views go live (D25).**
 
 ## M5: NixOS host
 `nixosConfigurations.droplet` in this repo's flake, with:
@@ -91,11 +97,11 @@ VM first. Then point teammates at project sites.
 
 ## Spikes
 
-| | Question | When |
+| | Question | Answer |
 |---|---|---|
-| S1 | Does forester pass `site://name/path` through untouched? | M2 |
-| S2 | Are forest output links root-absolute or relative? (one build, two hosts) | M4 |
-| S3 | Does `nix develop github:thecathe/forest/<sha> -c forester build` work on a clean machine? | M2 |
+| S1 | Does forester pass `site://name/path` through untouched? | **Yes** (M2): forester emits it verbatim as an external link, and so does mkdocs in strict mode. odoc is untested. |
+| S2 | Are forest output links root-absolute or relative? (one build, two hosts) | **Root-absolute** (M2): `base-url="/"`, `href="//"`, stylesheet `/default.xsl`. One build serves `jpears.me` and `forest.cathe.dev` unchanged. A forest can only be mounted at path `/`. |
+| S3 | Does `nix develop github:thecathe/forest/<sha> -c forester build` work on a clean machine? | **Yes for a clean checkout** (M2): about 10 s, with a warm Nix store. A cold store is verified in the M5 VM test. |
 | S4 | Can a public page `fetch` a tailnet-only host? (the widget) | later |
 
 ## Where the old curriculum went

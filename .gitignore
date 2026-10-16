@@ -2,3 +2,6 @@ www
 
 # mkdocs build output
 site/
+
+# ddm build working directory (checkouts, scratch, results)
+.ddm/

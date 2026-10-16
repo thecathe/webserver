@@ -15,7 +15,7 @@ workflows:
     env: { flake: "{{repo}}" }
     steps:
       - run: forester build
-      - builtin: lint-hidden
+      - builtin: rewrite-links
         unless: { view: private }
       - output: output/
   mkdocs:

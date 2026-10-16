@@ -205,3 +205,62 @@ Along the way we went over why Caddy was ever entangled with the Go code. Wildca
 DNS-01, which needs a Caddy plugin, and plugins must be compiled in. `webserver/` was therefore a custom Caddy build
 with a `deploy` subcommand bolted on. Under NixOS, `caddy.withPlugins` builds that Caddy declaratively, so ddm and
 Caddy can be separate services (D4).
+
+---
+
+## 2026-10-16 (later still): M2, workflow runner
+
+Branch `feat/ddm-workflows`. **Feature** + **Tooling** + **Docs**. Also, merged just before: `d00acf0`, a
+**Docs** page of tasks only you can do (`docs/tasks.md`), starting with deleting the old deploy secrets.
+
+**What was built.**
+- `45de3f5`: **Tooling.** Workflow devShells in `flake.nix`: `#mkdocs` and `#ocaml-docs`.
+- `b41dd7b`: **Refactor.** The spec drops the `lint-hidden` built-in and accepts absolute repo paths.
+- `b83ad24`: **Feature.** `internal/gitsync`: the exact-commit checkout.
+- `7f8d993`: **Feature.** `internal/workflow`: the up-front resolver and the runner. `mkdocs-config` is the first real
+  built-in.
+- `fa8c105`: **Feature.** `ddm build` (`--view`, `--src`, `--branch`, `--set`, `--dry-run`), plus the `bin/ddm`
+  wrapper.
+- `55fd51b`: **Feature.** The workflows in `sites.yaml` now match the tools that exist. `generate_docs.py` moved to
+  `scripts/`.
+- **Docs.** The workflows page was rewritten as a reference (step semantics, param precedence, envs, what each
+  workflow was verified on). Spec, operations, adding-a-site, roadmap and open questions were updated, and the
+  decision record gains D22–D25.
+
+**Every workflow was run on a real repo:**
+- `indimo` (mkdocs, with `mkdocs.yml` generated);
+- `cloakaml` (odoc, about 2 minutes on the first run);
+- `forest` (forester, about 10 s);
+- `demos` (ocaml-notebook);
+- this docs site.
+
+**Spikes.**
+- **S1:** forester and mkdocs pass `site://` through untouched, so the scheme stays. odoc is untested.
+- **S2:** forest links are root-absolute (`base-url="/"`), so one build serves both `jpears.me` and
+  `forest.cathe.dev`, and forests can't sit under a path prefix.
+- **S3:** a clean-checkout forest build works in the forest's own devShell. A cold Nix store waits for the M5 VM
+  test.
+
+**Found along the way.**
+- **D25, the important one.** The public view built from today's `forest.toml` contains full pages for people's
+  profiles. That file is your dev config, where `redirect` means "show as external", and hiding those profiles was
+  the original reason for redirect-meta. `private`-tagged trees are correctly excluded. The forest's public and notes
+  views therefore wait for M4.
+- cloakaml's *pushed* flake only has opam; your local checkout has an unpushed version with odoc. Its old Action
+  built from the `docs` branch. Hence D23, a `#ocaml-docs` shell in this repo, and `branch: docs` in the spec.
+- `build-forest --strict-private` already did what `lint-hidden` was going to do (D22).
+- The forest's `url` is still the template's `my-great-forest.net`. Setting it per view joins M4.
+- `go -C ddm run` runs with `ddm/` as the working directory, which made every relative path awkward. Hence `bin/ddm`,
+  which compiles from source and runs from the repo root.
+
+**Design notes.**
+- Resolution happens entirely before execution, so `--dry-run` shows the exact commands, and a typo'd `{{param}}`
+  fails before a 2-minute toolchain download rather than after.
+- `nix develop` per step re-evaluates the env each time. It's cheap after the first run, so not worth optimising yet.
+- The scratch `{{out}}` is per site and view. The result is then *copied* to `.ddm/out/<site>/<view>/<commit>/`, so
+  M3's publish step gets an immutable directory named by its commit.
+
+**Open questions raised:**
+- Should a site be able to override its workflow's env?
+- Should root-absolute workflows be declared `root_only`, so validation rejects path prefixes?
+- odoc and `site://`.

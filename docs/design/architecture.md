@@ -65,8 +65,8 @@ host blocks only ever point into `/var/www/public` or `/var/www/notes`.
 
 The Caddyfile is **generated** from `mounts`, replacing the old hand-written file (deleted, D19) and its per-request filesystem
 probing (`@has_odoc` / `@has_site`). Each mount becomes a host block (or a path inside one) rooted at the right
-`current`. `entry:` becomes `redir / <entry>`; a redirect is used rather than a rewrite until spike S2 shows whether
-forest links are root-absolute. Certificates keep coming from Cloudflare DNS-01, with a wildcard for `*.cathe.dev`.
+`current`. `entry:` becomes `redir / <entry>`; a redirect, which spike S2 confirmed is all the forest needs (its links
+are root-absolute). Certificates keep coming from Cloudflare DNS-01, with a wildcard for `*.cathe.dev`.
 
 ## Private access
 

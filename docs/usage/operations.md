@@ -19,17 +19,20 @@ everything is either in a git repo or generated from one.
 The `deploy-dots` Action is gone, so pushing to `main` no longer touches the droplet. Its GitHub secrets
 (`WEBSERVER_*`) are still set in the repo settings. They are harmless, but can be deleted.
 
-## Available now (M1)
+## Available now (M1, M2)
 
 From the repo root:
 
 ```sh
-nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml   # validate the spec; one-line summary
-nix develop -c go -C ddm run ./cmd/ddm sites ../sites.yaml   # table of every mount
-nix develop -c go -C ddm test ./...                          # spec tests, including sites.yaml itself
+nix develop -c bin/ddm check                  # validate the spec; one-line summary
+nix develop -c bin/ddm sites                  # table of every mount
+nix develop -c bin/ddm build <site> [--view v] # build locally into .ddm/out/<site>/<view>/<commit>/
+nix develop -c go -C ddm test ./...           # all tests, including sites.yaml itself
 ```
 
-Run `check` before committing a change to `sites.yaml`. Nothing else reads the file yet.
+Run `check` before committing a change to `sites.yaml`, and `build` before relying on a new site or workflow.
+`bin/ddm` compiles ddm from source and runs it, so it always matches the checkout. `ddm build -h` lists the build
+flags; [workflows](workflows.md#trying-one) has examples.
 
 ## Planned (once ddm runs, roadmap M6)
 
@@ -37,7 +40,6 @@ Run `check` before committing a change to `sites.yaml`. Nothing else reads the f
 |---|---|
 | `ddm status` | Applied system sha; per site and view: last sha, build result, when. |
 | `ddm sync [site]` | Check now instead of waiting for the poll. |
-| `ddm build <site> [--view v]` | Run a workflow locally without publishing. It also works on your laptop. |
 | `ddm rollback <site>` | Point `current` back at the previous published build. |
 | `journalctl -u ddm -u ddm-rebuild` | Logs for the daemon, and for system rebuilds. |
 

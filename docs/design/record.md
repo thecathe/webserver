@@ -127,6 +127,29 @@ same IP so DNS doesn't change, and there is no second droplet to pay for. The co
 first successful deploy, which is acceptable. Everything is first proven in a local NixOS VM test (M5/M6), to keep
 that window short.
 
+### D22. No forest-specific built-ins (2026-10-16, M2)
+The planned `lint-hidden` built-in is dropped. The forest's own `build-forest --strict-private` (from
+`thecathe/vscode-forester`) already fails a build in which a visible tree links to a hidden one, so the `forester`
+workflow runs it, except for the private view. **Why:** ddm stays ignorant of forester. The logic lives with the
+tool that understands trees and is tested there.
+
+### D23. Workflow environments: the repo's devShell, or a small one from this repo (2026-10-16, M2)
+`env.flake` is `{{repo}}` when the site repo ships a usable devShell (the forest), and otherwise one of this repo's
+per-tool devShells: `#mkdocs`, `#ocaml-docs`. **Why:** repos stay free of ddm-specific config, the toolchain is
+pinned by this repo's `flake.lock`, and the shells are small enough not to drag in Go. Found in practice: cloakaml's
+pushed flake only has opam, so `{{repo}}` would not have worked there.
+
+### D24. Params resolve up front, and the caller wins (2026-10-16, M2)
+Precedence, lowest first: workflow defaults, built-in vars, view params, `--set`. An inlined `use:` workflow's
+defaults only fill gaps, and its env replaces the caller's only if it has one. An unknown `{{param}}` is an error
+before anything runs. **Why:** loud, early failures; `--dry-run` shows exactly what will run.
+
+### D25. The forest's public and notes views don't go live before M4 (2026-10-16, M2)
+The first real build showed that the public view, built from today's `forest.toml` (your dev config, where
+`redirect` means "show as external"), includes full pages for people's profiles (`trees/people/@*.tree`). Avoiding
+that was the whole reason for redirect-meta. `private`-tagged trees *are* excluded. So publishing these two views
+waits for M4's per-view configs, while the private view (tailnet-only) and the other sites can go live in M3.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
