@@ -14,37 +14,43 @@ domains: [cathe.dev, jpears.me]
 taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
 
 workflows:
-  # A forest built with the forester fork, using the forest repo's own devShell.
+  # A forest built with the forester fork, in the forest repo's own devShell.
+  # build-forest (from vscode-forester) runs forest_gen.py, forester build,
+  # copies assets and post-processes SVGs. --strict-private fails the build if
+  # a visible tree links to a hidden one, so a non-private view fails closed.
   forester:
     env: { flake: "{{repo}}" }
-    params: { view: public }
+    params: { config: forest.toml }
     steps:
-      - run: forest-gen config --view {{view}}
-      - run: forest-gen all --config forest.{{view}}.toml
-      - builtin: lint-hidden
+      - run: build-forest {{config}} --strict-private
         unless: { view: private }
-      - run: forester build forest.{{view}}.toml
+      - run: build-forest {{config}}
+        when: { view: private }
       - output: output/
 
   mkdocs:
-    env: { flake: "{{system}}" }
-    params: { input_dir: ./, theme: material }
+    env: { flake: "{{system}}#mkdocs" }
+    params: { input_dir: docs, theme: material }
     steps:
       - builtin: mkdocs-config
       - run: mkdocs build -d {{out}}
 
+  # dune + odoc + the OCaml libraries our projects use, from this repo's flake.
   odoc:
-    env: { flake: "{{repo}}" }
+    env: { flake: "{{system}}#ocaml-docs" }
     steps:
       - run: dune build @doc
       - output: _build/default/_doc/_html
 
   # .ml files with doc comments → markdown → mkdocs (was demos-deploy-docs.yml).
   ocaml-notebook:
-    env: { flake: "{{system}}" }
-    params: { input_dir: ./ }
+    env: { flake: "{{system}}#mkdocs" }
+    params: { ml_dir: lib }
     steps:
-      - run: python3 {{system}}/scripts/generate_docs.py {{input_dir}} docs/
+      - run: >-
+          mkdir -p docs &&
+          find {{ml_dir}} -name "*.ml" -print0 | xargs -0 python3 {{system}}/scripts/generate_docs.py -o docs/ &&
+          { [ -f docs/index.md ] || echo "# {{site}}" > docs/index.md; }
       - use: mkdocs
 
   # A repo that already is a static site.
@@ -63,10 +69,13 @@ sites:
     repo: thecathe/forest
     taxa: [personal, notes]
     description: Notes, profile, CV, posts and papers
+    # Until M4 adds per-view configs (forest.<view>.toml generated from the
+    # forest's site.yaml), every view builds from forest.toml; only the
+    # private view skips --strict-private.
     views:
-      public:  { workflow: forester, params: { view: public } }
-      notes:   { workflow: forester, params: { view: notes } }
-      private: { workflow: forester, params: { view: private } }
+      public:  { workflow: forester }
+      notes:   { workflow: forester }
+      private: { workflow: forester }
     mounts:
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: jpears.me, entry: /@jpears/ }
@@ -87,6 +96,7 @@ sites:
 
   cloakaml:
     repo: thecathe/cloakaml
+    branch: docs   # the branch its old docs Action deployed from
     workflow: odoc
     taxa: [docs, project, tool]
     description: cloakaml API documentation
