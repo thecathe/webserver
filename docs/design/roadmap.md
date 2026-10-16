@@ -24,8 +24,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | M7 | Cutover | |
 
 ## M1: spec v2 + `ddm` skeleton (done)
-- A new `ddm/` Go module, built **alongside** the legacy `webserver/` rather than renaming it (D17). `webserver/`,
-  `deploy.yaml` and `Caddyfile` stay as they are until cutover.
+- A new `ddm/` Go module. The legacy `webserver/`, `deploy.yaml`, hand-written `Caddyfile` and `deploy-dots` Action
+  were deleted (D19).
 - `ddm/internal/spec` loads `sites.yaml`. Unknown keys are errors, defaults are filled, and every problem is reported at
   once. It checks hosts outside `domains`, unknown workflows, views and builtins, `use:` cycles, duplicate host+path,
   undeclared taxa, and malformed names, entries and access values. Tests: `ddm/internal/spec/spec_test.go`, including
@@ -33,13 +33,13 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - `ddm check` and `ddm sites` commands.
 - The dead v1 fields (`auto_rebuild`, `email_notifications`, `flags`) have no v2 equivalent: their intent moved to
   `system.poll` and to the open question on notifications.
-- **Moved, not done:** dropping `cathe.work` from the live `Caddyfile`. It becomes a redirect in the generated
-  Caddyfile instead (M3, D18), so links keep working until the domain lapses.
+- `cathe.work` is gone from the repo along with the old Caddyfile (D20).
 
 ## M2: workflow runner
 - `internal/workflow`: param substitution, `nix develop <env> -c`, `use:` inlining, `when`/`unless`, and the built-in
   registry.
-- Port `syncRepo` from the legacy `webserver/internal/deploy/git.go` into `ddm/`.
+- Rewrite repo sync in `ddm/`: clone, or fetch + hard reset to `origin/<branch>`, as the deleted `webserver/` did,
+  but at an exact sha.
 - Workflows in order:
   - **forester first**, since it's the landing page;
   - then `odoc`, `mkdocs`, `ocaml-notebook` (from `_example_yamls/`, moving `generate_docs.py` into `scripts/`).
@@ -48,8 +48,13 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 ## M3: publish, links, Caddy
 - Versioned roots with a `current` symlink.
 - `rewrite-links`.
-- `internal/caddygen`: entry redirects, per-view roots, the `the.cathe.dev` bind + `forward_auth` block.
-- `cathe.work` and `*.cathe.work` become redirects to their new homes for as long as the domain is held (D18).
+- `internal/caddygen`: entry redirects, per-view roots, the `the.cathe.dev` bind + `forward_auth` block. It replaces
+  the deleted hand-written Caddyfile. Carry over from it (see git history before
+  2026-10-16):
+  - certificates via `acme_dns cloudflare`, with a wildcard per domain;
+  - a shared 404 page for every host;
+  - odoc's root rewrite, since odoc output nests under the package name. This is now just `entry:` on the mount.
+  - Drop its per-request filesystem probing (`@has_odoc` / `@has_site`): each mount knows its root.
 - The `site-directory` built-in for `docs.cathe.dev`.
 - **This site goes live here.**
 
@@ -71,7 +76,9 @@ Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
 - Tested in a NixOS VM test before any real droplet exists.
 
 ## M7: cutover
-New droplet, validate, switch DNS, retire the old one. Then point teammates at project sites.
+Reinstall the existing droplet in place (D21): wipe it, install NixOS from this flake, let ddm build every site. DNS
+keeps pointing at the same IP. Downtime lasts from the wipe until the first deploy, kept short by proving M5/M6 in a
+VM first. Then point teammates at project sites.
 
 ## Later
 - The identity widget (after S4).
@@ -103,7 +110,7 @@ The 2026-09 curriculum (Modules 1–14) was written for you to implement. Its co
 | 6 DomainLink rewriting | M3 (`site://` + `rewrite-links`) |
 | 7 GH Action rebuild, 8 systemd timer | M6 (ddm polling) |
 | 9 home-manager on Ubuntu | dropped (D3) |
-| 10 NixOS blue/green | M5 + M7 |
+| 10 NixOS migration | M5 + M7 (in place, not blue/green: D21) |
 | 11 webhooks | Later |
 | 12 Caddyfile generation | M3 |
 | 13 GitHub Pages | Later |

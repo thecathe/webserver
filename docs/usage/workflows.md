@@ -10,8 +10,7 @@ generated:
 # Workflows
 
 !!! warning "Design, not implemented"
-    Workflows replace the `builders` map in `webserver/internal/deploy/builders.go`, where every method is
-    currently a stub.
+    Workflows replace the fixed build methods of the old `webserver/` tool (removed), which were all stubs.
 
 A workflow is a **named, reusable list of steps** that turns a checkout into a directory of static files. Sites refer
 to workflows by name and override their `params`.

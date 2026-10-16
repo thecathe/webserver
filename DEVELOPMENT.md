@@ -190,3 +190,18 @@ Branch `feat/ddm-spec-v2`. **Feature** + **Docs**.
 
 **Open questions raised:** a few smaller spec points (derive `system.flake`? `params` on `use:` steps? other
 forges?), and the redirect targets for `cathe.work`, which need a look at what's on the droplet.
+
+**Addendum: the droplet can be wiped.** Asked whether to merge with D17/D18, you explained that everything on the
+droplet is in git or generated from git, so the whole point of ddm is to reset it. That removed the reason for both
+deviations, and for blue/green too:
+- **D19:** the legacy setup (`webserver/`, `deploy.yaml`, the hand-written `Caddyfile`, the `deploy-dots` Action)
+  was deleted in this branch. The old Caddyfile's useful ideas (wildcard DNS-01 certs, a shared 404 page, odoc's
+  root rewrite) were carried into roadmap M3. Its filesystem probing is not carried over.
+- **D20:** `cathe.work` is simply dropped, with no redirects.
+- **D21:** the droplet is reinstalled in place rather than swapped blue/green: same IP, no DNS change, one droplet.
+  The cost is downtime, kept short by proving M5/M6 in a VM first.
+
+Along the way we went over why Caddy was ever entangled with the Go code. Wildcard certificates come from Cloudflare
+DNS-01, which needs a Caddy plugin, and plugins must be compiled in. `webserver/` was therefore a custom Caddy build
+with a `deploy` subcommand bolted on. Under NixOS, `caddy.withPlugins` builds that Caddy declaratively, so ddm and
+Caddy can be separate services (D4).

@@ -82,8 +82,9 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## Infrastructure
 
-- **Droplet:** provider and size. Stay on DigitalOcean? The NixOS image: a community image, or `nixos-infect` on a
-  fresh box?
+- **Droplet:** reinstalled in place (D21). Open: nixos-anywhere (kexec into an installer, partition with disko,
+  fully declarative) or DigitalOcean rebuild + nixos-infect (simpler, less declarative disk layout). The lean is
+  nixos-anywhere. Also: is the current droplet size enough for forester and odoc builds?
 - **Secrets:** agenix or sops-nix. The lean is agenix, which is simpler; the droplet's host key decrypts.
 - **Repo name** after the transfer (`server-dots` is a placeholder).
 - **DNS:** a wildcard `*.cathe.dev` plus explicit `the.cathe.dev` (pointing at the tailnet IP) and `jpears.me`.
@@ -117,13 +118,8 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## `cathe.work` sunset
 
-- **Checklist:**
-  - list everywhere that links to it (CV PDFs, profiles, email signatures, GitHub bios, papers);
-  - redirect what can be redirected while the domain is still held;
-  - decide each redirect target (e.g. `cathe.work` → `jpears.me`; `*.cathe.work` → the matching `*.cathe.dev`?).
-    The generated Caddyfile will redirect, not serve (D18). What is under `/var/www/cathe.work` today is unknown
-    from this repo; check on the droplet.
-- **Unknown:** when exactly it lapses.
+Dropped outright (D20): no redirects, and it disappears with the old droplet. Remaining, a personal checklist:
+update anything that links to it (CV PDFs, profiles, email signatures, GitHub bios, papers) before it lapses.
 
 ## This site's host
 

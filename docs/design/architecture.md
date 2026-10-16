@@ -33,8 +33,7 @@ generated:
   changed.
 - **Site loop.** For each site and view: if the repo's sha (or the workflow's definition) differs from the last
   successful build, it syncs the checkout, runs the workflow, runs `rewrite-links`, publishes, regenerates the
-  Caddyfile and reloads Caddy. One site failing never blocks the others; this behaviour is kept from today's
-  `deploy.go`.
+  Caddyfile and reloads Caddy. One site failing never blocks the others, as in the old `deploy.go`.
 
 ddm keeps a small state file (applied system sha; last built sha and result per site and view), so a restart picks up
 where it left off.
@@ -64,7 +63,7 @@ host blocks only ever point into `/var/www/public` or `/var/www/notes`.
 
 ## Caddy
 
-The Caddyfile is **generated** from `mounts`, replacing today's hand-written file and its per-request filesystem
+The Caddyfile is **generated** from `mounts`, replacing the old hand-written file (deleted, D19) and its per-request filesystem
 probing (`@has_odoc` / `@has_site`). Each mount becomes a host block (or a path inside one) rooted at the right
 `current`. `entry:` becomes `redir / <entry>`; a redirect is used rather than a rewrite until spike S2 shows whether
 forest links are root-absolute. Certificates keep coming from Cloudflare DNS-01, with a wildcard for `*.cathe.dev`.

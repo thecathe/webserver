@@ -11,8 +11,7 @@ generated:
 
 !!! info "Status: validated, not yet acted on"
     `sites.yaml` is loaded and validated by `ddm check` (roadmap M1, `ddm/internal/spec`). Nothing builds or
-    publishes from it yet: that's M2/M3. The live droplet still runs from the hand-written `Caddyfile` and the legacy
-    `webserver/` + `deploy.yaml`. Names may still change; see [open questions](../design/open-questions.md#spec-naming).
+    publishes from it yet: that's M2/M3. Names may still change; see [open questions](../design/open-questions.md#spec-naming).
 
 The spec has six top-level parts:
 - **system**: where the server's own config comes from;
