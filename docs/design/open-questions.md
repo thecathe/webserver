@@ -28,19 +28,18 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## `site://` survives every generator (spike S1)
 
-- **Question:** does forester (`resolve_uri`, `lib/compiler/Eval.ml`) pass `site://name/path` through untouched? Do
-  mkdocs and odoc?
-- **Lean:** yes for mkdocs (it only checks relative links) and probably odoc. Unknown for forester.
-- **Fallback:** `https://site.invalid/name/path`, which every tool treats as an external URL.
-- **Stake:** the cross-site linking design.
+- **Answered (M2):** forester and mkdocs (strict mode) both emit `site://cloakaml/…` verbatim, so the scheme stays.
+- **Still open:** odoc docstring links (`{{:site://…}text}`) are untested. Test when a project first needs one.
 
 ## One forest build on two hosts (spike S2)
 
-- **Question:** are links in forest output root-absolute or relative? Can the same build serve `jpears.me` and
-  `forest.cathe.dev`?
-- **Lean:** serve the same build on both, with `/` redirecting to the entry.
-- **Wrinkle:** `url` in the forest config is a single canonical value.
-- **Stake:** whether `jpears.me` needs its own build, and whether to use a redirect or a rewrite.
+- **Answered (M2):** links are root-absolute, so one build serves both hosts unchanged, and `/` → entry can be a
+  plain redirect.
+- **Follow-ups:**
+  - The forest's `url` is still the template's `https://www.my-great-forest.net/`, used in `uri` attributes
+    and some broken-link warnings. Set it per view in M4; the lean is `https://forest.cathe.dev/` for public.
+  - Root-absolute sites can't be mounted under a path prefix. Should the spec let a workflow declare
+    `root_only` so validation rejects `path:` on such mounts? The lean is yes, in M3.
 
 ## The forest notes view
 
@@ -48,8 +47,8 @@ move it to the [decision record](record.md) and note it in the [development log]
 - **Lean:** the fork addition, small and tested next to `Test_redirect_meta.ml`. A script filter can't remove trees
   from forester's own indexes.
 - **Also open:**
-  - What happens to a notes tree that links to a non-notes tree? It should probably become a `lint-hidden`-style
-    warning, or a link to the public copy via `site://`.
+  - What happens to a notes tree that links to a non-notes tree? It should probably be a `--strict-private`-style
+    failure, or a link to the public copy via `site://`.
   - Is the home tree the right exemption?
 
 ## Forest `site.yaml` scope
@@ -62,9 +61,11 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## Workflow environments (spike S3)
 
-- **Question:** does `nix develop github:thecathe/forest/<sha> -c forester build` work on a clean machine? What about
-  repos without a flake?
-- **Lean:** the repo's own devShell where one exists, otherwise a devShell in this repo.
+- **Answered (M2):** the forest builds from a clean checkout in its own devShell. Repos without a usable devShell
+  build in one of this repo's (`#mkdocs`, `#ocaml-docs`); cloakaml's pushed flake only has opam.
+- **Open:** a site can't yet choose its env; it comes with the workflow. Should sites be able to override `env`, e.g.
+  an odoc project with unusual libraries? The lean is yes, as a site-level `env:`, once a second OCaml project
+  needs it. Until then, add libraries to `#ocaml-docs`.
 - **Also open:** the first build of a new devShell is slow. Should ddm pre-build envs during the system loop?
 - **Also open:** the mkdocs-material team warns that MkDocs 2.0 will break plugins and theme overrides, with no
   migration path. nixpkgs pins MkDocs 1.6, so nothing breaks yet, but the `mkdocs` workflow and this site's

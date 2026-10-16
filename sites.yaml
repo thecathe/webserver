@@ -1,8 +1,8 @@
 # The ddm site spec (v2). Reference: docs/usage/spec.md.
-# Check it with:  nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml
+# Check it with:  nix develop -c bin/ddm check
 #
-# Not live yet: ddm can validate and list this spec (roadmap M1) but does not
-# build or publish anything until M2/M3.
+# Not live yet: ddm validates this spec and builds sites locally
+# (bin/ddm build <site>), but publishes nothing until M3.
 
 system:
   flake: github:cathe-org/dots   # becomes the personal-account repo after the transfer

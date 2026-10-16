@@ -11,8 +11,8 @@ generated:
 
 !!! warning "Status: design"
     Most of what these pages describe is **designed but not built**. The old droplet still runs the previous hand-made
-    setup, which will be wiped. `ddm/` can load and validate the
-    [site spec](usage/spec.md) (`ddm check`), but doesn't build or publish yet. Each page says which parts are real.
+    setup, which will be wiped. `ddm/` validates the
+    [site spec](usage/spec.md) and builds any site locally ([workflows](usage/workflows.md)), but doesn't publish yet. Each page says which parts are real.
 
 ## What it is for
 

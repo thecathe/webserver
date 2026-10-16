@@ -9,9 +9,9 @@ generated:
 
 # Site spec (v2)
 
-!!! info "Status: validated, not yet acted on"
-    `sites.yaml` is loaded and validated by `ddm check` (roadmap M1, `ddm/internal/spec`). Nothing builds or
-    publishes from it yet: that's M2/M3. Names may still change; see [open questions](../design/open-questions.md#spec-naming).
+!!! info "Status: validated and buildable, not yet published"
+    `sites.yaml` is loaded and validated by `ddm check` (roadmap M1, `ddm/internal/spec`). `bin/ddm build` builds any site locally (M2).
+    Nothing is published until M3. Names may still change; see [open questions](../design/open-questions.md#spec-naming).
 
 The spec has six top-level parts:
 - **system**: where the server's own config comes from;
@@ -24,8 +24,8 @@ The spec has six top-level parts:
 ## Checking it
 
 ```sh
-nix develop -c go -C ddm run ./cmd/ddm check ../sites.yaml   # valid? one-line summary
-nix develop -c go -C ddm run ./cmd/ddm sites ../sites.yaml   # every mount: host, path, site, view, workflow, access
+nix develop -c bin/ddm check   # valid? one-line summary
+nix develop -c bin/ddm sites   # every mount: host, path, site, view, workflow, access
 ```
 
 Every problem is reported at once, one per line, each naming exactly where it is (e.g.
@@ -75,7 +75,7 @@ If `taxa` is omitted, any taxon is accepted.
 | `steps` | Run in order. Each is **exactly one** of `run`, `builtin`, `use`, `output`. See [workflows](workflows.md). |
 
 Validation checks:
-- every `builtin` is one ddm knows (`mkdocs-config`, `lint-hidden`, `rewrite-links`, `site-directory`, `md-ssg`);
+- every `builtin` is one ddm knows (`mkdocs-config`, `rewrite-links`, `site-directory`, `md-ssg`);
 - every `use` names an existing workflow, and there are no `use` cycles (reported as e.g. `a → b → a`);
 - `params` appear only on `builtin` steps.
 
@@ -89,7 +89,7 @@ letters, digits and `-`, because it also becomes a directory name.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `repo` | none | `owner/name` on GitHub, or a full clone URL, cloned with the server's single read-only token. Omit it for generated sites (e.g. `docs`). |
+| `repo` | none | `owner/name` on GitHub, a full clone URL, or an absolute path, cloned with the server's single read-only token. Omit it for generated sites (e.g. `docs`). |
 | `branch` | `main` | |
 | `workflow` + `params` | | Shorthand for a single `public` view. Use either this or `views`, not both. |
 | `views.<view>` | | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each needs a `workflow`, and may have `params`. |

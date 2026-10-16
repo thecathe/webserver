@@ -9,9 +9,8 @@ generated:
 
 # Adding a site
 
-!!! warning "Design, not implemented"
-    This is the intended workflow once ddm is running (roadmap M6). Until then, sites are published by hand or by
-    each repo's own GitHub Action (see `_example_yamls/`).
+!!! warning "Partly implemented"
+    Writing the entry and `ddm build` work today (M2). Automatic publishing needs the ddm daemon (M6).
 
 ## The short version
 
@@ -39,9 +38,10 @@ certificate, so no DNS change is needed either.
 
 ## Checking on it
 
-- `ddm build my-project` runs the same workflow locally, with no publishing. Use it before pushing.
-- `ddm status` shows each site's last built sha, and whether the build succeeded.
-- `ddm sync my-project` re-checks now instead of waiting for the next poll.
+- `nix develop -c bin/ddm build my-project` runs the same workflow locally, with no publishing (works now). Use it
+  before pushing.
+- *(M6)* `ddm status` shows each site's last built sha, and whether the build succeeded.
+- *(M6)* `ddm sync my-project` re-checks now instead of waiting for the next poll.
 
 ## Variations
 
