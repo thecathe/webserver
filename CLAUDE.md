@@ -26,6 +26,7 @@ Periodically, and always before closing a session that changed or designed anyth
 - Update `docs/design/record.md` (living decisions; mark superseded ones rather than deleting) and
   `docs/design/open-questions.md`. Update `docs/design/roadmap.md` when milestones move.
 - Bump `edited` in the `generated` front matter of every page touched.
+- Add anything left for the user to do by hand (accounts, secrets, DNS, external links) to `docs/tasks.md`.
 - Check the site still builds: `nix develop -c mkdocs build --strict`.
 
 ## AI-generated content marking
