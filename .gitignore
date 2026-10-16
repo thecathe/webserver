@@ -1,9 +1,4 @@
 www
 
-# webserver: repos cloned/built by `webserver deploy`, and build output
-webserver/work/
-webserver/webserver
-webserver/cmd/webserver/webserver
-
 # mkdocs build output
 site/
