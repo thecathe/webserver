@@ -1,28 +1,37 @@
-// Command ddm is the deployment manager: it reads sites.yaml, and (in later
-// milestones) builds each site with its workflow, publishes it and keeps the
+// Command ddm is the deployment manager: it reads sites.yaml, builds each site
+// with its workflow, and (in later milestones) publishes it and keeps the
 // server's NixOS config current.
 //
-//	ddm check [spec]   validate the spec and summarise what it declares
-//	ddm sites [spec]   list every mount: host, path, site, view, access
+//	ddm check [spec]          validate the spec and summarise what it declares
+//	ddm sites [spec]          list every mount: host, path, site, view, access
+//	ddm build [flags] <site>  build one view of a site locally, without publishing
 //
 // spec defaults to sites.yaml in the current directory.
 package main
 
 import (
+	"context"
+	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
+	"ddm/internal/build"
 	"ddm/internal/spec"
 )
 
-const usage = `usage: ddm <command> [spec]
+const usage = `usage: ddm <command> ...
 
 commands:
-  check   validate the spec and summarise what it declares
-  sites   list every mount (host, path, site, view, access)
+  check [spec]          validate the spec and summarise what it declares
+  sites [spec]          list every mount (host, path, site, view, access)
+  build [flags] <site>  build one view of a site, without publishing
+                        (ddm build -h for flags)
 
 spec defaults to sites.yaml.
 `
@@ -40,34 +49,41 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	cmd, rest := args[0], args[1:]
-	path := "sites.yaml"
-	if len(rest) > 0 {
-		path = rest[0]
-	}
 
 	switch cmd {
 	case "check", "sites":
+		path := "sites.yaml"
+		if len(rest) > 0 {
+			path = rest[0]
+		}
+		s, ok := load(path, stderr)
+		if !ok {
+			return 1
+		}
+		if cmd == "check" {
+			check(stdout, path, s)
+		} else {
+			sites(stdout, s)
+		}
+		return 0
+	case "build":
+		return cmdBuild(rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "ddm: unknown command %q\n\n%s", cmd, usage)
 		return 2
 	}
+}
 
+func load(path string, stderr io.Writer) (*spec.Spec, bool) {
 	s, err := spec.Load(path)
 	if err != nil {
 		fmt.Fprintf(stderr, "ddm: %s is invalid:\n", path)
 		for _, line := range strings.Split(err.Error(), "\n") {
 			fmt.Fprintf(stderr, "  - %s\n", line)
 		}
-		return 1
+		return nil, false
 	}
-
-	switch cmd {
-	case "check":
-		check(stdout, path, s)
-	case "sites":
-		sites(stdout, s)
-	}
-	return 0
+	return s, true
 }
 
 func check(w io.Writer, path string, s *spec.Spec) {
@@ -98,4 +114,76 @@ func orDash(s string) string {
 		return "-"
 	}
 	return s
+}
+
+// setFlags collects repeated --set k=v.
+type setFlags map[string]string
+
+func (s setFlags) String() string { return fmt.Sprint(map[string]string(s)) }
+func (s setFlags) Set(v string) error {
+	k, val, ok := strings.Cut(v, "=")
+	if !ok || k == "" {
+		return errors.New("want key=value")
+	}
+	s[k] = val
+	return nil
+}
+
+func cmdBuild(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("build", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	specPath := fs.String("spec", "sites.yaml", "path to the site spec")
+	view := fs.String("view", "public", "which view to build")
+	src := fs.String("src", "", "build from this local git repo instead of the site's repo (committed state only)")
+	branch := fs.String("branch", "", "branch to build (default: the site's branch)")
+	work := fs.String("work", ".ddm", "working directory for checkouts and build output")
+	dryRun := fs.Bool("dry-run", false, "print the resolved plan without running it")
+	set := setFlags{}
+	fs.Var(set, "set", "override a workflow param, key=value (repeatable)")
+	fs.Usage = func() {
+		fmt.Fprint(stderr, "usage: ddm build [flags] <site>\n\nBuilds one view of a site into <work>/out/<site>/<view>/<commit>/. Nothing is published.\n\nflags:\n")
+		fs.PrintDefaults()
+	}
+
+	// Allow the site name before or after the flags.
+	var site string
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		site, args = args[0], args[1:]
+	}
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if site == "" && fs.NArg() > 0 {
+		site = fs.Arg(0)
+	}
+	if site == "" {
+		fs.Usage()
+		return 2
+	}
+
+	s, ok := load(*specPath, stderr)
+	if !ok {
+		return 1
+	}
+	system, err := filepath.Abs(filepath.Dir(*specPath))
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 1
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	res, err := build.Run(ctx, build.Request{
+		Spec: s, Site: site, View: *view, System: system, Work: *work,
+		Src: *src, Branch: *branch, Overrides: set, DryRun: *dryRun, Log: stdout,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: build %s (%s): %v\n", site, *view, err)
+		return 1
+	}
+	if !*dryRun {
+		fmt.Fprintf(stdout, "built %s (%s) at %s\n  -> %s\n", site, *view, res.Commit, res.Dir)
+	}
+	return 0
 }
