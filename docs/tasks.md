@@ -27,13 +27,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `thecathe/dots` (merged there as `441d40d`).
 - [ ] **Decide what `cathe.dev` shows** (added 2026-10-16). It lands on the forest's `@cathe` page (D7), which
   is yours to write.
-- [ ] **Decide how `@jpears` and `@cathe` stay public** in `forest-public.toml` (added 2026-10-16). See open
-  questions, "Forest configs". The lean is removing `\meta{redirect}` from those two trees.
-- [ ] **Look at the preview, before the styling session** (added 2026-10-17). From the repo root:
-  `nix develop -c bin/ddm preview --serve-only`, then open the addresses it prints (e.g.
-  `http://the.cathe.dev.localhost:8080/sites/`, the site map). The first run without `--serve-only` builds everything
-  (a few minutes). This site is built from GitHub, so it only shows the latest docs once `main` is pushed;
-  meanwhile add `--src ddm=.`.
 - [ ] **For M7: DNS for the private domain** (added 2026-10-17). `the.cathe.dev` and `*.the.cathe.dev` point at
   the droplet's **tailnet** IP (100.x). Decide whether these go in public Cloudflare DNS or only in Tailscale split
   DNS (see open questions, "Infrastructure"). Nothing to do until the droplet runs NixOS.
@@ -54,6 +47,8 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 - [x] Project taxons on `indimo` and `mebi` (Claude, 2026-10-17).
 - [x] People private by default: unpublished taxa in the fork (Claude, 2026-10-17).
+- [x] How `@jpears` and `@cathe` stay public: answered by D39 and D42 (2026-10-17).
+- [x] Looked at the preview (you, 2026-10-17).
 - [x] Pushed `ocaml-forester`, `vscode-forester` and the forest, with the forest's pins bumped (you, 2026-10-17).
 
 - [x] Told Claude the session's effort level (`medium`), 2026-10-17.
