@@ -94,14 +94,14 @@ func TestPool(t *testing.T) {
 		}
 		return dir
 	}
-	a, b := repo("a.ml"), repo("b.ml")
+	a, b := repo("a.opam"), repo("b.ml")
 	s, err := spec.Parse([]byte(`
 domains: [cathe.dev]
 workflows:
   docs:
     pool: true
     steps:
-      - run: ls -R > {{out}}/listing.txt && cat dune-workspace >> {{out}}/listing.txt && cp a/a.ml {{out}}/
+      - run: ls -R > {{out}}/listing.txt && cat dune-workspace >> {{out}}/listing.txt && cp a/a.opam {{out}}/
 sites:
   index: { workflow: docs, mounts: [ { host: ocaml.cathe.dev } ] }
   a: { repo: ` + a + `, workflow: docs, mounts: [ { host: a.cathe.dev, entry: /a/ } ] }
@@ -120,17 +120,18 @@ sites:
 		t.Errorf("result: %+v", res)
 	}
 	listing, _ := os.ReadFile(filepath.Join(res.Dir, "listing.txt"))
-	for _, want := range []string{"a.ml", "b.ml", "(lang dune"} {
+	for _, want := range []string{"a.opam", "b.ml", "(lang dune"} {
 		if !strings.Contains(string(listing), want) {
 			t.Errorf("workspace lacks %q:\n%s", want, listing)
 		}
 	}
 	manifest, err := os.ReadFile(filepath.Join(res.Dir, "ddm-build.json"))
-	if err != nil || !strings.Contains(string(manifest), `"site": "index"`) || !strings.Contains(string(manifest), `"branch": "main"`) {
+	if err != nil || !strings.Contains(string(manifest), `"site": "index"`) || !strings.Contains(string(manifest), `"branch": "main"`) ||
+		!strings.Contains(string(manifest), `"packages": [`) {
 		t.Errorf("manifest: %v\n%s", err, manifest)
 	}
 	// Results are writable, so publishing can rewrite links.
-	if f, err := os.OpenFile(filepath.Join(res.Dir, "a.ml"), os.O_WRONLY, 0); err != nil {
+	if f, err := os.OpenFile(filepath.Join(res.Dir, "a.opam"), os.O_WRONLY, 0); err != nil {
 		t.Errorf("result not writable: %v", err)
 	} else {
 		f.Close()

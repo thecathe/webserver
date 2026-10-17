@@ -46,6 +46,19 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## The forest notes view
 
+- **Raised 2026-10-17:** in the preview, private, public and notes look the same on `indimo`. That is expected for
+  now:
+  - **Public and private** differ only by `private`-tagged trees until `forest-public.toml` exists (M4, D26): both
+    build from `forest.toml`, where people's `redirect` metas are shown as external links rather than followed. So
+    the people check you want needs `forest-public.toml` first.
+  - **Notes** is meant to be the public forest *filtered* to trees tagged `notes` (D8). That filter is a fork
+    addition that doesn't exist yet, so today notes equals public.
+- **Should notes merge into public?** Lean: yes. Drop the notes view, and make `notes.cathe.dev` a mount of the
+  public forest landing on the `notes` tag page, as `projects.cathe.dev` lands on the Project taxon page. You lose
+  only the hiding of non-notes trees from that host (they would still be reachable by link), and M4 loses a whole
+  fork feature. Your call.
+- **Earlier questions** (if the filter is kept):
+
 - **Question:** a fork addition ("keep only trees with any of these tags") or a script-level filter?
 - **Lean:** the fork addition, small and tested next to `Test_redirect_meta.ml`. A script filter can't remove trees
   from forester's own indexes.
@@ -225,15 +238,22 @@ separate forests or one.
 functionality is being removed from this browser very soon." Every forest page is XML that the browser turns into
 HTML with `default.xsl`. Once Chrome drops XSLT, the forest stops rendering there (Firefox still works).
 
-- **Lean:** run the XSLT **at build time**. A step after `build-forest` runs `xsltproc` over every `index.xml`,
-  writing the result as the tree's `index.html` (today a redirect stub), so browsers get plain HTML.
-  - The XSL files stay the source of the look, and the toolbar is injected into the result as for any HTML.
-  - To check: anything the XSLT does that depends on the browser (it uses only XSLT 1.0, so `xsltproc` should
-    handle it), and whether `forester.js` (search, KaTeX) works unchanged on the rendered pages.
-- **Alternatives:**
-  - forester's newer HTML output, if the fork's version has one;
-  - a polyfill such as a JS XSLT engine (slow, fragile).
-- **Where:** a step in the `forester` workflow (this repo), not a forest change.
+- **Upstream:** every forester site that ships the XML + XSLT output has this problem. Your fork already has
+  `Html_client`/`Htmx_client` modules, and the XML output is named `Legacy_xml_client`, which suggests forester's own
+  direction is HTML rendered by forester, served dynamically with HTMX. I haven't confirmed upstream's plans or a
+  timeline for static HTML. Waiting for them is a risk if Chrome's removal lands first.
+- **Options:**
+  1. **Render the XSLT at build time** (lean). A step after `build-forest` runs `xsltproc` (libxslt, XSLT 1.0, the
+     same engine family browsers use) with `default.xsl` over every `index.xml`, writing the tree's `index.html`
+     (today a redirect stub). No forest or fork change, the same look, faster pages, and it works without
+     JavaScript. To check: `forester.js` (search, KaTeX) on the rendered pages, any `document()` calls in the XSL,
+     and build time over about 150 trees.
+  2. **Static HTML from the fork**, using its `Html_client`: a `forester build --html` mode. More work in OCaml, but
+     it aligns with forester's own direction, and the XSL theme would need porting to CSS.
+  3. **An XSLT polyfill:** a WebAssembly build of libxslt that runs in the page. Chrome's team has pointed to one.
+     Every page then loads it and transforms on every visit: slower, and one more moving part.
+  4. **Wait for upstream.**
+- **Lean:** option 1 now, since it is small and reversible, and revisit option 2 if upstream ships static HTML.
 
 ## Site navigation: a shared header, and section indexes
 
