@@ -34,8 +34,9 @@ type Request struct {
 
 // Result is where a finished build ended up.
 type Result struct {
-	Commit string // the sha built, or "none" for sites without a repo
-	Dir    string // <work>/out/<site>/<view>/<commit>
+	Commit string // the sha built, "none" for sites without a repo, or a pool's combined id
+	Dir    string // <work>/out/<served>/<view>/<commit>
+	Served string // what to publish it as: the site, or its pool (spec.Served)
 }
 
 // Run performs the build described by r.
@@ -49,6 +50,9 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 	work, err := filepath.Abs(r.Work)
 	if err != nil {
 		return nil, err
+	}
+	if wf := r.Spec.PoolOf(r.Site, r.View); wf != "" {
+		return runPool(ctx, r, work, wf)
 	}
 	checkout := filepath.Join(work, "src", r.Site)
 	scratch := filepath.Join(work, "scratch", r.Site, r.View)
@@ -79,7 +83,7 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 	}
 
 	plan, err := workflow.Resolve(r.Spec, r.Site, r.View, workflow.Vars{
-		Repo: checkout, System: r.System, Out: scratch,
+		Repo: checkout, System: r.System, Out: scratch, Cache: filepath.Join(work, "cache", r.Site),
 	}, r.Overrides)
 	if err != nil {
 		return nil, err
@@ -97,12 +101,21 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 		return nil, err
 	}
 
-	dest := filepath.Join(work, "out", r.Site, r.View, commit)
-	if err := os.RemoveAll(dest); err != nil {
+	dest, err := keep(built, work, r.Site, r.View, commit)
+	if err != nil {
 		return nil, err
 	}
-	if err := fsutil.CopyTree(built, dest); err != nil {
-		return nil, fmt.Errorf("copying result: %w", err)
+	return &Result{Commit: commit, Dir: dest, Served: r.Site}, nil
+}
+
+// keep copies a build result to <work>/out/<served>/<view>/<commit>.
+func keep(built, work, served, view, commit string) (string, error) {
+	dest := filepath.Join(work, "out", served, view, commit)
+	if err := os.RemoveAll(dest); err != nil {
+		return "", err
 	}
-	return &Result{Commit: commit, Dir: dest}, nil
+	if err := fsutil.CopyTree(built, dest); err != nil {
+		return "", fmt.Errorf("copying result: %w", err)
+	}
+	return dest, nil
 }

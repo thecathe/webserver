@@ -53,6 +53,23 @@ http://jpears.me.localhost:8080 {
 	}
 }
 
+http://lib.cathe.dev.localhost:8080 {
+	import errors
+	handle {
+		redir / /lib/
+		root * /home/me/.ddm/www/public/@pooled/current
+		file_server
+	}
+}
+
+http://ocaml.cathe.dev.localhost:8080 {
+	import errors
+	handle {
+		root * /home/me/.ddm/www/public/@pooled/current
+		file_server
+	}
+}
+
 http://secret.the.cathe.dev.localhost:8080 {
 	import errors
 	# private: in prod, only your Tailscale identity gets past here

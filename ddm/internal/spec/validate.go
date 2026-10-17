@@ -182,7 +182,7 @@ func (s *Spec) validateSites(p *problems) {
 				p.add("%s: taxon %q is not declared in taxa", where, t)
 			}
 		}
-		if len(site.Mounts) == 0 {
+		if len(site.Mounts) == 0 && !s.allPooled(name) {
 			p.add("%s: no mounts, so it would never be served", where)
 		}
 		for i, m := range site.Mounts {
@@ -215,6 +215,18 @@ func (s *Spec) validateSites(p *problems) {
 			}
 		}
 	}
+}
+
+// allPooled reports whether every view of a site is built by a pool, whose
+// result other members' mounts serve, so the site needs no mounts of its own.
+func (s *Spec) allPooled(site string) bool {
+	views := s.Sites[site].Views
+	for v := range views {
+		if s.PoolOf(site, v) == "" {
+			return false
+		}
+	}
+	return len(views) > 0
 }
 
 func validAccess(a string) bool { return a == AccessPublic || a == AccessPrivate }

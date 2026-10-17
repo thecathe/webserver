@@ -10,7 +10,11 @@ import (
 )
 
 // CopyTree copies src to dst, keeping symlinks as symlinks.
-func CopyTree(src, dst string) error {
+func CopyTree(src, dst string) error { return CopyTreeSkip(src, dst, nil) }
+
+// CopyTreeSkip is CopyTree, leaving out every path (relative to src) for
+// which skip returns true, and anything below it.
+func CopyTreeSkip(src, dst string, skip func(rel string) bool) error {
 	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -18,6 +22,12 @@ func CopyTree(src, dst string) error {
 		rel, err := filepath.Rel(src, path)
 		if err != nil {
 			return err
+		}
+		if skip != nil && rel != "." && skip(rel) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		target := filepath.Join(dst, rel)
 		info, err := d.Info()
@@ -34,7 +44,9 @@ func CopyTree(src, dst string) error {
 			}
 			return os.Symlink(link, target)
 		case info.Mode().IsRegular():
-			return copyFile(path, target, info.Mode().Perm())
+			// Owner-writable, whatever the source: dune marks its outputs
+			// read-only, and publishing rewrites links in place.
+			return copyFile(path, target, info.Mode().Perm()|0o200)
 		default:
 			return fmt.Errorf("%s: not a regular file, directory or symlink", path)
 		}

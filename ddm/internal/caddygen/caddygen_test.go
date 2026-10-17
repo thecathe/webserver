@@ -18,6 +18,7 @@ private_domain: the.cathe.dev
 workflows:
   w: { steps: [ { run: x } ] }
   dir: { steps: [ { builtin: site-directory } ] }
+  pooled: { pool: true, steps: [ { run: x } ] }
 sites:
   forest:
     views: { public: { workflow: w }, private: { workflow: w } }
@@ -33,6 +34,16 @@ sites:
   guide:
     workflow: w
     mounts: [ { host: docs.cathe.dev, path: guide, entry: /intro/ } ]
+  ocaml:
+    workflow: pooled
+    mounts: [ { host: ocaml.cathe.dev } ]
+  lib:
+    repo: me/lib
+    workflow: pooled
+    mounts: [ { host: lib.cathe.dev, entry: /lib/ } ]
+  quiet:
+    repo: me/quiet
+    workflow: pooled
   deep:
     workflow: w
     mounts: [ { host: a.b.cathe.dev } ]

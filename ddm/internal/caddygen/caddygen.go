@@ -40,7 +40,8 @@ func PreviewHost(host string) string { return host + ".localhost" }
 // mount is a spec mount with its site attached.
 type mount struct {
 	spec.Mount
-	Site string
+	Site   string
+	Served string // the published name: the site, or its pool
 }
 
 // block is one site block of the Caddyfile: a single host, or a wildcard
@@ -165,7 +166,7 @@ func private(w func(int, string, ...any), d int, socket string) {
 func mounts(w func(int, string, ...any), depth int, ms []mount, www string) {
 	slices.SortFunc(ms, func(a, b mount) int { return len(b.Path) - len(a.Path) })
 	for _, m := range ms {
-		root := publish.Current(www, m.View, m.Site)
+		root := publish.Current(www, m.View, m.Served)
 		if m.Path == "/" {
 			w(depth, "handle {")
 		} else {
@@ -207,7 +208,7 @@ func blocks(s *spec.Spec, preview bool, port int) []block {
 				bl = &block{Address: addr, Private: private, Hosts: map[string][]mount{}}
 				byAddr[addr] = bl
 			}
-			bl.Hosts[m.Host] = append(bl.Hosts[m.Host], mount{m, name})
+			bl.Hosts[m.Host] = append(bl.Hosts[m.Host], mount{m, name, s.Served(name, m.View)})
 		}
 	}
 	out := make([]block, 0, len(byAddr))

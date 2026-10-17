@@ -109,9 +109,9 @@ func (r Resolver) ResolveMount(from, view, host, path string) (string, error) {
 	return r.Base(host) + path, nil
 }
 
-func (r Resolver) hasPublicMount(site, view string) bool {
-	for _, m := range r.Spec.Sites[site].Mounts {
-		if m.View == view && m.Access == spec.AccessPublic {
+func (r Resolver) hasPublicMount(served, view string) bool {
+	for _, m := range r.Spec.MountsServing(served, view) {
+		if m.Access == spec.AccessPublic {
 			return true
 		}
 	}
