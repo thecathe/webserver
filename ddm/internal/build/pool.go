@@ -128,7 +128,7 @@ func runPool(ctx context.Context, r Request, work, wf string) (*Result, error) {
 	if err := os.WriteFile(filepath.Join(dest, "ddm-build.json"), append(manifest, '\n'), 0o644); err != nil {
 		return nil, err
 	}
-	return &Result{Commit: id, Dir: dest, Served: pool}, nil
+	return &Result{Commit: id, Dir: dest, Served: pool, Members: built}, nil
 }
 
 // poolID names a pooled build by every member's commit: any member moving

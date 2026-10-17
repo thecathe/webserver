@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"ddm/internal/bar"
 	"ddm/internal/build"
 	"ddm/internal/caddygen"
 	"ddm/internal/links"
@@ -65,7 +66,7 @@ func (f *targetFlags) resolve(s *spec.Spec, work string) (target, error) {
 		port := *f.port
 		return target{
 			caddy:  caddygen.Target{Preview: true, Port: port, WWW: www},
-			base:   func(host string) string { return fmt.Sprintf("http://%s:%d", caddygen.PreviewHost(host), port) },
+			base:   caddygen.Target{Preview: true, Port: port}.Base,
 			strict: *f.strict,
 		}, nil
 	}
@@ -80,9 +81,20 @@ func buildAndPublish(ctx context.Context, req build.Request, t target) (string, 
 		return "", err
 	}
 	fmt.Fprintf(req.Log, "==> publishing %s (%s) at %s\n", res.Served, req.View, res.Commit)
-	return publish.Run(publish.Request{
+	dest, err := publish.Run(publish.Request{
 		Site: res.Served, View: req.View, Commit: res.Commit, From: res.Dir, WWW: t.caddy.WWW,
 		Links: links.Resolver{Spec: req.Spec, Base: t.base}, Strict: t.strict, Log: req.Log,
+		Head: bar.Script,
+	})
+	if err != nil {
+		return "", err
+	}
+	// The toolbar's files (nav.json follows the spec) and this publish's status.
+	if err := bar.Write(t.caddy.WWW, req.Spec, t.base); err != nil {
+		return "", err
+	}
+	return dest, bar.WriteStatus(t.caddy.WWW, req.Spec, bar.Status{
+		Served: res.Served, View: req.View, Commit: res.Commit, Published: time.Now().UTC(), Members: res.Members,
 	})
 }
 
@@ -197,6 +209,10 @@ flags:
 		}
 	}
 
+	if err := bar.Write(t.caddy.WWW, s, t.base); err != nil {
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 1
+	}
 	caddyfile := filepath.Join(*work, "Caddyfile.preview")
 	if err := os.WriteFile(caddyfile, []byte(caddygen.Generate(s, t.caddy)), 0o644); err != nil {
 		fmt.Fprintf(stderr, "ddm: %v\n", err)

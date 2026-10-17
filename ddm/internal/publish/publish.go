@@ -10,8 +10,10 @@
 package publish
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -36,8 +38,11 @@ type Request struct {
 	// link is left as it is and reported as a warning.
 	Strict bool
 	Keep   int // publishes to keep; 0 means DefaultKeep
-	Log    io.Writer
-	Now    func() time.Time // for tests; nil means time.Now
+	// Head, if set, is inserted before the first </head> of every HTML page
+	// and XSLT stylesheet (the toolbar's script tag).
+	Head string
+	Log  io.Writer
+	Now  func() time.Time // for tests; nil means time.Now
 }
 
 // Root is where every publish of a site's view lives.
@@ -82,6 +87,14 @@ func Run(r Request) (string, error) {
 		}
 		fmt.Fprintf(r.Log, "    warning: %v\n", err)
 	}
+	if r.Head != "" {
+		n, err := injectHead(tmp, r.Head)
+		if err != nil {
+			os.RemoveAll(tmp)
+			return "", err
+		}
+		fmt.Fprintf(r.Log, "    added the toolbar to %d page(s)\n", n)
+	}
 	if err := os.Rename(tmp, dest); err != nil {
 		return "", err
 	}
@@ -96,6 +109,40 @@ func Run(r Request) (string, error) {
 		fmt.Fprintf(r.Log, "    warning: pruning old publishes: %v\n", err)
 	}
 	return dest, nil
+}
+
+// injectHead inserts snippet before the first </head> of each .html, .htm
+// and .xsl file under dir (an XSLT stylesheet's </head> is the rendered
+// page's, as in the forest). Files without one, or already carrying the
+// snippet, are left alone.
+func injectHead(dir, snippet string) (int, error) {
+	n := 0
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || !d.Type().IsRegular() {
+			return err
+		}
+		switch strings.ToLower(filepath.Ext(path)) {
+		case ".html", ".htm", ".xsl":
+		default:
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		i := bytes.Index(bytes.ToLower(data), []byte("</head>"))
+		if i < 0 || bytes.Contains(data, []byte(snippet)) {
+			return nil
+		}
+		out := slices.Concat(data[:i], []byte(snippet), data[i:])
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		n++
+		return os.WriteFile(path, out, info.Mode().Perm())
+	})
+	return n, err
 }
 
 // swap points root/current at name, atomically.

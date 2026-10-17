@@ -15,6 +15,10 @@
 	import errors
 	@docs_cathe_dev host docs.cathe.dev
 	handle @docs_cathe_dev {
+		handle_path /_ddm/* {
+			root * /var/www/_ddm/public
+			file_server
+		}
 		redir /guide /guide/
 		handle_path /guide/* {
 			redir / /guide/intro/
@@ -28,6 +32,10 @@
 	}
 	@forest_cathe_dev host forest.cathe.dev
 	handle @forest_cathe_dev {
+		handle_path /_ddm/* {
+			root * /var/www/_ddm/public
+			file_server
+		}
 		handle {
 			redir / /index/
 			root * /var/www/public/forest/current
@@ -36,14 +44,24 @@
 	}
 	@lib_cathe_dev host lib.cathe.dev
 	handle @lib_cathe_dev {
+		handle_path /_ddm/* {
+			root * /var/www/_ddm/public
+			file_server
+		}
 		handle {
 			redir / /lib/
+			@elsewhere not path / /lib/* /odoc.support/*
+			redir @elsewhere https://ocaml.cathe.dev{uri}
 			root * /var/www/public/@pooled/current
 			file_server
 		}
 	}
 	@ocaml_cathe_dev host ocaml.cathe.dev
 	handle @ocaml_cathe_dev {
+		handle_path /_ddm/* {
+			root * /var/www/_ddm/public
+			file_server
+		}
 		handle {
 			root * /var/www/public/@pooled/current
 			file_server
@@ -71,6 +89,10 @@
 		error @notowner 403
 		@secret_the_cathe_dev host secret.the.cathe.dev
 		handle @secret_the_cathe_dev {
+			handle_path /_ddm/* {
+				root * /var/www/_ddm/private
+				file_server
+			}
 			handle {
 				root * /var/www/public/secret/current
 				file_server
@@ -84,6 +106,10 @@
 
 a.b.cathe.dev {
 	import errors
+	handle_path /_ddm/* {
+		root * /var/www/_ddm/public
+		file_server
+	}
 	handle {
 		root * /var/www/public/deep/current
 		file_server
@@ -92,6 +118,10 @@ a.b.cathe.dev {
 
 jpears.me {
 	import errors
+	handle_path /_ddm/* {
+		root * /var/www/_ddm/public
+		file_server
+	}
 	handle {
 		redir / /@jpears/
 		root * /var/www/public/forest/current
@@ -114,6 +144,10 @@ the.cathe.dev {
 		}
 		@notowner expression `{http.request.header.Tailscale-Login} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`
 		error @notowner 403
+		handle_path /_ddm/* {
+			root * /var/www/_ddm/private
+			file_server
+		}
 		redir /sites /sites/
 		handle_path /sites/* {
 			root * /var/www/private/docs/current

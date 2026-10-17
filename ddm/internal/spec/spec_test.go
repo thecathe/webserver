@@ -147,6 +147,8 @@ func TestInvalid(t *testing.T) {
 		{"bad repo", "repo: thecathe/forest", "repo: forest", `repo "forest" must be owner/name`},
 		{"use unknown", "- builtin: mkdocs-config", "- use: nope", `uses unknown workflow "nope"`},
 		{"bad poll", "domains:", "system: { poll: soon }\ndomains:", "invalid duration"},
+		{"nav to nowhere", "taxa: [docs, notes]", "taxa: [docs, notes]\nnav: [ { title: x, link: \"mount://nope.cathe.dev/\" } ]", "nothing is mounted on nope.cathe.dev"},
+		{"nav bad scheme", "taxa: [docs, notes]", "taxa: [docs, notes]\nnav: [ { title: x, link: \"http://a\" } ]", "must be site://, mount:// or https://"},
 		{"flake without host", "domains:", "system: { flake: github:x/y }\ndomains:", "host is required"},
 	}
 	for _, c := range cases {
