@@ -24,10 +24,12 @@ type BaseURL func(host string) string
 // Prod serves every host over https.
 func Prod(host string) string { return "https://" + host }
 
-// linkRE matches site://name[/path] and mount://host[/path]. The path stops
-// at whitespace, quotes, brackets and parentheses, which end a URL in HTML
-// attributes, XML, CSS url(...) and JSON strings alike.
-var linkRE = regexp.MustCompile("(site|mount)://([a-z0-9][a-z0-9.-]*)(/[^\\s\"'`<>()]*)?")
+// linkRE matches site://name[/path] and mount://host[/path] where a link
+// can start: right after a quote (an attribute or string value) or "(" (CSS
+// url(...)). The same text in prose, such as <code>site://x/</code> in a
+// page documenting the syntax, is left alone. The path stops at whitespace,
+// quotes, brackets and parentheses.
+var linkRE = regexp.MustCompile("([\"'(])(site|mount)://([a-z0-9][a-z0-9.-]*)(/[^\\s\"'`<>()]*)?")
 
 // rewritable are the file types that can contain links.
 var rewritable = map[string]bool{
@@ -135,10 +137,10 @@ func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 		out := linkRE.ReplaceAllFunc(data, func(m []byte) []byte {
 			sub := linkRE.FindSubmatch(m)
 			resolve := r.Resolve
-			if string(sub[1]) == "mount" {
+			if string(sub[2]) == "mount" {
 				resolve = r.ResolveMount
 			}
-			url, err := resolve(site, view, string(sub[2]), string(sub[3]))
+			url, err := resolve(site, view, string(sub[3]), string(sub[4]))
 			if err != nil {
 				if msg := err.Error(); !seen[msg] {
 					seen[msg] = true
@@ -149,7 +151,7 @@ func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 			}
 			n++
 			changed = true
-			return []byte(url)
+			return append(sub[1], url...)
 		})
 		if !changed {
 			return nil

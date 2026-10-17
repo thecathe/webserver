@@ -102,6 +102,7 @@ func TestRewrite(t *testing.T) {
 		"page.html":       `<a href="site://forest/index/">forest</a> <a href='site://guide/a.html#x'>guide</a>`,
 		"style.css":       `a { background: url(site://cloakaml/logo.svg); }`,
 		"notes.txt":       `site://cloakaml/ stays: not a rewritable type`,
+		"syntax.html":     `<p>Write <code>site://cloakaml/</code>, as in <a href="site://cloakaml/">this</a>.</p>`,
 		"map.html":        `<a href="mount://jpears.me/@jpears/">jpears.me</a>`,
 	}
 	for name, body := range files {
@@ -113,14 +114,15 @@ func TestRewrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n != 6 {
-		t.Errorf("rewrote %d links, want 6", n)
+	if n != 7 {
+		t.Errorf("rewrote %d links, want 7", n)
 	}
 	want := map[string]string{
 		"index/index.xml": `<f:link href="https://cloakaml.cathe.dev/" type="external">cloakaml</f:link><f:link href="https://cloakaml.cathe.dev/">bare</f:link>`,
 		"page.html":       `<a href="https://forest.cathe.dev/index/">forest</a> <a href='https://docs.cathe.dev/guide/a.html#x'>guide</a>`,
 		"style.css":       `a { background: url(https://cloakaml.cathe.dev/logo.svg); }`,
 		"notes.txt":       files["notes.txt"],
+		"syntax.html":     `<p>Write <code>site://cloakaml/</code>, as in <a href="https://cloakaml.cathe.dev/">this</a>.</p>`,
 		"map.html":        `<a href="https://jpears.me/@jpears/">jpears.me</a>`,
 	}
 	for name, w := range want {
