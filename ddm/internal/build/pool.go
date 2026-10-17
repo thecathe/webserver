@@ -24,6 +24,10 @@ type Member struct {
 	Repo   string `json:"repo,omitempty"`
 	Branch string `json:"branch,omitempty"`
 	Commit string `json:"commit,omitempty"`
+	// Packages are the opam packages the member's repo defines (its *.opam
+	// files), so a pooled page can be traced to its repo: /rocq-mebi/… is
+	// mebi_plugin's.
+	Packages []string `json:"packages,omitempty"`
 }
 
 // workspaceFile makes the pool's directory one dune workspace, so a single
@@ -72,6 +76,10 @@ func runPool(ctx context.Context, r Request, work, wf string) (*Result, error) {
 		checkout := filepath.Join(work, "src", name)
 		if err := gitsync.Sync(url, branch, commit, checkout); err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
+		}
+		opams, _ := filepath.Glob(filepath.Join(checkout, "*.opam"))
+		for _, o := range opams {
+			built[len(built)-1].Packages = append(built[len(built)-1].Packages, strings.TrimSuffix(filepath.Base(o), ".opam"))
 		}
 	}
 	id := poolID(built)

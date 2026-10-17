@@ -55,8 +55,18 @@
   if (here) {
     const st = await get(`status/${here.view}/${here.served}.json`);
     if (st) {
-      const m = st.members.find((x) => x.site === here.site && x.commit) || st.members.find((x) => x.commit);
-      const parts = [el("span", {}, here.site)];
+      // In a pool, the page's first path segment names its package, and so
+      // its repo (/rocq-mebi/… is mebi_plugin's). A page of no package, such
+      // as the pool's index, shows the pool instead of one member.
+      const rel = here.path === "/" ? path : path.slice(here.path.length);
+      const seg = rel.split("/")[1] || "";
+      const m = st.served.startsWith("@")
+        ? st.members.find((x) => (x.packages || []).includes(seg))
+        : st.members.find((x) => x.commit);
+      const parts = [el("span", {}, m ? m.site : here.site)];
+      if (!m && st.served.startsWith("@")) {
+        parts.push(el("span", { title: "Built together" }, st.members.filter((x) => x.commit).map((x) => x.site).join(" + ")));
+      }
       if (m) {
         const repo = /^[\w.-]+\/[\w.-]+$/.test(m.repo)
           ? el("a", { href: `https://github.com/${m.repo}/tree/${m.branch}` }, `${m.repo}@${m.branch}`)
