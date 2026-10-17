@@ -627,3 +627,11 @@ Branch `docs/styling-session`. **Design** + **Docs**.
 
 **Where the next session starts.** M5: `nixosConfigurations.droplet`. Everything ddm does today runs locally
 (`bin/ddm preview`). The open to-dos that M5/M7 need from you are the Tailscale login, a Cloudflare token, and DNS.
+
+**Session closed (D43).**
+- **Your picks:** Gruvbox, and Source Serif + Sans (with Source Code Pro).
+- **Leans accepted as decisions**, with the light/dark toggle confirmed as a widget in the toolbar: self-hosted
+  fonts, a toggle shared across `*.cathe.dev`, colours/fonts/links only, the forest via an override sheet first,
+  and a toolbar that scrolls away.
+- **Implementation is M3b's first item.** Still to work out: making each generator honour the toggle's explicit
+  choice, and giving the forest a dark mode.

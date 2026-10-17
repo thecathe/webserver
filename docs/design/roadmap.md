@@ -18,7 +18,7 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | M1 | Spec v2 + `ddm` skeleton | **done** 2026-10-16 |
 | M2 | Workflow runner + built-ins | **done** 2026-10-16 |
 | M3a | Publish, links, Caddy generation, local preview; one site of every kind | **done** 2026-10-17 |
-| — | Shared-styling design session (D27), looking at the M3a preview | next |
+| — | Shared-styling design session (D27), looking at the M3a preview | **done** 2026-10-17 (D43) |
 | M3b | The remaining sites, and styling adapters per generator | |
 | M4 | Forest side: `forest-public.toml`, views, the notes filter in the fork | |
 | M5 | NixOS host config | |
@@ -84,10 +84,10 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - **The forest's public view** builds from `forest-public.toml` (D39), with notes and recents as public pages
   (D38). Its XSLT is rendered at build time (D40). This brings forward M4's first item.
 
-## Next: the shared-styling design session (opened 2026-10-17)
-Options and leans are in [open questions](open-questions.md#shared-styling-across-sites), with a style lab
-previewing palettes and type. Once decided, the implementation (tokens, adapters, fonts, `<link>` injection) is
-M3b's first item.
+## The shared-styling design session (done 2026-10-17)
+Decided in D43: Gruvbox; Source Serif, Sans and Code Pro; a light/dark toggle in the toolbar; tokens and adapters
+linked from `/_ddm/`. The implementation is M3b's first item. The agenda below is kept as the record of what was
+discussed.
 
 ### Agenda
 Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:
@@ -99,6 +99,10 @@ Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds si
 - the collated OCaml docs page beyond the pool ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
 
 ## M3b: the rest
+- **Styling (D43), first:**
+  - `theme/tokens.css`, the self-hosted Source fonts, and adapters for mkdocs, odoc and the forest;
+  - `<link>` injection at publish;
+  - the toolbar reads the tokens and gains the light/dark toggle (a `.cathe.dev` cookie).
 - Styling adapters per generator, as designed in the session.
 - The header toolbar, section index pages, and the `sites.cathe.dev` / `docs.cathe.dev` split.
 - The collated OCaml docs index.
