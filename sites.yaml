@@ -82,9 +82,11 @@ sites:
       public:  { workflow: forester }
       notes:   { workflow: forester }
       private: { workflow: forester }
+    # The first mount of a view is its canonical address: site://forest/...
+    # links resolve to forest.cathe.dev.
     mounts:
-      - { host: cathe.dev, entry: /@cathe/ }
       - { host: forest.cathe.dev, entry: /index/ }
+      - { host: cathe.dev, entry: /@cathe/ }
       - { host: jpears.me, entry: /@jpears/ }
       - { host: notes.cathe.dev, view: notes, entry: /index/ }
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
