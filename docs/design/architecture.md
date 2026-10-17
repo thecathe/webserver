@@ -94,6 +94,15 @@ hand-written file (deleted, D19) and its per-request filesystem probing (`@has_o
 - **Preview:** the same generator, for `http://<host>.localhost:<port>` with no TLS or private gate
   ([operations](../usage/operations.md#local-preview)).
 
+## Toolbar, and pool hosts
+
+- **Toolbar** (D36): a script tag added at publish, plus JSON that ddm writes per audience under `/_ddm/`. See
+  [operations](../usage/operations.md#the-toolbar).
+- **Pool hosts:** a pool member's own host (`cloakaml.cathe.dev`) serves the whole pooled build, so odoc's
+  `Index` link (`../index.html`) and its links to other packages would show the pool from cloakaml's address. The
+  generated Caddyfile therefore redirects everything on that host outside `/<package>/` and `/odoc.support/` to the
+  pool index host (`ocaml.cathe.dev`), keeping the path.
+
 ## Private access
 
 `the.cathe.dev` should be reachable only from your tailnet, and only by **you**. Four options were compared:

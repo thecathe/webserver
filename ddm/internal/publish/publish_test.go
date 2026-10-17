@@ -59,6 +59,26 @@ func TestPublish(t *testing.T) {
 	}
 }
 
+func TestPublishHead(t *testing.T) {
+	r := setup(t, "<html><HEAD><title>x</title></HEAD><body></body></html>")
+	os.WriteFile(filepath.Join(r.From, "tree.xsl"), []byte(`<xsl:template match="/"><html><head></head></html></xsl:template>`), 0o644)
+	os.WriteFile(filepath.Join(r.From, "data.xml"), []byte(`<head></head>`), 0o644)
+	r.Head = `<script src="/x.js"></script>`
+	if _, err := Run(r); err != nil {
+		t.Fatal(err)
+	}
+	cur := Current(r.WWW, "public", "a")
+	for file, want := range map[string]string{
+		"index.html": `<html><HEAD><title>x</title><script src="/x.js"></script></HEAD><body></body></html>`,
+		"tree.xsl":   `<xsl:template match="/"><html><head><script src="/x.js"></script></head></html></xsl:template>`,
+		"data.xml":   `<head></head>`, // not a page
+	} {
+		if got, _ := os.ReadFile(filepath.Join(cur, file)); string(got) != want {
+			t.Errorf("%s:\n got %s\nwant %s", file, got, want)
+		}
+	}
+}
+
 func TestPublishKeepsTheNewest(t *testing.T) {
 	r := setup(t, "hi")
 	r.Keep = 2

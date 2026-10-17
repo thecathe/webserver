@@ -37,6 +37,9 @@ type Result struct {
 	Commit string // the sha built, "none" for sites without a repo, or a pool's combined id
 	Dir    string // <work>/out/<served>/<view>/<commit>
 	Served string // what to publish it as: the site, or its pool (spec.Served)
+	// Members is what was built: the site's repo, branch and commit, or every
+	// member of a pool. The toolbar's status line shows it.
+	Members []Member
 }
 
 // Run performs the build described by r.
@@ -105,7 +108,15 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Result{Commit: commit, Dir: dest, Served: r.Site}, nil
+	branch := site.Branch
+	if r.Branch != "" {
+		branch = r.Branch
+	}
+	m := Member{Site: r.Site}
+	if commit != "none" {
+		m.Repo, m.Branch, m.Commit = site.Repo, branch, commit
+	}
+	return &Result{Commit: commit, Dir: dest, Served: r.Site, Members: []Member{m}}, nil
 }
 
 // keep copies a build result to <work>/out/<served>/<view>/<commit>.

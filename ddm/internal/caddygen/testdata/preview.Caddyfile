@@ -15,6 +15,10 @@
 
 http://a.b.cathe.dev.localhost:8080 {
 	import errors
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/public
+		file_server
+	}
 	handle {
 		root * /home/me/.ddm/www/public/deep/current
 		file_server
@@ -23,6 +27,10 @@ http://a.b.cathe.dev.localhost:8080 {
 
 http://docs.cathe.dev.localhost:8080 {
 	import errors
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/public
+		file_server
+	}
 	redir /guide /guide/
 	handle_path /guide/* {
 		redir / /guide/intro/
@@ -37,6 +45,10 @@ http://docs.cathe.dev.localhost:8080 {
 
 http://forest.cathe.dev.localhost:8080 {
 	import errors
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/public
+		file_server
+	}
 	handle {
 		redir / /index/
 		root * /home/me/.ddm/www/public/forest/current
@@ -46,6 +58,10 @@ http://forest.cathe.dev.localhost:8080 {
 
 http://jpears.me.localhost:8080 {
 	import errors
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/public
+		file_server
+	}
 	handle {
 		redir / /@jpears/
 		root * /home/me/.ddm/www/public/forest/current
@@ -55,8 +71,14 @@ http://jpears.me.localhost:8080 {
 
 http://lib.cathe.dev.localhost:8080 {
 	import errors
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/public
+		file_server
+	}
 	handle {
 		redir / /lib/
+		@elsewhere not path / /lib/* /odoc.support/*
+		redir @elsewhere http://ocaml.cathe.dev.localhost:8080{uri}
 		root * /home/me/.ddm/www/public/@pooled/current
 		file_server
 	}
@@ -64,6 +86,10 @@ http://lib.cathe.dev.localhost:8080 {
 
 http://ocaml.cathe.dev.localhost:8080 {
 	import errors
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/public
+		file_server
+	}
 	handle {
 		root * /home/me/.ddm/www/public/@pooled/current
 		file_server
@@ -73,6 +99,10 @@ http://ocaml.cathe.dev.localhost:8080 {
 http://secret.the.cathe.dev.localhost:8080 {
 	import errors
 	# private: in prod, only your Tailscale identity gets past here
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/private
+		file_server
+	}
 	handle {
 		root * /home/me/.ddm/www/public/secret/current
 		file_server
@@ -82,6 +112,10 @@ http://secret.the.cathe.dev.localhost:8080 {
 http://the.cathe.dev.localhost:8080 {
 	import errors
 	# private: in prod, only your Tailscale identity gets past here
+	handle_path /_ddm/* {
+		root * /home/me/.ddm/www/_ddm/private
+		file_server
+	}
 	redir /sites /sites/
 	handle_path /sites/* {
 		root * /home/me/.ddm/www/private/docs/current

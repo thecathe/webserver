@@ -18,6 +18,18 @@ private_domain: the.cathe.dev
 
 taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
 
+# The toolbar on every site (ddm/internal/bar): these links, the same page in
+# the site's other views, and what the page was built from. Links to private
+# mounts only show on private pages.
+nav:
+  - { title: cathe.dev, link: "mount://cathe.dev/" }
+  - { title: jpears.me, link: "mount://jpears.me/" }
+  - { title: projects, link: "mount://projects.cathe.dev/" }
+  - { title: docs, link: "mount://docs.cathe.dev/" }
+  - { title: sites, link: "mount://sites.cathe.dev/" }
+  - { title: private, link: "mount://the.cathe.dev/" }
+  - { title: site map, link: "mount://the.cathe.dev/sites/" }
+
 workflows:
   # A forest built with the forester fork, in the forest repo's own devShell.
   # build-forest (from vscode-forester) runs forest_gen.py, forester build,
@@ -110,15 +122,23 @@ sites:
       - { host: notes.cathe.dev, view: notes, entry: /index/ }
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
-  docs:
+  # Every public site, by taxon; its private view is the full site map.
+  sites:
     indexed: false
     views:
       public:  { workflow: site-directory }
       private: { workflow: site-directory, params: { page: map } }
     mounts:
-      - { host: docs.cathe.dev }
+      - { host: sites.cathe.dev }
       # The full site map: every site, host and mount, public and private.
       - { host: the.cathe.dev, path: sites, view: private, access: private }
+
+  # The documentation sites (taxon docs).
+  docs:
+    workflow: site-directory
+    params: { taxon: docs, title: Documentation }
+    indexed: false
+    mounts: [ { host: docs.cathe.dev } ]
 
   ddm:
     repo: cathe-org/dots

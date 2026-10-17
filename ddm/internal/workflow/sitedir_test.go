@@ -63,6 +63,20 @@ func TestSiteDirectory(t *testing.T) {
 	}
 }
 
+func TestSiteDirectoryOneTaxon(t *testing.T) {
+	out := t.TempDir()
+	p := &Plan{Site: "docs", View: "public", Vars: Vars{Out: out}, Spec: mustSpec(t, dirSpec)}
+	params := map[string]string{"taxon": "personal", "title": "Personal"}
+	if err := siteDirectory(context.Background(), BuiltinArgs{Plan: p, Params: params, Log: &bytes.Buffer{}}); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(filepath.Join(out, "index.html"))
+	got := string(b)
+	if !strings.Contains(got, "<h1>Personal</h1>") || !strings.Contains(got, "site://forest/") || strings.Contains(got, "<h2>") {
+		t.Errorf("one-taxon page:\n%s", got)
+	}
+}
+
 func TestSiteMap(t *testing.T) {
 	got := sitePage(t, "map")
 	for _, want := range []string{

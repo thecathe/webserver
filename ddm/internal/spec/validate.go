@@ -32,6 +32,7 @@ func (s *Spec) validate() error {
 	s.validateDomains(&p)
 	s.validateWorkflows(&p)
 	s.validateSites(&p)
+	s.validateNav(&p)
 	return errors.Join(p...)
 }
 
@@ -227,6 +228,41 @@ func (s *Spec) allPooled(site string) bool {
 		}
 	}
 	return len(views) > 0
+}
+
+func (s *Spec) validateNav(p *problems) {
+	for i, n := range s.Nav {
+		at := fmt.Sprintf("nav[%d]", i)
+		if n.Title == "" {
+			p.add("%s: title is required", at)
+		}
+		switch {
+		case strings.HasPrefix(n.Link, "site://"):
+			name, _, _ := strings.Cut(strings.TrimPrefix(n.Link, "site://"), "/")
+			if _, ok := s.Sites[name]; !ok {
+				p.add("%s: link %q names no site", at, n.Link)
+			}
+		case strings.HasPrefix(n.Link, "mount://"):
+			host, _, _ := strings.Cut(strings.TrimPrefix(n.Link, "mount://"), "/")
+			if !s.isMounted(host) {
+				p.add("%s: link %q: nothing is mounted on %s", at, n.Link, host)
+			}
+		case strings.HasPrefix(n.Link, "https://"):
+		default:
+			p.add("%s: link %q must be site://, mount:// or https://", at, n.Link)
+		}
+	}
+}
+
+func (s *Spec) isMounted(host string) bool {
+	for _, site := range s.Sites {
+		for _, m := range site.Mounts {
+			if m.Host == host {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func validAccess(a string) bool { return a == AccessPublic || a == AccessPrivate }

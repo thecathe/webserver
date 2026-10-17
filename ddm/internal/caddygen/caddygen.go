@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"ddm/internal/bar"
 	"ddm/internal/publish"
 	"ddm/internal/spec"
 )
@@ -34,6 +35,14 @@ const DefaultAuthSocket = "/run/tailscale-nginx-auth/tailscale-nginx-auth.sock"
 // Tailscale's address ranges: private mounts refuse anything else.
 const tailnetRanges = "100.64.0.0/10 fd7a:115c:a1e0::/48"
 
+// Base is the URL a host is served at for this target.
+func (t Target) Base(host string) string {
+	if t.Preview {
+		return fmt.Sprintf("http://%s:%d", PreviewHost(host), t.Port)
+	}
+	return "https://" + host
+}
+
 // PreviewHost is the name a host is served at in a preview.
 func PreviewHost(host string) string { return host + ".localhost" }
 
@@ -42,6 +51,10 @@ type mount struct {
 	spec.Mount
 	Site   string
 	Served string // the published name: the site, or its pool
+	// For a pool member's own host (cloakaml.cathe.dev): its package's path
+	// prefix, and the pool index's URL that everything else redirects to, so
+	// odoc's "Index" and other packages open on the index host.
+	Package, Index string
 }
 
 // block is one site block of the Caddyfile: a single host, or a wildcard
@@ -86,7 +99,7 @@ func Generate(s *spec.Spec, t Target) string {
 	}
 	w(0, "}")
 
-	for _, bl := range blocks(s, t.Preview, t.Port) {
+	for _, bl := range blocks(s, t) {
 		w(0, "")
 		w(0, "%s {", bl.Address)
 		w(1, "import errors")
@@ -103,13 +116,13 @@ func Generate(s *spec.Spec, t Target) string {
 		}
 		hosts := slices.Sorted(maps.Keys(bl.Hosts))
 		if len(hosts) == 1 && !strings.HasPrefix(bl.Address, "*.") {
-			mounts(w, d, bl.Hosts[hosts[0]], t.WWW)
+			mounts(w, d, bl.Hosts[hosts[0]], t.WWW, bl.Private)
 		} else {
 			for _, h := range hosts {
 				name := strings.NewReplacer(".", "_", "-", "_").Replace(h)
 				w(d, "@%s host %s", name, h)
 				w(d, "handle @%s {", name)
-				mounts(w, d+1, bl.Hosts[h], t.WWW)
+				mounts(w, d+1, bl.Hosts[h], t.WWW, bl.Private)
 				w(d, "}")
 			}
 			w(d, "handle {")
@@ -162,8 +175,13 @@ func private(w func(int, string, ...any), d int, socket string) {
 	w(d, "error @notowner 403")
 }
 
-// mounts writes the handlers for one host's mounts, longest path first.
-func mounts(w func(int, string, ...any), depth int, ms []mount, www string) {
+// mounts writes the handlers for one host's mounts, longest path first,
+// after the toolbar's files (/_ddm/, see internal/bar).
+func mounts(w func(int, string, ...any), depth int, ms []mount, www string, private bool) {
+	w(depth, "handle_path /_ddm/* {")
+	w(depth+1, "root * %s", bar.Dir(www, private))
+	w(depth+1, "file_server")
+	w(depth, "}")
 	slices.SortFunc(ms, func(a, b mount) int { return len(b.Path) - len(a.Path) })
 	for _, m := range ms {
 		root := publish.Current(www, m.View, m.Served)
@@ -176,6 +194,10 @@ func mounts(w func(int, string, ...any), depth int, ms []mount, www string) {
 		if m.Entry != "" {
 			w(depth+1, "redir / %s", strings.TrimSuffix(m.Path, "/")+m.Entry)
 		}
+		if m.Index != "" {
+			w(depth+1, "@elsewhere not path / /%s/* /odoc.support/*", m.Package)
+			w(depth+1, "redir @elsewhere %s{uri}", m.Index)
+		}
 		w(depth+1, "root * %s", root)
 		w(depth+1, "file_server")
 		w(depth, "}")
@@ -186,7 +208,8 @@ func mounts(w func(int, string, ...any), depth int, ms []mount, www string) {
 // than one label below it get a block of their own; direct subdomains
 // share a *.domain block. The private domain is grouped the same way, but
 // never with the public domain it sits under.
-func blocks(s *spec.Spec, preview bool, port int) []block {
+func blocks(s *spec.Spec, t Target) []block {
+	preview, port := t.Preview, t.Port
 	byAddr := map[string]*block{}
 	for _, name := range s.SiteNames() {
 		for _, m := range s.Sites[name].Mounts {
@@ -208,7 +231,9 @@ func blocks(s *spec.Spec, preview bool, port int) []block {
 				bl = &block{Address: addr, Private: private, Hosts: map[string][]mount{}}
 				byAddr[addr] = bl
 			}
-			bl.Hosts[m.Host] = append(bl.Hosts[m.Host], mount{m, name, s.Served(name, m.View)})
+			mm := mount{Mount: m, Site: name, Served: s.Served(name, m.View)}
+			mm.Package, mm.Index = poolIndex(s, t, name, m)
+			bl.Hosts[m.Host] = append(bl.Hosts[m.Host], mm)
 		}
 	}
 	out := make([]block, 0, len(byAddr))
@@ -216,6 +241,28 @@ func blocks(s *spec.Spec, preview bool, port int) []block {
 		out = append(out, *byAddr[a])
 	}
 	return out
+}
+
+// poolIndex returns, for a pool member with a repo and an entry, its
+// package path (the entry's first segment) and the URL of the pool's index:
+// the first mount, in the same view, of a member without a repo.
+func poolIndex(s *spec.Spec, t Target, site string, m spec.Mount) (pkg, index string) {
+	wf := s.PoolOf(site, m.View)
+	if wf == "" || s.Sites[site].Repo == "" || m.Entry == "" {
+		return "", ""
+	}
+	pkg, _, _ = strings.Cut(strings.Trim(m.Entry, "/"), "/")
+	for _, other := range s.PoolMembers(wf, m.View) {
+		if s.Sites[other].Repo != "" {
+			continue
+		}
+		for _, om := range s.Sites[other].Mounts {
+			if om.View == m.View {
+				return pkg, t.Base(om.Host) + strings.TrimSuffix(om.Path, "/")
+			}
+		}
+	}
+	return "", ""
 }
 
 // notFoundRoot is where 404.html is served from: the public view of the

@@ -477,3 +477,42 @@ a second switch during upgrades. A rebuild with the switch cached takes about 1 
   - `indimo`, `mebi` and `projects` redirect into the forest;
   - `indimo-notes` serves the mkdocs notes;
   - the site map lists mebi-plugin as served by the pool.
+
+---
+
+## 2026-10-17 (night): a toolbar, sites.cathe.dev, and odoc's Index link
+
+Branch `feat/nav-bar`. **Feature** + **Docs**.
+
+You asked for three things after browsing the preview; none needed anything from you first.
+
+- **odoc's "Index" on `cloakaml.cathe.dev`** showed the whole pool (including `rocq-mebi`) under cloakaml's
+  address. On a pool member's own host, the generated Caddyfile now redirects everything outside `/<package>/` and
+  `/odoc.support/` to `ocaml.cathe.dev`, keeping the path, so "Index" and links to other packages open there.
+- **A toolbar, now rather than after the styling session** (D36), so you can flip a forest page between its private
+  and public views. It is one module script added at publish and drawn in a shadow root before `<body>`. It shows:
+  - the spec's new `nav:` links;
+  - the same page in the site's other views;
+  - a status line (repo@branch, commit, pool, build date) from status files written at publish.
+
+  Public and private audiences get separate data under `/_ddm/`, so private addresses never reach public pages
+  (tested).
+- **`docs.cathe.dev` → `sites.cathe.dev`**, and a new `docs.cathe.dev` lists the `docs` taxon (D37).
+  `site-directory` gained `taxon` and `title` params.
+
+**Commits:** `cedaa24` (taxon pages), `769ad8e` (toolbar, pool host redirects), `9bf2baa` (sites.yaml), `a280f68`
+(toolbar fixes), plus docs.
+
+**Verified.**
+- Tests pass: new tests cover the bar data's public/private split, the head injection and the taxon page.
+- The prod Caddyfile adapts.
+- In the preview:
+  - cloakaml's `/index.html` and `/rocq-mebi/…` redirect to `ocaml.cathe.dev`;
+  - the bar renders on mkdocs, odoc and forest pages (headless Firefox and Chromium screenshots);
+  - on `the.cathe.dev/indimo/` it offers `public` and `notes`.
+
+**Found.**
+- **Chromium is removing XSLT**, which the forest needs. Its pages now show a removal banner. The lean is rendering
+  the XSLT at build time; it is next on the roadmap.
+- A classic `defer` script didn't run in XSLT-rendered pages. odoc's grid `<body>` displaced the bar. Both are fixed
+  (D36).

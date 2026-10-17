@@ -23,10 +23,12 @@ type Spec struct {
 	// PrivateDomain is where private mounts live, e.g. "the.cathe.dev". It and
 	// its subdomains resolve to the server's tailnet address, so only private
 	// mounts may use it, and private mounts may use nothing else.
-	PrivateDomain string              `yaml:"private_domain"`
-	Taxa          []string            `yaml:"taxa"`
-	Workflows     map[string]Workflow `yaml:"workflows"`
-	Sites         map[string]Site     `yaml:"sites"`
+	PrivateDomain string   `yaml:"private_domain"`
+	Taxa          []string `yaml:"taxa"`
+	// Nav is the toolbar's links, shown on every site, in order.
+	Nav       []NavLink           `yaml:"nav"`
+	Workflows map[string]Workflow `yaml:"workflows"`
+	Sites     map[string]Site     `yaml:"sites"`
 }
 
 // System says where the server's own NixOS config comes from.
@@ -48,6 +50,13 @@ type Paths struct {
 	WWW string `yaml:"www"`
 	// Caddyfile is where the generated Caddy config is written.
 	Caddyfile string `yaml:"caddyfile"`
+}
+
+// NavLink is one toolbar link. Link is site://name/path, mount://host/path
+// or an https:// URL. A link to a private mount only shows on private pages.
+type NavLink struct {
+	Title string `yaml:"title"`
+	Link  string `yaml:"link"`
 }
 
 // Workflow is a named, reusable list of build steps.

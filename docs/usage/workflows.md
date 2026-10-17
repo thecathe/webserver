@@ -67,7 +67,7 @@ Commands also see `DDM_SITE`, `DDM_VIEW`, `DDM_OUT`, `DDM_REPO` and `DDM_SYSTEM`
 | Built-in | Status | Purpose |
 |---|---|---|
 | `mkdocs-config` | works | Writes a minimal `mkdocs.yml` if the repo has none. Params: `input_dir` (docs_dir, default `docs`; mkdocs can't use the repo root), `theme` (default `material`), `site_name` (default: the site name). |
-| `site-directory` | works (M3a) | Generates pages from the spec. Param `page`: `directory` (default) lists every indexed, publicly mounted site by taxon (`docs.cathe.dev`); `map` lists **every** mount of every site, grouped by host, each with a public/private badge (the private site map at `the.cathe.dev/sites/`). Both write the shared `404.html`. |
+| `site-directory` | works (M3a) | Generates pages from the spec. Param `page`: `directory` (default) lists every indexed, publicly mounted site by taxon (`sites.cathe.dev`), or with `taxon` only that taxon's sites (`docs.cathe.dev`: `taxon: docs`), under `title`; `map` lists **every** mount of every site, grouped by host, each with a public/private badge (the private site map at `the.cathe.dev/sites/`). Both write the shared `404.html`. |
 | `md-ssg` | later | A small static-site generator built in Go, for plain markdown repos. |
 
 `site://` links are not a workflow step: they are resolved when a build is **published**, because what a link
