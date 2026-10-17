@@ -121,6 +121,8 @@ func cmdPreview(args []string, stdout, stderr io.Writer) int {
 	serveOnly := fs.Bool("serve-only", false, "don't build: serve what was last published")
 	noServe := fs.Bool("no-serve", false, "build and publish, but don't start Caddy")
 	strict := fs.Bool("strict", false, "fail a site on an unresolved site:// link")
+	srcs := setFlags{}
+	fs.Var(srcs, "src", "build site from a local git repo instead of its own, name=path[@branch] (repeatable; committed state only)")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, `usage: ddm preview [flags] [site ...]
 
@@ -171,8 +173,10 @@ flags:
 		for _, name := range sites {
 			for _, view := range mountedViews(s.Sites[name]) {
 				start := time.Now()
+				src, branch, _ := strings.Cut(srcs[name], "@")
 				_, err := buildAndPublish(ctx, build.Request{
 					Spec: s, Site: name, View: view, System: system, Work: *work, Log: stdout,
+					Src: src, Branch: branch,
 				}, t)
 				if err != nil {
 					if ctx.Err() != nil {
