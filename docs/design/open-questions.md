@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Open questions
@@ -30,6 +30,9 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 - **Answered (M2):** forester and mkdocs (strict mode) both emit `site://cloakaml/…` verbatim, so the scheme stays.
 - **Still open:** odoc docstring links (`{{:site://…}text}`) are untested. Test when a project first needs one.
+- **Answered (M3a):** forest redirect trees work. `\meta{redirect}{[text](site://name/)}` resolves in both the
+  `redirect` and `external` configs. The bare form only works with `redirect`; see
+  [links between sites](../usage/spec.md#links-between-sites).
 
 ## One forest build on two hosts (spike S2)
 
@@ -38,8 +41,8 @@ move it to the [decision record](record.md) and note it in the [development log]
 - **Follow-ups:**
   - The forest's `url` is still the template's `https://www.my-great-forest.net/`, used in `uri` attributes
     and some broken-link warnings. Set it per view in M4; the lean is `https://forest.cathe.dev/` for public.
-  - Root-absolute sites can't be mounted under a path prefix. Should the spec let a workflow declare
-    `root_only` so validation rejects `path:` on such mounts? The lean is yes, in M3.
+  - Root-absolute sites can't be mounted under a path prefix. **Answered (M3a, D33):** workflows declare
+    `root_only: true`, and validation rejects a `path:` on their mounts.
 
 ## The forest notes view
 
@@ -83,8 +86,9 @@ move it to the [decision record](record.md) and note it in the [development log]
 ## ddm runtime details
 
 - **Poll interval:** 10m? Per-site overrides?
-- **Notifications:** these replace the dead `email_notifications` field. Email, ntfy, or a status page on
-  `ddm.cathe.dev`? The lean is a status page first.
+- **Notifications:** these replace the dead `email_notifications` field. Email, ntfy, or a status page? The lean is
+  a status page first, most naturally the private site map (`the.cathe.dev/sites/`, D29), extended with each
+  mount's live commit and last build once the daemon keeps state (M6).
 - **Health check:** for rollback, what does "the new generation is healthy" mean? `caddy validate`, ddm answering on
   its socket, and a fetch of each mount's entry?
 - **Retention:** how many builds to keep per site?
@@ -97,8 +101,15 @@ move it to the [decision record](record.md) and note it in the [development log]
   nixos-anywhere. Also: is the current droplet size enough for forester and odoc builds?
 - **Secrets:** agenix or sops-nix. The lean is agenix, which is simpler; the droplet's host key decrypts.
 - **Repo name** after the transfer (`server-dots` is a placeholder).
-- **DNS:** a wildcard `*.cathe.dev` plus explicit `the.cathe.dev` (pointing at the tailnet IP) and `jpears.me`.
+- **DNS:** a wildcard `*.cathe.dev`, `cathe.dev` and `jpears.me` to the public IP, plus `the.cathe.dev` and
+  `*.the.cathe.dev` to the tailnet IP (D29). Wildcard certificates for both come from the same Cloudflare token.
 - **Remote access:** should `the.cathe.dev`'s tailnet IP be in public DNS at all, or only in Tailscale's split DNS?
+
+## Private sites in a local preview
+
+- **Question:** `ddm preview` serves private mounts without any check, on localhost only. Is that enough, or should
+  a preview skip private views unless asked (`--private`)?
+- **Lean:** fine as is: the preview is yours, on your machine. Revisit if previews are ever shared.
 
 ## Private-access widget (spike S4)
 

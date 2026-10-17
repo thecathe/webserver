@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Your to-dos
@@ -29,6 +29,18 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   is yours to write.
 - [ ] **Decide how `@jpears` and `@cathe` stay public** in `forest-public.toml` (added 2026-10-16). See open
   questions, "Forest configs". The lean is removing `\meta{redirect}` from those two trees.
+- [ ] **Look at the preview, before the styling session** (added 2026-10-17). From the repo root:
+  `nix develop -c bin/ddm preview --serve-only`, then open the addresses it prints (e.g.
+  `http://the.cathe.dev.localhost:8080/sites/`, the site map). The first run without `--serve-only` builds everything
+  (a few minutes). This site is built from GitHub, so it only shows the latest docs once `main` is pushed;
+  meanwhile add `--src ddm=.`.
+- [ ] **For M7: DNS for the private domain** (added 2026-10-17). `the.cathe.dev` and `*.the.cathe.dev` point at
+  the droplet's **tailnet** IP (100.x). Decide whether these go in public Cloudflare DNS or only in Tailscale split
+  DNS (see open questions, "Infrastructure"). Nothing to do until the droplet runs NixOS.
+- [ ] **For M5: your Tailscale login name** (added 2026-10-17), e.g. `you@github`, as shown in the Tailscale admin
+  console. It becomes `TAILNET_OWNER`, the one identity the private sites let in.
+- [ ] **For M5: a Cloudflare API token** with `Zone:DNS:Edit` on `cathe.dev` and `jpears.me` (added 2026-10-17),
+  for the wildcard certificates. It is stored encrypted in this repo (agenix), never in plain text.
 - [ ] *(optional)* **Tell Claude the session's effort level**, so generated pages can show it instead of
   `unrecorded`.
 
