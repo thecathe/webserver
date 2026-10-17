@@ -46,7 +46,16 @@ workflows:
         unless: { view: private }
       - run: build-forest {{config}}
         when: { view: private }
+      - use: forest-html
       - output: output/
+
+  # Renders a forest's XML pages to HTML at build time with its own XSLT, so
+  # browsers no longer have to (Chromium is removing XSLT). Each tree's
+  # index.html, a redirect stub to index.xml, becomes the rendered page.
+  forest-html:
+    env: { flake: "{{system}}#xslt" }
+    steps:
+      - run: sh {{system}}/scripts/forest-render-html.sh output
 
   mkdocs:
     env: { flake: "{{system}}#mkdocs" }
