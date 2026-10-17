@@ -153,12 +153,19 @@ published. In a [local preview](operations.md#local-preview) the same link becom
 
 ```text
 \title{cloakaml}
-\meta{redirect}{site://cloakaml/}
+\taxon{Reference}
+\meta{redirect}{[cloakaml docs](site://cloakaml/)}
 ```
 
-turns every link to `site-cloakaml` into a link to cloakaml's docs. The forester fork parses the meta as a URI and
-writes it as the `href` of each link to that tree in its XML output, which publishing then rewrites. `site://cloakaml`
-without the trailing slash works too.
+lets every other tree link to cloakaml with an ordinary `[cloakaml](site-cloakaml)`. Verified on 2026-10-17 with a
+test tree in both kinds of forest config:
+- **`redirect` behaviour** (`forest-public.toml`, the public views): the tree isn't built, and every link to it
+  becomes a link to cloakaml's docs.
+- **`external` behaviour** (`forest.toml`, the private view): the tree is built, and its meta is shown as a link to
+  cloakaml's docs.
+
+Use the `[text](site://…)` form. The bare `\meta{redirect}{site://cloakaml/}` redirects correctly, but in the
+private view its meta is shown as plain text, which isn't a link position, so it stays unrewritten.
 
 ddm's own generated pages also use `mount://<host>/<path>`, which names one exact mount (the site map links every
 address, not only the canonical one). It is resolved the same way.
