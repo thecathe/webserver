@@ -413,3 +413,6 @@ Branch `docs/ocaml-bundle-and-indimo`. **Design** only.
 - **INDIMO's notes into forester.** The lean is to merge them into the main forest (a folder plus the `indimo` tag,
   which `forest.toml` already declares), with `indimo.cathe.dev` becoming a forest mount. A separate forest only if
   others edit them. Scheduled with the forest work (M4), if you decide to.
+
+**Addendum (same day).** INDIMO: only you edit it, so it merges into the main forest. A tree tagged `indimo` is
+public, and `indimo` plus `private` stays private, which the existing `private` tag already gives.
