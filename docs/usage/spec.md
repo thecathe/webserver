@@ -4,14 +4,15 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Site spec (v2)
 
-!!! info "Status: validated and buildable, not yet published"
-    `sites.yaml` is loaded and validated by `ddm check` (roadmap M1, `ddm/internal/spec`). `bin/ddm build` builds any site locally (M2).
-    Nothing is published until M3. Names may still change; see [open questions](../design/open-questions.md#spec-naming).
+!!! info "Status: validated, buildable and publishable locally"
+    `sites.yaml` is loaded and validated by `ddm check` (M1). `bin/ddm build` builds any site (M2), and
+    `bin/ddm preview` publishes and serves them locally (M3a). Nothing is live until the server exists (M5–M7).
+    Names may still change; see [open questions](../design/open-questions.md#spec-naming).
 
 The spec has seven top-level parts:
 - **system**: where the server's own config comes from;
@@ -122,19 +123,46 @@ Each `host` + `path` may be mounted only once across the whole spec, whatever th
 
 ## Links between sites
 
-!!! warning "Not implemented yet (M3)"
-
 In any source (a forest `.tree`, markdown, an odoc docstring), write
 
 ```text
 site://<name>/<path>
 ```
 
-for example `site://cloakaml/Cloakaml/index.html`. After each build, the `rewrite-links` built-in replaces it with
-the target site's URL **in the same view**. A private build links to the private copy if the target has one, and to
-the public copy otherwise. A link to a site on the same host becomes a relative link, and an unknown name produces a
-loud warning (an error in strict mode).
+for example [`site://cloakaml/`](site://cloakaml/) or [`site://forest/index/`](site://forest/index/): both links
+in this sentence are written that way in this page's source.
+
+When a build is **published**, every `site://` link in its HTML, XML, XSL, CSS, JS, JSON and SVG files becomes the
+target's URL:
+- **Same view first.** A private build links to the target's private view if it has one, and to its public view
+  otherwise.
+- **The first mount of that view is canonical**, so `site://forest/…` goes to `forest.cathe.dev`, the forest's first
+  public mount.
+- **Always absolute.** One build may be served on several hosts (the forest is on three), so a root-relative link
+  could land on the wrong one.
+- **Never public → private.** A publicly served build that links to a private mount fails, since the link would
+  publish a private hostname.
+- **Unknown names** are left as they are and reported. That is a warning, or an error with `--strict`, and always
+  an error for prod.
+
+Links are resolved at publish time, not in a workflow step, because the result depends on where the build is
+published. In a [local preview](operations.md#local-preview) the same link becomes
+`http://cloakaml.cathe.dev.localhost:8080/`.
+
+**From the forest, by redirect tree.** A tree such as `trees/site-cloakaml.tree` containing
+
+```text
+\title{cloakaml}
+\meta{redirect}{site://cloakaml/}
+```
+
+turns every link to `site-cloakaml` into a link to cloakaml's docs. The forester fork parses the meta as a URI and
+writes it as the `href` of each link to that tree in its XML output, which publishing then rewrites. `site://cloakaml`
+without the trailing slash works too.
+
+ddm's own generated pages also use `mount://<host>/<path>`, which names one exact mount (the site map links every
+address, not only the canonical one). It is resolved the same way.
 
 This replaces the old `DomainLink{LinkTo, LinkPlaceholder, Path}` design: the placeholder becomes one fixed scheme,
-so no per-link configuration is needed. Whether forester passes `site://` through untouched is spike S1 on the
-[roadmap](../design/roadmap.md#spikes).
+so no per-link configuration is needed. Spike S1 confirmed that forester and mkdocs pass `site://` through
+untouched. odoc is untested.

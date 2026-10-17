@@ -4,14 +4,14 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Workflows
 
-!!! info "Status: implemented (M2), not yet published"
-    `ddm build` runs any workflow locally. Publishing the result is M3. The `rewrite-links` and `site-directory`
-    built-ins are registered but report "not implemented yet".
+!!! info "Status: implemented (M2, M3a); published locally, not yet live"
+    `ddm build` runs any workflow; `ddm publish` and `ddm preview` publish the result (see
+    [operations](operations.md)). Nothing is live on the internet until the server exists (M5–M7).
 
 A workflow is a **named, reusable list of steps** that turns a checkout into a directory of static files. Sites refer
 to workflows by name and override their `params`.
@@ -67,9 +67,12 @@ Commands also see `DDM_SITE`, `DDM_VIEW`, `DDM_OUT`, `DDM_REPO` and `DDM_SYSTEM`
 | Built-in | Status | Purpose |
 |---|---|---|
 | `mkdocs-config` | works | Writes a minimal `mkdocs.yml` if the repo has none. Params: `input_dir` (docs_dir, default `docs`; mkdocs can't use the repo root), `theme` (default `material`), `site_name` (default: the site name). |
-| `rewrite-links` | M3 | Resolves `site://name/path` links. |
-| `site-directory` | M3 | Generates the `docs.cathe.dev` directory from the spec. |
+| `site-directory` | works (M3a) | Generates pages from the spec. Param `page`: `directory` (default) lists every indexed, publicly mounted site by taxon (`docs.cathe.dev`); `map` lists **every** mount of every site, grouped by host, each with a public/private badge (the private site map at `the.cathe.dev/sites/`). Both write the shared `404.html`. |
 | `md-ssg` | later | A small static-site generator built in Go, for plain markdown repos. |
+
+`site://` links are not a workflow step: they are resolved when a build is **published**, because what a link
+becomes depends on where it is published (the server, or a local preview). See
+[links between sites](spec.md#links-between-sites).
 
 There is no forest-specific built-in. The forest's own `build-forest --strict-private` already fails a build in
 which a visible tree links to a hidden one, so ddm knows nothing about forester.
@@ -95,9 +98,12 @@ later builds reuse it.
 | `forester` | `build-forest {{config}}` (`--strict-private` unless private) → `output/` | `forest`, about 10 s |
 | `mkdocs` | `mkdocs-config` → `mkdocs build -d {{out}}` | `indimo` (no mkdocs.yml, so one is generated), `ddm` (this site) |
 | `odoc` | `dune build @doc` → `_build/default/_doc/_html` | `cloakaml` (`docs` branch) |
-| `ocaml-notebook` | `generate_docs.py` over `{{ml_dir}}/**/*.ml` → `docs/` (plus a default `index.md`) → `use: mkdocs` | `thecathe/demos` with `ml_dir: ocaml` (not in the spec) |
+| `ocaml-notebook` | `generate_docs.py` over `{{ml_dir}}/**/*.ml` → `docs/` (plus a default `index.md`) → `use: mkdocs` | `demos` (`ml_dir: ocaml`) |
 | `static` | `output: {{input_dir}}` | none yet |
-| `site-directory` | `builtin: site-directory` | M3 |
+| `site-directory` | `builtin: site-directory` (`page: directory` or `map`) | `docs`, both views |
+
+`forester` is `root_only: true`: forest output links are root-absolute, so the spec rejects mounting a forest under a
+path prefix.
 
 ## Porting a GitHub Actions workflow
 
@@ -109,12 +115,12 @@ The workflows in `_example_yamls/` are what these replace. The general mapping:
 | Toolchain setup (`ocaml/setup-ocaml`, `actions/setup-python`) | the workflow's `env`; Nix provides it once, not per build |
 | Project dependency install (`opam install . --deps-only`, `pip install …`) | the devShell (the repo's own, or one in this repo) |
 | The build command (`dune build @doc`, `mkdocs build`, `python generate_docs.py`) | a `run:` step |
-| "Create subdomain dir" plus the empty-variable guard before `rm -rf` | ddm's publish step (M3): versioned directories and a symlink swap, so nothing is ever `rm -rf`'d in place |
+| "Create subdomain dir" plus the empty-variable guard before `rm -rf` | ddm's publish step: versioned directories and a symlink swap, so nothing is ever `rm -rf`'d in place |
 | `scp` to the server | gone: build and publish happen on the same machine |
 | Deriving the subdomain from the repo name (stripping `-docs`, …) | gone: the mount states the host explicitly |
 
 | Example | Became |
 |---|---|
-| `cloakaml-deploy-docs.yml` | `odoc`. Its abandoned "Fix links" `sed` step is what `site://` links + `rewrite-links` solve properly. |
+| `cloakaml-deploy-docs.yml` | `odoc`. Its abandoned "Fix links" `sed` step is what `site://` links, resolved at publish time, solve properly. |
 | `demos-deploy-docs-md.yml` | `mkdocs`. It used theme `shadcn`, which isn't in nixpkgs; material is the default. |
 | `demos-deploy-docs.yml` + `generate_docs.py` | `ocaml-notebook`; the script now lives in `scripts/`. |
