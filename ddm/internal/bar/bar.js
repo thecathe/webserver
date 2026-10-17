@@ -36,17 +36,30 @@
     links.append(a);
   }
 
-  // The same page in the site's other views: private ↔ public ↔ notes.
+  // The switch between this page's private and public versions. On a private
+  // page it is always there, greyed out when the page has no public version
+  // (no public mount, or this page isn't in the public build: a hidden tree,
+  // a person's page). On a public page it only exists in a local preview,
+  // for testing: in production a public page never learns private addresses.
   const views = el("span", { class: "views" });
   if (here) {
     const rel = here.path === "/" ? path : path.slice(here.path.length) || "/";
-    const seen = new Set([here.view]);
-    const alts = nav.mounts.filter((m) => m.site === here.site && !seen.has(m.view) && seen.add(m.view));
-    if (alts.length) {
-      views.append(el("b", { class: here.access }, here.view));
-      for (const m of alts) {
-        const url = m.origin + (m.path === "/" ? "" : m.path) + rel + location.search + location.hash;
-        views.append(el("a", { href: url, class: m.access, title: "This page in the " + m.view + " view" }, m.view));
+    const other = here.access === "private" ? "public" : "private";
+    if (other === "public" || nav.preview) {
+      const target = nav.mounts.find((m) => m.site === here.site && m.access === other);
+      let ok = !!target;
+      if (target && other === "public") {
+        const pages = await get(`paths/public/${target.served}.json`);
+        const page = rel.endsWith("/") ? rel + "index.html" : rel;
+        ok = !pages || pages.includes(page) || pages.includes(page + "/index.html");
+      }
+      views.append(el("b", { class: here.access }, here.access));
+      const label = other + (other === "private" ? " (preview only)" : "");
+      if (ok) {
+        const url = target.origin + (target.path === "/" ? "" : target.path) + rel + location.search + location.hash;
+        views.append(el("a", { href: url, class: other, title: "This page in the " + other + " version" }, label));
+      } else {
+        views.append(el("span", { class: other + " off", title: "This page has no " + other + " version" }, label));
       }
     }
   }
@@ -67,7 +80,7 @@
       if (!m && st.served.startsWith("@")) {
         parts.push(el("span", { title: "Built together" }, st.members.filter((x) => x.commit).map((x) => x.site).join(" + ")));
       }
-      if (m) {
+      if (m && m.commit) {
         const repo = /^[\w.-]+\/[\w.-]+$/.test(m.repo)
           ? el("a", { href: `https://github.com/${m.repo}/tree/${m.branch}` }, `${m.repo}@${m.branch}`)
           : el("span", {}, `${m.repo}@${m.branch}`);
@@ -100,7 +113,8 @@
       .links a.current { color: var(--fg); }
       .views { display: flex; gap: .5rem; align-items: center; }
       .views:not(:empty)::before { content: "view"; color: var(--muted); }
-      .views b, .views a { padding: 0 .45rem; border: 1px solid currentColor; border-radius: 1rem; }
+      .views b, .views a, .views span { padding: 0 .45rem; border: 1px solid currentColor; border-radius: 1rem; }
+      .views .off { opacity: .4; cursor: not-allowed; }
       .views .public { color: var(--public); } .views .private { color: var(--private); }
       .views b { background: color-mix(in srgb, currentColor 15%, transparent); }
       .status { margin-left: auto; display: flex; gap: .6rem; color: var(--muted); font-family: ui-monospace, monospace; font-size: 12px; }

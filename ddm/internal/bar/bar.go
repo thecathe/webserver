@@ -16,9 +16,13 @@ package bar
 import (
 	_ "embed"
 	"encoding/json"
+	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"ddm/internal/build"
@@ -59,16 +63,21 @@ type link struct {
 type nav struct {
 	Links  []link  `json:"links"`
 	Mounts []mount `json:"mounts"`
+	// Preview marks a local preview: public pages then also get a button to
+	// the private view, for testing. Never written for production, where it
+	// would publish the private addresses.
+	Preview bool `json:"preview,omitempty"`
 }
 
-// Write writes bar.js and nav.json for both audiences.
-func Write(www string, s *spec.Spec, base links.BaseURL) error {
+// Write writes bar.js and nav.json for both audiences. With preview, the
+// public nav.json carries the private mounts too, for the testing button.
+func Write(www string, s *spec.Spec, base links.BaseURL, preview bool) error {
 	r := links.Resolver{Spec: s, Base: base}
 	for _, private := range []bool{false, true} {
-		var n nav
+		n := nav{Preview: preview}
 		for _, name := range s.SiteNames() {
 			for _, m := range s.Sites[name].Mounts {
-				if m.Access == spec.AccessPrivate && !private {
+				if m.Access == spec.AccessPrivate && !private && !preview {
 					continue
 				}
 				n.Mounts = append(n.Mounts, mount{
@@ -135,7 +144,9 @@ type Status struct {
 }
 
 // WriteStatus records a publish for the status line: for private pages
-// always, and for public pages too if any public mount serves it.
+// always, and for public pages too if any public mount serves it. The
+// public copy leaves out the repo, branch and commit of any repo that isn't
+// public, so a public page never links to a private repo.
 func WriteStatus(www string, s *spec.Spec, st Status) error {
 	public := false
 	for _, m := range s.MountsServing(st.Served, st.View) {
@@ -145,15 +156,78 @@ func WriteStatus(www string, s *spec.Spec, st Status) error {
 		if !private && !public {
 			continue
 		}
+		out := st
+		if !private {
+			out.Members = nil
+			for _, m := range st.Members {
+				if m.Repo != "" && !RepoIsPublic(m.Repo) {
+					m = build.Member{Site: m.Site, Packages: m.Packages}
+				}
+				out.Members = append(out.Members, m)
+			}
+		}
 		dir := filepath.Join(Dir(www, private), "status", st.View)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
-		if err := writeJSON(filepath.Join(dir, st.Served+".json"), st); err != nil {
+		if err := writeJSON(filepath.Join(dir, st.Served+".json"), out); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// RepoIsPublic reports whether GitHub serves repo ("owner/name") to anyone.
+// Anything else, including a failed check, counts as private: the cost of a
+// wrong "private" is a missing link; of a wrong "public", a leaked repo name.
+// Replaceable in tests.
+var RepoIsPublic = func(repo string) bool {
+	repoMu.Lock()
+	defer repoMu.Unlock()
+	if v, ok := repoCache[repo]; ok {
+		return v
+	}
+	ok := false
+	if repoRE.MatchString(repo) {
+		c := http.Client{Timeout: 10 * time.Second}
+		if resp, err := c.Head("https://github.com/" + repo); err == nil {
+			resp.Body.Close()
+			// An anonymous request: a private repo is a 404 to us.
+			ok = resp.StatusCode == http.StatusOK
+		}
+	}
+	repoCache[repo] = ok
+	return ok
+}
+
+var (
+	repoMu    sync.Mutex
+	repoCache = map[string]bool{}
+	repoRE    = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
+)
+
+// WritePaths lists the pages of a public build (every .html file, as a URL
+// path) for private pages, so their "public" button can tell whether this
+// page has a public version. Private-only: the list is of public pages, but
+// it is written beside private data and never served publicly.
+func WritePaths(www, view, served, dir string) error {
+	var paths []string
+	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".html") {
+			return err
+		}
+		rel, err := filepath.Rel(dir, p)
+		paths = append(paths, "/"+filepath.ToSlash(rel))
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	out := filepath.Join(Dir(www, true), "paths", view)
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		return err
+	}
+	return writeJSON(filepath.Join(out, served+".json"), paths)
 }
 
 func writeJSON(path string, v any) error {

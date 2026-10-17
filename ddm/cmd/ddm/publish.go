@@ -89,9 +89,15 @@ func buildAndPublish(ctx context.Context, req build.Request, t target) (string, 
 	if err != nil {
 		return "", err
 	}
-	// The toolbar's files (nav.json follows the spec) and this publish's status.
-	if err := bar.Write(t.caddy.WWW, req.Spec, t.base); err != nil {
+	// The toolbar's files (nav.json follows the spec), this publish's status,
+	// and, for a public build, its page list.
+	if err := bar.Write(t.caddy.WWW, req.Spec, t.base, t.caddy.Preview); err != nil {
 		return "", err
+	}
+	if req.View == spec.DefaultView {
+		if err := bar.WritePaths(t.caddy.WWW, req.View, res.Served, dest); err != nil {
+			return "", err
+		}
 	}
 	return dest, bar.WriteStatus(t.caddy.WWW, req.Spec, bar.Status{
 		Served: res.Served, View: req.View, Commit: res.Commit, Published: time.Now().UTC(), Members: res.Members,
@@ -209,7 +215,7 @@ flags:
 		}
 	}
 
-	if err := bar.Write(t.caddy.WWW, s, t.base); err != nil {
+	if err := bar.Write(t.caddy.WWW, s, t.base, true); err != nil {
 		fmt.Fprintf(stderr, "ddm: %v\n", err)
 		return 1
 	}
