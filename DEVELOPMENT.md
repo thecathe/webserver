@@ -2,7 +2,7 @@
 generated:
   by: Claude
   model: Opus 5.5
-  effort: unrecorded
+  effort: medium
   date: 2026-10-16
   edited: 2026-10-17
 ---
@@ -376,3 +376,22 @@ workflow built-in.
 - for M5/M7: your Tailscale login, a Cloudflare token, and DNS for `the.cathe.dev` and `*.the.cathe.dev`.
 
 **Where the next session starts:** the shared-styling design session, with `bin/ddm preview --serve-only` running.
+
+---
+
+## 2026-10-17 (later): odoc landing pages, navigation, and the directory split
+
+Branch `docs/odoc-and-navigation`. **Design** + one spec line.
+
+After looking at the preview you raised three things.
+- **cloakaml lands on an almost empty "OCaml package documentation" page.** odoc's root lists the dune project's own
+  opam packages, so it has one item unless a repo defines several. The mount now has `entry: /cloakaml/`. That needed
+  no code, since `entry` already redirects `/`.
+- **A collated OCaml docs page, and splitting `Showable`/`Thing` into a shared package.** The catch is that odoc
+  only cross-links packages built together. Options and a lean are in the open questions.
+- **A shared header toolbar** linking `cathe.dev`, `jpears.me` and one index per section, and renaming today's
+  directory to `sites.cathe.dev`, with `docs.cathe.dev` becoming the docs section's index. The lean shape is: taxa
+  grow into sections, `site-directory` gets a `taxon` param, and section indexes are paths on `sites.cathe.dev`
+  (`demos.cathe.dev` is already taken by a site). All of this joins the styling session's agenda (roadmap).
+
+Also: you gave the effort level (`medium`), now recorded on pages edited today. The convention is in the record.
