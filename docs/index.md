@@ -9,10 +9,11 @@ generated:
 
 # ddm: the deployment manager
 
-!!! warning "Status: design"
-    Most of what these pages describe is **designed but not built**. The old droplet still runs the previous hand-made
-    setup, which will be wiped. `ddm/` validates the
-    [site spec](usage/spec.md) and builds any site locally ([workflows](usage/workflows.md)), but doesn't publish yet. Each page says which parts are real.
+!!! info "Status (2026-10-17): everything runs locally; the server is next"
+    `ddm` validates the [site spec](usage/spec.md), builds and publishes every site, generates the Caddyfile, and
+    serves the whole set locally with a shared toolbar (`bin/ddm preview`; see [operations](usage/operations.md)).
+    Nothing is live yet: the NixOS server (M5), the daemon (M6) and the reinstall of the droplet (M7) come next. The
+    old droplet still runs the previous hand-made setup, which will be wiped.
 
 ## What it is for
 
@@ -33,7 +34,7 @@ Two more goals run through the design:
 - **Cross-linking between subdomains**: any site can link to any other by name (`site://<name>/<path>`), resolved
   per view, so links survive hosts and paths changing.
 
-## The sites (planned)
+## The sites
 
 | Host | What | View |
 |---|---|---|

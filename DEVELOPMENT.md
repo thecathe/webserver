@@ -601,3 +601,29 @@ forest is built with the old fork.
 
 **Addendum.** You pushed `ocaml-forester`, `vscode-forester` and the forest (with its pins bumped) and confirmed the
 public forest behaves correctly from GitHub, without `--src`.
+
+---
+
+## 2026-10-17 (end of day): the styling session opens; the state of things
+
+Branch `docs/styling-session`. **Design** + **Docs**.
+
+**Styling session.**
+- **A style lab** ([artifact](https://claude.ai/artifact/Uw23oYRagRwf6ahtirxgcA), private to you) previews three
+  palettes (Gruvbox, Nord, Everforest) and three type pairings (Inria, IBM Plex, Source) on real content (a forest
+  page with the toolbar, an odoc signature, the AI marker), in light and dark.
+- **Survey:** odoc is the easiest generator to theme (105 CSS variables, dark mode built in), mkdocs-material is
+  close behind, and the forest is the hardest (hard-coded colours, no dark mode).
+- **The delivery plan changed because of the toolbar.** Every host already serves `/_ddm/`, so the shared tokens,
+  per-generator adapters and fonts can be linked same-origin and inserted at publish, rather than copied into each
+  build. The leans are recorded in the open questions; your choices close the session.
+
+**Docs brought up to date for the next session (M5, in a fresh session).**
+- The overview's status box.
+- The roadmap:
+  - M4's done items (D38, D39, D42), and D25 resolved;
+  - a list of what M5 must provide: the Caddy package and env, the tailscaleAuth socket, paths, the opam cache size,
+    a token for private repos, DNS.
+
+**Where the next session starts.** M5: `nixosConfigurations.droplet`. Everything ddm does today runs locally
+(`bin/ddm preview`). The open to-dos that M5/M7 need from you are the Tailscale login, a Cloudflare token, and DNS.

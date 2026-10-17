@@ -69,8 +69,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   - plain-markdown mkdocs: `indimo`;
   - themed mkdocs: `ddm`;
   - generated pages: `docs`, both views.
-- **Nothing is live on the internet yet.** That needs the server (M5) and the cutover (M7). D25 still holds the
-  forest's public and notes views until M4.
+- **Nothing is live on the internet yet.** That needs the server (M5) and the cutover (M7). (D25 was resolved later
+  the same day by D39 and D42.)
 
 ## After M3a (2026-10-17)
 - The **OCaml docs pool** (D34): `cloakaml`, `mebi-plugin` and `membranes` built together, served at
@@ -84,7 +84,12 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - **The forest's public view** builds from `forest-public.toml` (D39), with notes and recents as public pages
   (D38). Its XSLT is rendered at build time (D40). This brings forward M4's first item.
 
-## Next: the shared-styling design session
+## Next: the shared-styling design session (opened 2026-10-17)
+Options and leans are in [open questions](open-questions.md#shared-styling-across-sites), with a style lab
+previewing palettes and type. Once decided, the implementation (tokens, adapters, fonts, `<link>` injection) is
+M3b's first item.
+
+### Agenda
 Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:
 - the palette, typography and AI marker ([shared styling](open-questions.md#shared-styling-across-sites), D27);
 - the **shared header toolbar** and **section indexes**, including `docs.cathe.dev` → `sites.cathe.dev`
@@ -101,26 +106,40 @@ Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds si
 - odoc and `site://` (still untested).
 
 ## M4: forest side
-Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
-- **forest, first**: `forest-public.toml` (D26), exposing only the `@jpears` and `@cathe` people pages, with `url`
-  set to the public host. Point the public and notes views in `sites.yaml` at it (`params: { config:
-  forest-public.toml }`), then rebuild and check that no other `@…` directory appears in the output. **This unblocks
-  publishing the public views (D25).**
+- **Done 2026-10-17, ahead of schedule:**
+  - `forest-public.toml` with the public `url` and redirects followed (D39);
+  - people unpublished unless listed, via a fork addition (D42);
+  - the notes view replaced by the `notes` tag page (D38), so the planned notes-view tag filter is dropped;
+  - indimo and mebi tagged as Projects.
+
+  The forest's public view can go live.
+- **Remaining:**
 - **forest**: port INDIMO's notes into the forest, if you decide to
   ([open question](open-questions.md#indimos-notes-port-to-forester-into-the-main-forest)).
 - **forest**: taxa for posts, papers and works. A start on `@cathe` (the `cathe.dev` landing page) whenever you've
   decided what goes there.
 - **vscode-forester** *(only if the hand-kept configs drift)*: a `site.yaml` reader and per-view TOML generator (D12).
-- **ocaml-forester**: the notes-view tag filter.
-- Set the forest's `url` in each config (it is still the template's `https://www.my-great-forest.net/`), so the
-  `uri` attributes and "copy link" point at the real host.
-- **Required before the forest's public and notes views go live (D25).**
+- `forest.toml`'s `url` is still the template's; set it to `https://the.cathe.dev/` when the private view's
+  "copy link" matters.
 
 ## M5: NixOS host
 `nixosConfigurations.droplet` in this repo's flake, with:
 - Caddy (with plugins), `services.tailscale`, `services.tailscaleAuth`;
 - agenix, firewall;
 - the `ddm` package and service, and `ddm-rebuild.service`.
+
+Things M3a and after settled that M5 must provide:
+- **Caddy:** this flake's `packages.caddy` (Cloudflare DNS plugin). Its environment needs `CLOUDFLARE_API_TOKEN` and
+  `TAILNET_OWNER` (your Tailscale login; unset means nobody gets into private sites, D30). The generated config
+  expects `services.tailscaleAuth`'s socket at `/run/tailscale-nginx-auth/tailscale-nginx-auth.sock`, so confirm
+  the path on the pinned nixpkgs.
+- **Paths:** `/var/www` (publishes plus `/_ddm/`), `/var/lib/ddm` (work dir, Caddyfile). The OCaml pool caches an
+  opam switch under the work dir: about 1.5 GB, and a first build of about 6 minutes at about 600 MiB peak (D34).
+  mebi_plugin may have to leave the pool on the droplet; size the droplet first.
+- **GitHub token:** read access to **private** repos too. `thecathe/forest`, `demos`, `INDIMO` and `membranes` are
+  not public.
+- **Tools at build time:** `nix` (every workflow env comes from flakes), `git`, plus network access for opam.
+- **DNS** (M7): `the.cathe.dev` and `*.the.cathe.dev` to the tailnet IP; the public names to the public IP.
 
 ## M6: ddm daemon
 - Both loops, the state file, self-update, health check and rollback, and the socket CLI.
