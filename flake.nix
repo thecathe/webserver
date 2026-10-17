@@ -42,6 +42,26 @@
         buildInputs = [pkgs.python3] ++ mkdocsTools;
       };
 
+      # opam itself plus what opam packages commonly need from the system, for
+      # workflows that build an opam switch (the OCaml docs pool): exact
+      # versions from the projects' own lockfiles, which nixpkgs can't match.
+      ocaml-opam = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          opam
+          git
+          gnumake
+          pkg-config
+          gmp # conf-gmp: zarith -> rocq-runtime
+          m4
+          perl
+          unzip
+          curl
+          rsync
+          patch
+          which
+        ];
+      };
+
       ocaml-docs = pkgs.mkShell {
         buildInputs = with pkgs.ocamlPackages; [
           ocaml
