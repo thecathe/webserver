@@ -26,6 +26,8 @@ nav:
   - { title: jpears.me, link: "mount://jpears.me/" }
   - { title: projects, link: "mount://projects.cathe.dev/" }
   - { title: docs, link: "mount://docs.cathe.dev/" }
+  - { title: notes, link: "mount://notes.cathe.dev/" }
+  - { title: recents, link: "mount://recents.cathe.dev/" }
   - { title: sites, link: "mount://sites.cathe.dev/" }
   - { title: private, link: "mount://the.cathe.dev/" }
   - { title: site map, link: "mount://the.cathe.dev/sites/" }
@@ -103,12 +105,11 @@ sites:
     repo: thecathe/forest
     taxa: [personal, notes]
     description: Notes, profile, CV, posts and papers
-    # Until M4 adds per-view configs (forest.<view>.toml generated from the
-    # forest's site.yaml), every view builds from forest.toml; only the
-    # private view skips --strict-private.
+    # Public uses forest-public.toml: people's redirects are followed, and
+    # private-tagged trees are hidden (--strict-private fails the build if a
+    # visible tree links to one). Private uses forest.toml: everything shown.
     views:
-      public:  { workflow: forester }
-      notes:   { workflow: forester }
+      public:  { workflow: forester, params: { config: forest-public.toml } }
       private: { workflow: forester }
     # The first mount of a view is its canonical address: site://forest/...
     # links resolve to forest.cathe.dev.
@@ -119,7 +120,8 @@ sites:
       - { host: projects.cathe.dev, entry: /taxon-project/ }
       - { host: indimo.cathe.dev, entry: /indimo/ }
       - { host: mebi.cathe.dev, entry: /mebi/ }
-      - { host: notes.cathe.dev, view: notes, entry: /index/ }
+      - { host: notes.cathe.dev, entry: /tag-notes/ }
+      - { host: recents.cathe.dev, entry: /timeline/ }
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
   # Every public site, by taxon; its private view is the full site map.
