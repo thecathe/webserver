@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Adding a site
@@ -25,7 +25,7 @@ generated:
         workflow: mkdocs
         params: { input_dir: docs/ }
         taxa: [docs, project]
-        description: One line for the docs.cathe.dev directory
+        description: One line for the sites.cathe.dev directory
         mounts: [ { host: my-project.cathe.dev } ]
     ```
 

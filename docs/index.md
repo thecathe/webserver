@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # ddm: the deployment manager
@@ -38,12 +38,17 @@ Two more goals run through the design:
 | Host | What | View |
 |---|---|---|
 | `jpears.me` | the forest, landing on `/@jpears/` (profile, CV pages, the CV itself) | public |
-| `cathe.dev` | the forest, landing on `//` (content to come) | public |
+| `cathe.dev` | the forest, landing on `/@cathe/` (content to come) | public |
 | `forest.cathe.dev` | the forest, landing on `/index/` | public |
 | `notes.cathe.dev` | forest trees tagged `notes` (and not `private`) | notes |
+| `projects.cathe.dev`, `indimo.cathe.dev`, `mebi.cathe.dev` | the forest's Project taxon page, and its INDIMO and MeBi pages | public |
 | `the.cathe.dev` | the whole forest, private trees included; tailnet-only, your identity only | private |
-| `docs.cathe.dev` | a generated directory of every site under `cathe.dev`, grouped by taxon | public |
+| `the.cathe.dev/sites/` | the full site map: every site and address, public and private | private |
+| `sites.cathe.dev` | a generated directory of every public site, grouped by taxon | public |
+| `docs.cathe.dev` | a generated index of the documentation sites | public |
+| `ocaml.cathe.dev` | every OCaml package's API docs, built together and cross-linked | public |
 | `<project>.cathe.dev` | project documentation (odoc, mkdocs, …) | public |
+| `indimo-notes.cathe.dev` | INDIMO's notes in mkdocs, until they move into the forest | public |
 | `ddm.cathe.dev` | this site | public |
 
 Only two domains remain: `cathe.dev` and `jpears.me`. `cathe.work` is dropped.

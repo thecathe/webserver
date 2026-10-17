@@ -58,6 +58,23 @@ localhost only. `site://` links are resolved to these preview addresses.
 - **Private mounts are served without the tailnet check**: the preview is for looking, not for access control.
   The forest's public view also includes the profiles that keep it unpublished (D25), so a preview is for you only.
 
+### The toolbar
+
+Every published page gets a bar along its top, drawn by `/_ddm/bar.js`:
+- the `nav:` links from `sites.yaml`;
+- **view switches**: the same page in the site's other views. On `the.cathe.dev/indimo/` it offers `public` →
+  `forest.cathe.dev/indimo/` and `notes` → `notes.cathe.dev/indimo/`, which is the quick way to check what a tree
+  looks like publicly;
+- a **status line**: site, repo and branch (linked), commit (linked), pool if any, and build date.
+
+How it gets there: publishing inserts `<script type="module" src="/_ddm/bar.js">` before `</head>` in every
+`.html` page and `.xsl` stylesheet (the forest's pages are built by its XSLT in the browser). ddm writes the
+script's data to `<www>/_ddm/public/` and `<www>/_ddm/private/`, and Caddy serves `/_ddm/` on every host from the
+matching one. A public page therefore never sees a private address. The bar is drawn in a shadow root, before
+`<body>`, so no site's CSS or layout can affect it. Its look is a placeholder for the styling session.
+
+"Up to date or not" isn't shown yet: that needs the daemon's polling (M6).
+
 ### Publishing
 
 `ddm publish` builds one view and publishes it:

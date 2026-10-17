@@ -238,6 +238,25 @@ Lowering membranes to `(lang dune 3.23)` is the likely fix, if it uses nothing f
   mebi_plugin (and membranes, once it joins) has no address of its own yet, and the private site map lists them under "Without an address of
   their own".
 
+### D36. A toolbar on every page, before the styling session (2026-10-17)
+*Brings forward* part of D27. Every published page gets one script tag. The script draws:
+- the `nav:` links from the spec;
+- the same page in the site's other views;
+- a status line (repo, branch, commit, build date).
+
+It reads JSON that ddm writes per audience, so public pages see only public addresses. It is drawn in a shadow root
+before `<body>`, so it is generator-independent: mkdocs, odoc and the forest's XSLT pages all get it with no
+per-generator adapter. **Why:** you needed a private ↔ public switch now, to check how forest trees appear publicly.
+The styling session restyles it rather than inventing it. **Found:**
+- a classic `defer` script didn't run in the forest's XSLT-rendered pages; a module script (like `forester.js`) does;
+- odoc's `<body>` is a grid, which displaced a bar placed inside it.
+
+### D37. `sites.cathe.dev` is the directory; `docs.cathe.dev` indexes documentation (2026-10-17)
+The directory of every site, titled "Sites", moves to `sites.cathe.dev` (the site `sites`, whose private view stays
+the site map at `the.cathe.dev/sites/`). `docs.cathe.dev` is a new generated index of the `docs` taxon: every
+documentation site, including `ocaml.cathe.dev`, with room for other kinds of documentation. **Why:** the name
+should match the page.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

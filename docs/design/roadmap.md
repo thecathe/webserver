@@ -77,6 +77,13 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   `ocaml.cathe.dev`, with build cost measured on your machine.
 - Forest addresses `indimo.cathe.dev`, `mebi.cathe.dev`, `projects.cathe.dev`; INDIMO's mkdocs notes at
   `indimo-notes.cathe.dev` (D35).
+- The **toolbar** on every page, with view switches and a status line (D36). `sites.cathe.dev` is the directory and
+  `docs.cathe.dev` the documentation index (D37). On a package's own host, odoc's `Index` now opens
+  `ocaml.cathe.dev`.
+
+## Soon: server-side XSLT for the forest
+Chromium is removing XSLT, which every forest page needs. Render it at build time
+([open question](open-questions.md#browsers-are-removing-xslt-which-the-forest-depends-on)).
 
 ## Next: the shared-styling design session
 Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:

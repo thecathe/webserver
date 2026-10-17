@@ -72,8 +72,22 @@ It and its subdomains resolve to the server's tailnet address, so:
 A private site can therefore never end up on a public host by a typo, and a public one can never be hidden by
 accident.
 
-`taxa` declares the vocabulary that sites may classify themselves with. It drives the `docs.cathe.dev` directory.
+`taxa` declares the vocabulary that sites may classify themselves with. It drives the `sites.cathe.dev` directory, and `docs.cathe.dev` lists the `docs` taxon.
 If `taxa` is omitted, any taxon is accepted.
+
+### `nav`
+
+The toolbar's links, shown at the top of every published page, in order:
+
+```yaml
+nav:
+  - { title: cathe.dev, link: "mount://cathe.dev/" }
+  - { title: site map, link: "mount://the.cathe.dev/sites/" }
+```
+
+`link` is `site://name/path`, `mount://host/path` or an `https://` URL. A link to a private mount only appears on
+private pages. Besides these links, the toolbar shows the same page in the site's other views and what the page was
+built from; see [operations](operations.md#the-toolbar).
 
 ### `workflows.<name>`
 
@@ -108,7 +122,7 @@ letters, digits and `-`, because it also becomes a directory name.
 | `access` | `public` | The default `access` for every mount of this site: `public` or `private`. A mount can override it. |
 | `taxa` | | Classification, from the declared `taxa`. |
 | `description` | | One line for the directory. |
-| `indexed` | `true` | `false` hides the site from the `docs.cathe.dev` directory. |
+| `indexed` | `true` | `false` hides the site from the generated directories (`sites.cathe.dev`, `docs.cathe.dev`). |
 
 ### `mounts[]`
 

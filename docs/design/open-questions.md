@@ -219,10 +219,30 @@ separate forests or one.
   - Should other markdown note repos follow? That is: personal notes live in the forest, and mkdocs is only for
     project documentation.
 
+## Browsers are removing XSLT, which the forest depends on
+
+**Found 2026-10-17, worth acting on soon.** Chromium now shows a banner on forest pages: "This site uses XSLT; that
+functionality is being removed from this browser very soon." Every forest page is XML that the browser turns into
+HTML with `default.xsl`. Once Chrome drops XSLT, the forest stops rendering there (Firefox still works).
+
+- **Lean:** run the XSLT **at build time**. A step after `build-forest` runs `xsltproc` over every `index.xml`,
+  writing the result as the tree's `index.html` (today a redirect stub), so browsers get plain HTML.
+  - The XSL files stay the source of the look, and the toolbar is injected into the result as for any HTML.
+  - To check: anything the XSLT does that depends on the browser (it uses only XSLT 1.0, so `xsltproc` should
+    handle it), and whether `forester.js` (search, KaTeX) works unchanged on the rendered pages.
+- **Alternatives:**
+  - forester's newer HTML output, if the fork's version has one;
+  - a polyfill such as a JS XSLT engine (slow, fragile).
+- **Where:** a step in the `forester` workflow (this repo), not a forest change.
+
 ## Site navigation: a shared header, and section indexes
 
 Raised 2026-10-17. This belongs to the shared-styling session (D27), which it extends.
 
+- **Status (2026-10-17, D36, D37):** a first toolbar is live in the preview on every site: nav links, view
+  switches and a status line. `docs.cathe.dev` → `sites.cathe.dev` is done, and `docs.cathe.dev` is now the index
+  of the `docs` taxon. Still open below: the look, section indexes beyond `docs`, and the "up to date" part of the
+  status line.
 - **Goal:** every public site carries the same header toolbar, linking the central pillars: `cathe.dev`,
   `jpears.me`, and one index page per **section** (docs, projects, demos, presentations, …). Private and personal
   sites are not in it.
