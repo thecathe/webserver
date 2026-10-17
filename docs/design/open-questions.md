@@ -120,33 +120,18 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## Shared styling across sites
 
-- **Goal (D27):** a consistent look across the forest, mkdocs sites, odoc output and anything later, plus
-  cross-linking between subdomains (done: `site://`, the toolbar).
-- **Session opened 2026-10-17**, with a [style lab](https://claude.ai/artifact/Uw23oYRagRwf6ahtirxgcA) (private to
-  you) previewing three palettes (Gruvbox, Nord, Everforest) and three type pairings (Inria, IBM Plex, Source) on
-  real content, light and dark.
-- **What each generator offers:**
+**Decided 2026-10-17 (D43)** after the styling session and its
+[style lab](https://claude.ai/artifact/Uw23oYRagRwf6ahtirxgcA):
+- Gruvbox, with Source Serif 4, Source Sans 3 and Source Code Pro, self-hosted;
+- a light/dark toggle in the toolbar, shared across `*.cathe.dev`;
+- tokens, adapters and fonts linked from `/_ddm/` at publish;
+- the forest via an override sheet first.
 
-  | | Fonts | Colours | Dark mode | Hook |
-  |---|---|---|---|---|
-  | forest | Inria Sans, self-hosted | hard-coded in a 944-line `style.css` | none | override sheet, or rework the base theme |
-  | odoc | Noticia Text + Fira Mono | 105 CSS variables | yes | override the variables |
-  | mkdocs-material | Roboto | `--md-*` variables | yes, with a toggle | `extra_css` |
-
-- **Delivery (lean, changed by the toolbar):** every host already serves `/_ddm/`. So `theme/tokens.css`, one
-  adapter per generator and the fonts live in this repo and are served from `/_ddm/`, and publishing inserts the
-  `<link>`s before `</head>`, as it does the toolbar script. They are linked same-origin, not copied into each build
-  (the earlier lean).
-- **To decide** (leans in the style lab):
-  - palette (lean: Gruvbox, already used by two surfaces);
-  - type pairing;
-  - self-hosted fonts (lean: yes);
-  - a light/dark toggle remembered in a `.cathe.dev` cookie (lean: yes);
-  - how far to push each generator (lean: colours, fonts and links only; layouts stay their own);
-  - the forest: override sheet now, rework the base theme later (lean);
-  - the shared AI-marker class (lean: styles shared, markup per generator later);
-  - the toolbar scrolls away rather than sticking (lean).
-- **Stake:** lower than before. Nothing is live yet, and the toolbar already gives every site a common element.
+Still open, for M3b:
+- **How the toggle reaches each generator.** mkdocs-material and odoc both follow `prefers-color-scheme`, while the
+  toggle sets an explicit choice. Each adapter must honour a `data-theme` attribute (or class) that the toolbar sets
+  on `<html>`. Material keeps its own palette toggle in sync via `data-md-color-scheme`.
+- **The forest's dark mode.** The forest has none today, so its override sheet supplies it.
 
 ## AI marking beyond this site
 

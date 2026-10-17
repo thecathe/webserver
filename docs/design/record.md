@@ -307,6 +307,26 @@ people pages left are `@jpears` and `@cathe` (an `Alias`); no output file contai
 build passes `--strict-private`. Fork tests cover planting, redirect precedence, the `publish` list, plain-text
 links, backlinks, transclusion and config parsing.
 
+### D43. One look: Gruvbox, Source Serif + Sans, linked from `/_ddm/` (2026-10-17)
+*Closes* the styling session (D27). Decided with you, using the style lab:
+- **Palette:** Gruvbox, light and dark, as this docs site and the toolbar already use. Tokens: background,
+  surface, text, muted, line, link accent, public (green), private (red), AI marker (yellow).
+- **Type:** Source Serif 4 for headings, Source Sans 3 for text and UI, Source Code Pro for code. Self-hosted
+  under `/_ddm/fonts/`, so your sites make no third-party requests.
+- **Light/dark:** the system setting by default, plus a toggle **widget in the toolbar**. The choice is remembered
+  in a cookie on `.cathe.dev`, so it carries across subdomains; `jpears.me` keeps its own.
+- **Reach:** colours, fonts and link style on every generator; layouts stay each generator's own.
+- **Delivery:** `theme/tokens.css`, one adapter per generator (`theme/adapters/{mkdocs,odoc,forest}.css`) and the
+  fonts, served from `/_ddm/` and linked before `</head>` at publish, like the toolbar script.
+- **Forest:** an override sheet first; moving the base theme onto the tokens later.
+- **Toolbar:** scrolls away with the page (Material and odoc have their own sticky headers). It reads the tokens
+  directly.
+- **AI marker:** its styles live in the shared sheet; per-generator markup comes later.
+
+**Why:** Gruvbox was already on two of the three surfaces. Source's serif headings with a sans body read well across
+long notes and dense API docs. Linking from `/_ddm/` costs nothing now that every host serves it. **Implementation:**
+M3b's first item.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
