@@ -2,7 +2,7 @@
 generated:
   by: Claude
   model: Opus 5.5
-  effort: unrecorded
+  effort: medium
   date: 2026-10-16
   edited: 2026-10-17
 ---
@@ -41,7 +41,7 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   console. It becomes `TAILNET_OWNER`, the one identity the private sites let in.
 - [ ] **For M5: a Cloudflare API token** with `Zone:DNS:Edit` on `cathe.dev` and `jpears.me` (added 2026-10-17),
   for the wildcard certificates. It is stored encrypted in this repo (agenix), never in plain text.
-- [ ] *(optional)* **Tell Claude the session's effort level**, so generated pages can show it instead of
-  `unrecorded`.
 
 ## Done
+
+- [x] Told Claude the session's effort level (`medium`), 2026-10-17.

@@ -116,7 +116,9 @@ sites:
     workflow: odoc
     taxa: [docs, project, tool]
     description: cloakaml API documentation
-    mounts: [ { host: cloakaml.cathe.dev } ]
+    # odoc's own root page only lists this repo's packages (just one), so
+    # land on the package itself.
+    mounts: [ { host: cloakaml.cathe.dev, entry: /cloakaml/ } ]
 
   demos:
     repo: thecathe/demos

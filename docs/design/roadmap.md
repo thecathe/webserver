@@ -2,7 +2,7 @@
 generated:
   by: Claude
   model: Opus 5.5
-  effort: unrecorded
+  effort: medium
   date: 2026-10-16
   edited: 2026-10-17
 ---
@@ -73,11 +73,17 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   forest's public and notes views until M4.
 
 ## Next: the shared-styling design session
-Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. See the
-[open questions](open-questions.md#shared-styling-across-sites) and D27.
+Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:
+- the palette, typography and AI marker ([shared styling](open-questions.md#shared-styling-across-sites), D27);
+- the **shared header toolbar** and **section indexes**, including `docs.cathe.dev` → `sites.cathe.dev`
+  ([site navigation](open-questions.md#site-navigation-a-shared-header-and-section-indexes));
+- how far each generator can be themed, odoc especially;
+- the collated OCaml docs page ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
 
 ## M3b: the rest
 - Styling adapters per generator, as designed in the session.
+- The header toolbar, section index pages, and the `sites.cathe.dev` / `docs.cathe.dev` split.
+- The collated OCaml docs index.
 - Any remaining sites, and team project sites.
 - odoc and `site://` (still untested).
 

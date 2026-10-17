@@ -2,7 +2,7 @@
 generated:
   by: Claude
   model: Opus 5.5
-  effort: unrecorded
+  effort: medium
   date: 2026-10-16
   edited: 2026-10-17
 ---
