@@ -216,16 +216,21 @@ separate forests or one.
   - the build grows, but the forest takes about 10 s today.
 - **`indimo.cathe.dev` can stay** as a mount of the forest landing on the tag page (`entry: /indimo/` or wherever the
   tag page lives), retiring the separate mkdocs site.
-- **When a separate forest is better:** if other people edit INDIMO's notes. Collaborators would otherwise need
-  access to your personal forest. A separate forest repo (same template, same theme) is then its own ddm site,
-  linked with `site://`.
+- **Separate forest: not needed.** Only you edit INDIMO's notes (answered 2026-10-17).
+- **Privacy (decided 2026-10-17):**
+  - a tree tagged `indimo` is public;
+  - a tree tagged `indimo` and `private` stays private.
+
+  This needs no new rule: the forest's existing `private` tag already hides a tree from the public and notes
+  views, whatever its other tags.
 - **Porting:** mechanical for plain markdown (headings, lists, links, maths), so it can be scripted (e.g. pandoc to
   a rough draft plus hand fixes) in a forest-repo branch. It belongs with the forest work (M4). The mkdocs
   `indimo` site is a useful sample for the styling session until then.
 - **Open:**
-  - Is anyone else editing INDIMO?
-  - Should INDIMO's notes be public, notes-view only, or private?
-  - Do other `.md` note repos follow the same path?
+  - Should INDIMO trees also appear in the notes view (`notes.cathe.dev`)? A folder rule could tag them `notes` as
+    well.
+  - Should other markdown note repos follow? That is: personal notes live in the forest, and mkdocs is only for
+    project documentation.
 
 ## Site navigation: a shared header, and section indexes
 
