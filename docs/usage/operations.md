@@ -62,10 +62,15 @@ localhost only. `site://` links are resolved to these preview addresses.
 
 Every published page gets a bar along its top, drawn by `/_ddm/bar.js`:
 - the `nav:` links from `sites.yaml`;
-- **view switches**: the same page in the site's other views. On `the.cathe.dev/indimo/` it offers `public` →
-  `forest.cathe.dev/indimo/` and `notes` → `notes.cathe.dev/indimo/`, which is the quick way to check what a tree
-  looks like publicly;
-- a **status line**: site, repo and branch (linked), commit (linked), pool if any, and build date.
+- **the private/public switch.** On every private page there is a `public` button: the same page in the public
+  version. It is greyed out when that page has no public version, either because the site has no public mount or
+  because the page isn't in the public build (a hidden tree, a person's page). ddm checks this against a list of the
+  public build's pages, written at publish into the private-only data. **In a local preview only**, public pages
+  also get a `private (preview only)` button, for testing. Production never writes the private addresses for public
+  pages, so the button can't exist there;
+- a **status line**: site, repo and branch (linked), commit (linked), pool if any, and build date. On public pages
+  the repo, branch and commit appear only for repos GitHub serves publicly. A private repo (or a failed check) shows
+  just the site and the date.
 
 How it gets there: publishing inserts `<script type="module" src="/_ddm/bar.js">` before `</head>` in every
 `.html` page and `.xsl` stylesheet (the forest's pages are built by its XSLT in the browser). ddm writes the

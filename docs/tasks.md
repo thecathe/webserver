@@ -42,21 +42,27 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **For M5: a Cloudflare API token** with `Zone:DNS:Edit` on `cathe.dev` and `jpears.me` (added 2026-10-17),
   for the wildcard certificates. It is stored encrypted in this repo (agenix), never in plain text.
 
-- [ ] **Tag the project trees** (added 2026-10-17). `projects.cathe.dev` is the forest's `Project` taxon page, which
-  lists trees with `\taxon{Project}`. Today only Cloakaml has it; add it to the `indimo` and `mebi` trees (and any
-  other project).
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
   `sites.yaml`. Otherwise it waits for a Rocq release that allows newer dune.
 
-- [ ] **Push the forest's `main`** (added 2026-10-17). `forest-public.toml` and the `notes` tag page are merged into
-  your forest's local `main` (not pushed). ddm builds the forest from GitHub, so until you push, the public forest
-  only builds with `--src`: `bin/ddm preview --src forest=$HOME/Documents/git/thecathe/forest`.
-- [ ] **Three people without a redirect stay public** (added 2026-10-17): `@lstefanesco`, `@afrancalanza`,
-  `@mpretnar` have no `\meta{redirect}`, so the public forest still builds their pages. Give each a redirect (to
-  their own page), or tag them `private`, or decide they can stay.
+- [ ] **Push three repos, then bump the forest's pins** (added 2026-10-17). The new "unpublished people" rule needs
+  your forester fork and `forest_gen.py` from GitHub, since the forest's devShell pins both. All three are merged
+  locally, not pushed:
+  1. `ocaml-forester`: push `redirect-meta` (unpublished taxa);
+  2. `vscode-forester`: push `main` (`forest_gen.py` skips unpublished people);
+  3. `forest`: `nix flake update forester vscode-forester`, commit the lock, and push `main` (project taxons,
+     `unpublished = true` for Person).
+
+  Until then, ddm's public forest builds with the old forester, which warns about the unknown keys, and the three
+  people without a redirect stay public in the preview.
+- [ ] **PhD: a Project?** (added 2026-10-17). `trees/project/phd.tree` has both `\taxon{Project}` and
+  `\taxon{Summary}` commented out, so I left it; indimo and mebi are now Projects.
 
 ## Done
+
+- [x] Project taxons on `indimo` and `mebi` (Claude, 2026-10-17).
+- [x] People private by default: unpublished taxa in the fork (Claude, 2026-10-17).
 
 - [x] Told Claude the session's effort level (`medium`), 2026-10-17.
