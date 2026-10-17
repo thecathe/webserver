@@ -82,6 +82,7 @@ If `taxa` is omitted, any taxon is accepted.
 | `env.flake` | Where build tools come from. `"{{repo}}"` is the site repo's own devShell, and `"{{system}}"` (or `"{{system}}#name"`) a devShell of this repo. Steps run inside `nix develop <ref> -c`. Omit it for steps that need no tools. |
 | `params` | Defaults, which a site or view can override. Substituted as `{{name}}`. |
 | `steps` | Run in order. Each is **exactly one** of `run`, `builtin`, `use`, `output`. See [workflows](workflows.md). |
+| `pool` | `false` | Build every site that uses this workflow (in the same view) **together**: each site's repo is synced as usual, all the checkouts are copied into one workspace, and the steps run once with `{{repo}}` set to it. The one result is served by every member's mounts. A member then needs no mounts of its own. See [workflows](workflows.md#pooled-workflows). |
 | `root_only` | `false` | The output's links are root-absolute (forester's `base-url="/"`), so its sites can only be mounted at path `/`. A mount with any other `path` is an error. |
 
 Validation checks:
@@ -90,7 +91,7 @@ Validation checks:
 - `params` appear only on `builtin` steps.
 
 Built-in variables: `{{repo}}` (the checkout), `{{system}}` (this repo at the applied sha), `{{out}}` (the scratch
-output dir), `{{view}}`, `{{site}}`.
+output dir), `{{cache}}` (kept between builds), `{{view}}`, `{{site}}` (`@<workflow>` in a pooled build).
 
 ### `sites.<name>`
 
@@ -103,7 +104,7 @@ letters, digits and `-`, because it also becomes a directory name.
 | `branch` | `main` | |
 | `workflow` + `params` | | Shorthand for a single `public` view. Use either this or `views`, not both. |
 | `views.<view>` | | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each needs a `workflow`, and may have `params`. |
-| `mounts[]` | | Where outputs are served. At least one is required. See below. |
+| `mounts[]` | | Where outputs are served. At least one is required, except for a site built only by a pooled workflow: the pool's other mounts serve it. See below. |
 | `access` | `public` | The default `access` for every mount of this site: `public` or `private`. A mount can override it. |
 | `taxa` | | Classification, from the declared `taxa`. |
 | `description` | | One line for the directory. |

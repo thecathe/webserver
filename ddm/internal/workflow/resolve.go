@@ -23,6 +23,7 @@ type Vars struct {
 	Repo   string // absolute path of the site checkout
 	System string // absolute path of this repo (the one holding sites.yaml)
 	Out    string // absolute path of the scratch output directory
+	Cache  string // absolute path of a directory kept between builds (e.g. an opam switch)
 	Site   string
 	View   string
 }
@@ -79,8 +80,30 @@ func Resolve(s *spec.Spec, site, view string, vars Vars, overrides map[string]st
 	return p, nil
 }
 
+// ResolvePool builds the plan for a pooled workflow: one run for every
+// member site. Only the workflow's own params apply (members' view params
+// can't all win), plus overrides. {{site}} is the pool's name, and {{repo}}
+// the workspace holding every member's checkout.
+func ResolvePool(s *spec.Spec, wf, view string, vars Vars, overrides map[string]string) (*Plan, error) {
+	if !s.Workflows[wf].Pool {
+		return nil, fmt.Errorf("workflow %q is not pooled", wf)
+	}
+	vars.Site, vars.View = spec.PoolName(wf), view
+	params := map[string]string{}
+	maps.Copy(params, s.Workflows[wf].Params)
+	maps.Copy(params, vars.asParams())
+	maps.Copy(params, overrides)
+	p := &Plan{Site: vars.Site, View: view, Vars: vars, Spec: s}
+	r := resolver{spec: s, plan: p}
+	r.inline(wf, params, "")
+	if err := errors.Join(r.errs...); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
 func (v Vars) asParams() map[string]string {
-	return map[string]string{"repo": v.Repo, "system": v.System, "out": v.Out, "site": v.Site, "view": v.View}
+	return map[string]string{"repo": v.Repo, "system": v.System, "out": v.Out, "cache": v.Cache, "site": v.Site, "view": v.View}
 }
 
 type resolver struct {

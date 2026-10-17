@@ -97,13 +97,44 @@ later builds reuse it.
 |---|---|---|
 | `forester` | `build-forest {{config}}` (`--strict-private` unless private) → `output/` | `forest`, about 10 s |
 | `mkdocs` | `mkdocs-config` → `mkdocs build -d {{out}}` | `indimo` (no mkdocs.yml, so one is generated), `ddm` (this site) |
-| `odoc` | `dune build @doc` → `_build/default/_doc/_html` | `cloakaml` (`docs` branch) |
+| `odoc` | `dune build @doc` → `_build/default/_doc/_html` | `cloakaml` (`docs` branch), before the pool; kept for a project built on its own |
+| `odoc-pool` | pooled: `opam-pool-switch.sh` → `dune build @doc --profile release` in one opam switch → `_build/default/_doc/_html` | `ocaml` (index), `cloakaml`, `mebi-plugin` (membranes waits on a dune version clash, D34) |
 | `ocaml-notebook` | `generate_docs.py` over `{{ml_dir}}/**/*.ml` → `docs/` (plus a default `index.md`) → `use: mkdocs` | `demos` (`ml_dir: ocaml`) |
 | `static` | `output: {{input_dir}}` | none yet |
 | `site-directory` | `builtin: site-directory` (`page: directory` or `map`) | `docs`, both views |
 
 `forester` is `root_only: true`: forest output links are root-absolute, so the spec rejects mounting a forest under a
 path prefix.
+
+## Pooled workflows
+
+A workflow with `pool: true` builds all of its sites in one run. It exists for **OCaml docs**: odoc only turns a
+reference such as `Showable.t` into a link when `Showable`'s package is documented in the same build. Built
+separately, the reference stays plain text.
+
+How a pooled build runs (`ddm/internal/build/pool.go`):
+1. Every member site's repo is synced at its own branch, exactly as for any site.
+2. The checkouts are copied (without `.git`, `_build`, `_opam`) into `.ddm/scratch/@<workflow>/<view>/ws/<site>/`,
+   next to a two-line `dune-workspace`. That is dune's standard way to build several projects as one, so a library
+   found in the workspace is used in place of an installed copy.
+3. The workflow runs once, with `{{repo}}` set to the workspace and `{{site}}` set to `@<workflow>`.
+4. The result is published once, as `<www>/<view>/@<workflow>/`, with a `ddm-build.json` naming every member's
+   repo, branch and commit. Every member's mounts serve it, each with its own `entry`.
+
+**Membership is the spec.** A site is in the pool exactly when it uses the pooled workflow. A project left out stays
+a separate site, and references to it stay plain text. A member's push rebuilds the whole pool.
+
+**`odoc-pool`'s environment** is one opam switch, built by `scripts/opam-pool-switch.sh` and cached in
+`.ddm/cache/@odoc-pool/` between builds. It tries every member's lockfile (`*.opam.locked`) first, for exact
+versions. If the lockfiles conflict, it solves once over every member's `.opam` constraints instead. A pool can only hold projects that agree on one version of every
+shared tool. Today membranes needs `dune >= 3.24` while Rocq 9.2.0 (mebi_plugin) needs `dune < 3.24`, so membranes
+is left out (D34). The env is `{{system}}#ocaml-opam`: opam plus the system libraries opam packages expect.
+
+The `ocaml` site has no repo. It serves the pool's root, which is odoc's list of every package, as the collated
+OCaml documentation page.
+
+`{{cache}}` (every workflow has it) is a directory kept between builds: `.ddm/cache/<site>`, or
+`.ddm/cache/@<workflow>` for a pool. Every `run:` step also logs its **peak memory**, for sizing the server.
 
 ## Porting a GitHub Actions workflow
 

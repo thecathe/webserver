@@ -58,6 +58,11 @@ type Workflow struct {
 	// RootOnly marks workflows whose output uses root-absolute links (e.g.
 	// forester's base-url="/"), so they can only be mounted at path "/".
 	RootOnly bool `yaml:"root_only"`
+	// Pool builds every site that uses this workflow (in the same view) together,
+	// in one run over all of their checkouts, and serves the one result from
+	// all of their mounts. Used for OCaml docs: odoc only links packages that
+	// are built together.
+	Pool bool `yaml:"pool"`
 }
 
 // Env names where a workflow's tools come from. Steps run inside
@@ -254,6 +259,57 @@ func (s *Spec) normalise() {
 func normalisePath(p string) string {
 	p = "/" + strings.Trim(p, "/")
 	return p
+}
+
+// PoolOf returns the pooled workflow a site's view is built by, or "".
+func (s *Spec) PoolOf(site, view string) string {
+	v, ok := s.Sites[site].Views[view]
+	if ok && s.Workflows[v.Workflow].Pool {
+		return v.Workflow
+	}
+	return ""
+}
+
+// PoolMembers returns the sites whose view is built by pooled workflow wf,
+// sorted.
+func (s *Spec) PoolMembers(wf, view string) []string {
+	var out []string
+	for _, name := range s.SiteNames() {
+		if s.PoolOf(name, view) == wf {
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
+// PoolName is the name a pool's build is published under. The "@" keeps it
+// apart from site names.
+func PoolName(wf string) string { return "@" + wf }
+
+// Served returns the name a site's view is published under: its own name,
+// or its pool's.
+func (s *Spec) Served(site, view string) string {
+	if wf := s.PoolOf(site, view); wf != "" {
+		return PoolName(wf)
+	}
+	return site
+}
+
+// MountsServing returns every mount that serves what is published as served
+// in view: one site's mounts, or all of a pool's members' mounts.
+func (s *Spec) MountsServing(served, view string) []Mount {
+	var out []Mount
+	for _, name := range s.SiteNames() {
+		if s.Served(name, view) != served {
+			continue
+		}
+		for _, m := range s.Sites[name].Mounts {
+			if m.View == view {
+				out = append(out, m)
+			}
+		}
+	}
+	return out
 }
 
 // SiteNames returns the site names in sorted order.

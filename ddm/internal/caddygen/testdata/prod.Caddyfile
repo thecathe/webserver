@@ -34,6 +34,21 @@
 			file_server
 		}
 	}
+	@lib_cathe_dev host lib.cathe.dev
+	handle @lib_cathe_dev {
+		handle {
+			redir / /lib/
+			root * /var/www/public/@pooled/current
+			file_server
+		}
+	}
+	@ocaml_cathe_dev host ocaml.cathe.dev
+	handle @ocaml_cathe_dev {
+		handle {
+			root * /var/www/public/@pooled/current
+			file_server
+		}
+	}
 	handle {
 		error 404
 	}

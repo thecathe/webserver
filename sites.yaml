@@ -48,6 +48,20 @@ workflows:
       - run: dune build @doc
       - output: _build/default/_doc/_html
 
+  # Every OCaml project's API docs, built together in one dune workspace so
+  # odoc links across projects (a type from a shared library links to its
+  # docs). pool: true runs this once for all sites that use it, and serves the
+  # one result from all of their mounts. Tools come from one opam switch
+  # (scripts/opam-pool-switch.sh), cached between builds: the projects' own
+  # lockfiles if they agree, else one solve over their .opam constraints.
+  odoc-pool:
+    pool: true
+    env: { flake: "{{system}}#ocaml-opam" }
+    steps:
+      - run: sh {{system}}/scripts/opam-pool-switch.sh {{cache}} {{repo}}
+      - run: OPAMROOT={{cache}}/opam-root opam exec --switch={{cache}}/switch -- dune build @doc --profile release
+      - output: _build/default/_doc/_html
+
   # .ml files with doc comments → markdown → mkdocs (was demos-deploy-docs.yml).
   ocaml-notebook:
     env: { flake: "{{system}}#mkdocs" }
@@ -90,6 +104,9 @@ sites:
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: cathe.dev, entry: /@cathe/ }
       - { host: jpears.me, entry: /@jpears/ }
+      - { host: projects.cathe.dev, entry: /taxon-project/ }
+      - { host: indimo.cathe.dev, entry: /indimo/ }
+      - { host: mebi.cathe.dev, entry: /mebi/ }
       - { host: notes.cathe.dev, view: notes, entry: /index/ }
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
@@ -110,15 +127,40 @@ sites:
     description: Design and usage docs for ddm, the deployment manager behind these sites
     mounts: [ { host: ddm.cathe.dev } ]
 
+  # The OCaml docs pool. `ocaml` has no repo: it serves the pooled build's
+  # root, odoc's list of every package, as the collated OCaml docs page.
+  ocaml:
+    workflow: odoc-pool
+    taxa: [docs]
+    description: API documentation for every OCaml package, linked together
+    mounts: [ { host: ocaml.cathe.dev } ]
+
   cloakaml:
     repo: thecathe/cloakaml
     branch: docs   # the branch its old docs Action deployed from
-    workflow: odoc
+    workflow: odoc-pool
     taxa: [docs, project, tool]
     description: cloakaml API documentation
-    # odoc's own root page only lists this repo's packages (just one), so
-    # land on the package itself.
+    # Lands on the package rather than odoc's package list.
     mounts: [ { host: cloakaml.cathe.dev, entry: /cloakaml/ } ]
+
+  # Pool members without an address of their own: their docs are at
+  # ocaml.cathe.dev/<package>/ (mebi.cathe.dev is the forest's mebi page).
+  mebi-plugin:
+    repo: thecathe/mebi_plugin
+    workflow: odoc-pool
+    taxa: [docs, project, tool]
+    description: MEBI, a Rocq plugin for mechanised bisimilarity proofs (API documentation)
+
+  # Out of the pool for now: membranes needs dune >= 3.24 (its lang dune
+  # 3.24), while Rocq 9.2.0 (mebi-plugin) needs dune < 3.24, so no switch can
+  # build both. Lowering membranes to (lang dune 3.23) would let it in.
+  # membranes:
+  #   repo: thecathe/membranes
+  #   branch: re-functoring
+  #   workflow: odoc-pool
+  #   taxa: [docs, project]
+  #   description: membranes API documentation
 
   demos:
     repo: thecathe/demos
@@ -128,9 +170,11 @@ sites:
     description: OCaml demos, rendered from their doc comments
     mounts: [ { host: demos.cathe.dev } ]
 
-  indimo:
+  # INDIMO's notes in mkdocs, until they move into the forest (whose INDIMO
+  # page is indimo.cathe.dev). Also the sample of a plain-markdown site.
+  indimo-notes:
     repo: thecathe/INDIMO
     workflow: mkdocs
-    taxa: [docs, notes, project]
+    taxa: [notes]
     description: INDIMO project notes
-    mounts: [ { host: indimo.cathe.dev } ]
+    mounts: [ { host: indimo-notes.cathe.dev } ]

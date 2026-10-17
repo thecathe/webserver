@@ -166,41 +166,28 @@ Raised 2026-10-17, looking at the preview.
   with the `odoc` workflow (or tagged with a new taxon, e.g. `ocaml`), linking each package's own page.
   - **Lean:** a `site-directory` page filtered by taxon, served as one of the section indexes below (e.g.
     `sites.cathe.dev/ocaml/`). Each entry links with `mount://` straight to the package page.
-- **Splitting `Showable` and `Thing` into their own opam package(s)** (elaborated 2026-10-17). odoc only links
-  `Showable.t` in membranes' docs if it has `Showable`'s docs **in the same build**. Built separately, odoc writes
-  the reference as unlinked text (an `xref-unresolved` span), so there is no URL anywhere for ddm to fix. The
-  options, from most to least linking:
-  1. **An OCaml docs bundle: one dune workspace.** This is less ad hoc than it sounds: it is dune's standard way to
-     build several projects together (the same mechanism opam-monorepo uses). A directory holding a
-     `dune-workspace` file and each repo as a subdirectory, each with its own `dune-project`, is one workspace:
-     `dune build @doc` at its root documents every package, cross-linked. A library found in the workspace (your
-     `showable`) is used in place of an installed one, so membranes needs no change.
-     - ddm side: a site with several `repos:` (or a workflow that clones the others), plus a two-line
-       `dune-workspace`. A modest feature, since gitsync already does single repos.
-     - Payoff: the bundle's odoc root page **is** the collated "OCaml package documentation" page. Each project
-       keeps its host as a mount of the one build with an `entry`, e.g. `cloakaml.cathe.dev` → `/cloakaml/`, just as
-       the forest serves one build on three hosts. odoc links are relative, so this works.
-     - Costs:
-       - every project must build in one environment (one compiler, the union of dependencies in
-         `#ocaml-docs`). If mebi_plugin needs Rocq, the env grows by Rocq;
-       - any repo's push rebuilds the whole bundle;
-       - one broken project fails the bundle, unless the workflow drops failing projects and retries.
-  2. **Vendor the shared library into each project** (a git submodule or a pinned copy in the repo). Each site's
-     own build includes `showable`'s docs, so links work, but those docs are duplicated per site and the copies
-     can drift.
-  3. **odoc 3 cross-build linking.** odoc 3's driver can map a dependency's references to another site's URL (built
-     for ocaml.org). As far as I know `dune build @doc` doesn't expose this, so it would mean driving odoc
-     directly. Unverified.
-  4. **ddm rewrites unresolved references after the build.** It would map each `xref-unresolved` `Showable.t` to
-     `site://showable/Showable/index.html#type-t`. Workable, since the span carries the path, but heuristic (type,
-     value and module anchors differ) and tied to odoc's HTML. Messy, as you suspected.
-  5. **Plain text.** The fallback, and the state of things today.
+- **Cross-linking: decided 2026-10-17 (D34), the pool.** Every OCaml docs site uses the pooled `odoc-pool`
+  workflow: one dune workspace, one `dune build @doc`, in one opam switch built from the lockfiles. Being in the spec
+  is the inclusion rule: a project left out stays separate, and references to it stay plain text, which is
+  acceptable. Rejected: vendoring shared libraries into each project; ddm rewriting odoc's unresolved references
+  (heuristic). odoc 3 linking to separately built docs stays unverified.
+- **Still open:**
+  - **The pool on the droplet.** mebi_plugin brings Rocq. It is in the pool now, on your machine, to measure the
+    cost (see the development log). If the droplet can't afford it, mebi_plugin's docs would be built here and
+    copied over, which ddm doesn't model yet. Options:
+    - a site kind whose output is a directory ddm only publishes (it becomes the one push-shaped exception to D32);
+    - the droplet pulls a release artifact you publish (still pull).
 
-  - **Lean:** option 1, when the split happens. It is the only one that gives real odoc links with no per-link
-    machinery, and it also produces the collated page. Spike it with cloakaml plus a stub second package first.
-    Not committed to: plain text remains acceptable.
-  - **Also:** for the projects' own builds (not docs), membranes and mebi_plugin depend on the new package as
-    usual (opam pin or release). The bundle only concerns docs.
+    Either way, the collated page should still list it.
+  - **The collated page when not everything is in the pool.** odoc's root page only lists the pool's own
+    packages. If mebi_plugin ever builds outside the pool, `ocaml.cathe.dev` would need a ddm-generated index
+    instead, listing packages wherever they are built, and ideally each package's libraries (odoc's package pages
+    list them; ddm could read them from the output).
+  - **Splitting libraries out.** `Showable`/`Thing` (and some of mebi_plugin's libraries) may become their own
+    repos. Each is then just another pool member, and its users depend on it as an opam package as usual. In the
+    workspace, dune uses the pool's copy.
+  - **Rebuild cost.** Any member's push rebuilds the pool. dune's cache keeps unchanged members fast, and the opam
+    switch is reused, but a first build compiles Rocq.
 
 ## INDIMO's notes: port to forester, into the main forest?
 
@@ -263,6 +250,16 @@ Raised 2026-10-17. This belongs to the shared-styling session (D27), which it ex
 
   A publish-time injection works everywhere ddm publishes HTML, but is the most brittle against each generator's
   own CSS.
+- **A status line** (raised 2026-10-17), like nvim's or VS Code's, at the edge of the header on generated sites:
+  - the repo (linked), the branch and commit it was built from, and when;
+  - if cheap, whether that is still the branch's latest commit.
+
+  The first part is cheap: publishing already knows all of it (pools write it to `ddm-build.json`), so ddm can write
+  a small status file next to each publish for the header to show.
+
+  "Up to date" is live state: the branch may move after publishing. The cheap version: ddm's poll loop (M6) already
+  checks every branch's head, so it can update a status file that the header fetches. Until the daemon exists, the
+  status line can only say what was built.
 - **Open:**
   - Section names and titles: is it "projects" or "project"? "presentations"?
   - Does `cathe.dev` itself, the forest's `@cathe` page, show the same header?

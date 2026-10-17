@@ -42,6 +42,14 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **For M5: a Cloudflare API token** with `Zone:DNS:Edit` on `cathe.dev` and `jpears.me` (added 2026-10-17),
   for the wildcard certificates. It is stored encrypted in this repo (agenix), never in plain text.
 
+- [ ] **Tag the project trees** (added 2026-10-17). `projects.cathe.dev` is the forest's `Project` taxon page, which
+  lists trees with `\taxon{Project}`. Today only Cloakaml has it; add it to the `indimo` and `mebi` trees (and any
+  other project).
+- [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
+  (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
+  dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
+  `sites.yaml`. Otherwise it waits for a Rocq release that allows newer dune.
+
 ## Done
 
 - [x] Told Claude the session's effort level (`medium`), 2026-10-17.

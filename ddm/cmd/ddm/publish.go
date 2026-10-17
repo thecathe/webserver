@@ -79,9 +79,9 @@ func buildAndPublish(ctx context.Context, req build.Request, t target) (string, 
 	if err != nil || req.DryRun {
 		return "", err
 	}
-	fmt.Fprintf(req.Log, "==> publishing %s (%s) at %s\n", req.Site, req.View, res.Commit)
+	fmt.Fprintf(req.Log, "==> publishing %s (%s) at %s\n", res.Served, req.View, res.Commit)
 	return publish.Run(publish.Request{
-		Site: req.Site, View: req.View, Commit: res.Commit, From: res.Dir, WWW: t.caddy.WWW,
+		Site: res.Served, View: req.View, Commit: res.Commit, From: res.Dir, WWW: t.caddy.WWW,
 		Links: links.Resolver{Spec: req.Spec, Base: t.base}, Strict: t.strict, Log: req.Log,
 	})
 }
@@ -170,8 +170,14 @@ flags:
 
 	var failed []string
 	if !*serveOnly {
+		done := map[string]bool{} // a pool is built once, whichever member comes first
 		for _, name := range sites {
-			for _, view := range mountedViews(s.Sites[name]) {
+			for _, view := range builtViews(s.Sites[name]) {
+				if key := s.Served(name, view) + "/" + view; done[key] {
+					continue
+				} else {
+					done[key] = true
+				}
 				start := time.Now()
 				src, branch, _ := strings.Cut(srcs[name], "@")
 				_, err := buildAndPublish(ctx, build.Request{
@@ -201,7 +207,7 @@ flags:
 	for _, name := range s.SiteNames() {
 		for _, m := range s.Sites[name].Mounts {
 			mark := ""
-			if _, err := os.Stat(publish.Current(t.caddy.WWW, m.View, name)); err != nil {
+			if _, err := os.Stat(publish.Current(t.caddy.WWW, m.View, s.Served(name, m.View))); err != nil {
 				mark = "   (not published)"
 			}
 			path := strings.TrimSuffix(m.Path, "/") + "/"
@@ -231,12 +237,18 @@ flags:
 	return 0
 }
 
-// mountedViews are the views of a site that some mount serves.
-func mountedViews(site spec.Site) []string {
+// builtViews are the views of a site worth building in a preview: those a
+// mount serves, or every view of a pool member with no mounts of its own.
+func builtViews(site spec.Site) []string {
 	var views []string
 	for _, m := range site.Mounts {
 		if !slices.Contains(views, m.View) {
 			views = append(views, m.View)
+		}
+	}
+	if len(site.Mounts) == 0 {
+		for v := range site.Views {
+			views = append(views, v)
 		}
 	}
 	slices.Sort(views)

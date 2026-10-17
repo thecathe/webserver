@@ -83,6 +83,33 @@ func TestSiteAccessDefault(t *testing.T) {
 	}
 }
 
+func TestPool(t *testing.T) {
+	src := `
+domains: [cathe.dev]
+workflows:
+  docs: { pool: true, steps: [ { run: x } ] }
+  w: { steps: [ { run: x } ] }
+sites:
+  index: { workflow: docs, mounts: [ { host: ocaml.cathe.dev } ] }
+  a: { repo: me/a, workflow: docs, mounts: [ { host: a.cathe.dev, entry: /a/ } ] }
+  b: { repo: me/b, workflow: docs }
+  c: { repo: me/c, workflow: w, mounts: [ { host: c.cathe.dev } ] }
+`
+	s, err := Parse([]byte(src))
+	if err != nil {
+		t.Fatalf("a pool member needs no mounts of its own: %v", err)
+	}
+	if got := s.PoolMembers("docs", "public"); strings.Join(got, " ") != "a b index" {
+		t.Errorf("members: %v", got)
+	}
+	if s.Served("b", "public") != "@docs" || s.Served("c", "public") != "c" {
+		t.Errorf("served: %q %q", s.Served("b", "public"), s.Served("c", "public"))
+	}
+	if got := len(s.MountsServing("@docs", "public")); got != 2 {
+		t.Errorf("the pool is served by both members' mounts, got %d", got)
+	}
+}
+
 // The repo's own spec must always be valid.
 func TestRepoSpec(t *testing.T) {
 	if _, err := Load("../../../sites.yaml"); err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -111,6 +112,7 @@ type mapMount struct {
 	Site, View, Workflow, Entry, Access string
 	Repo, RepoURL, Branch, Description  string
 	Indexed                             bool
+	Pool                                string // the pool it is built in, if any
 }
 
 type mapHost struct {
@@ -121,6 +123,7 @@ type mapHost struct {
 
 type mapPage struct {
 	Hosts                  []mapHost
+	Unmounted              []mapMount // pool members served only through other members' mounts
 	Sites, Public, Private int
 }
 
@@ -130,6 +133,20 @@ func mapData(s *spec.Spec) mapPage {
 	for _, name := range s.SiteNames() {
 		site := s.Sites[name]
 		page.Sites++
+		if len(site.Mounts) == 0 {
+			for _, view := range slices.Sorted(maps.Keys(site.Views)) {
+				pool := s.PoolOf(name, view)
+				var at []string
+				for _, m := range s.MountsServing(spec.PoolName(pool), view) {
+					at = append(at, m.Host+strings.TrimSuffix(m.Path, "/"))
+				}
+				page.Unmounted = append(page.Unmounted, mapMount{
+					Site: name, View: view, Workflow: site.Views[view].Workflow, Pool: pool,
+					Repo: site.Repo, RepoURL: repoURL(site.Repo), Branch: site.Branch,
+					Description: site.Description, Indexed: site.IsIndexed(), Address: strings.Join(at, ", "),
+				})
+			}
+		}
 		for _, m := range site.Mounts {
 			addr := m.Host
 			if m.Path != "/" {
@@ -140,6 +157,7 @@ func mapData(s *spec.Spec) mapPage {
 				Site: name, View: m.View, Workflow: site.Views[m.View].Workflow, Entry: m.Entry,
 				Access: m.Access, Repo: site.Repo, RepoURL: repoURL(site.Repo), Branch: site.Branch,
 				Description: site.Description, Indexed: site.IsIndexed(),
+				Pool: s.PoolOf(name, m.View),
 			}
 			if m.Access == spec.AccessPrivate {
 				page.Private++
@@ -239,7 +257,20 @@ Generated from <code>sites.yaml</code> on every build, so anything newly deploye
 <td>{{.View}}</td>
 <td>{{.Workflow}}</td>
 <td>{{if .RepoURL}}<a href="{{.RepoURL}}">{{.Repo}}</a> <span class="muted">({{.Branch}})</span>{{else if .Repo}}{{.Repo}}{{else}}<span class="muted">generated</span>{{end}}</td>
-<td>{{if not .Indexed}}<span class="muted">not in the directory</span>{{end}}</td>
+<td>{{if .Pool}}built in the {{.Pool}} pool<br>{{end}}{{if not .Indexed}}<span class="muted">not in the directory</span>{{end}}</td>
+</tr>
+{{end}}</table></div>
+</section>
+{{end}}{{if .Unmounted}}<section>
+<h2>Without an address of their own</h2>
+<p class="muted">Built in a pool, and served through the pool's addresses.</p>
+<div class="wrap"><table>
+<tr><th>Site</th><th>Pool</th><th>Served at</th><th>Source</th></tr>
+{{range .Unmounted}}<tr>
+<td><strong>{{.Site}}</strong>{{if .Description}}<br><span class="muted">{{.Description}}</span>{{end}}</td>
+<td>{{.Pool}}</td>
+<td>{{.Address}}</td>
+<td>{{if .RepoURL}}<a href="{{.RepoURL}}">{{.Repo}}</a> <span class="muted">({{.Branch}})</span>{{else}}{{.Repo}}{{end}}</td>
 </tr>
 {{end}}</table></div>
 </section>

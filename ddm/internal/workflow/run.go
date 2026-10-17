@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -67,9 +68,17 @@ func (p *Plan) run(ctx context.Context, st Step, log io.Writer) error {
 	cmd.Dir = p.Vars.Repo
 	cmd.Env = append(os.Environ(),
 		"DDM_SITE="+p.Site, "DDM_VIEW="+p.View, "DDM_OUT="+p.Vars.Out,
-		"DDM_REPO="+p.Vars.Repo, "DDM_SYSTEM="+p.Vars.System)
+		"DDM_REPO="+p.Vars.Repo, "DDM_SYSTEM="+p.Vars.System, "DDM_CACHE="+p.Vars.Cache)
 	cmd.Stdout, cmd.Stderr = log, log
-	return cmd.Run()
+	err := cmd.Run()
+	// Peak memory of the step's largest process, so heavy builds (Rocq, odoc)
+	// can be sized against the server.
+	if ps := cmd.ProcessState; ps != nil {
+		if ru, ok := ps.SysUsage().(*syscall.Rusage); ok && ru.Maxrss > 0 {
+			fmt.Fprintf(log, "    peak memory %d MiB\n", ru.Maxrss/1024)
+		}
+	}
+	return err
 }
 
 func (p *Plan) builtin(ctx context.Context, st Step, log io.Writer) error {
