@@ -598,3 +598,6 @@ All merged locally; nothing pushed. **Feature** + **Design**.
 
 **For you:** push the three repos and bump the forest's flake lock (to-dos). Until then, the preview's public
 forest is built with the old fork.
+
+**Addendum.** You pushed `ocaml-forester`, `vscode-forester` and the forest (with its pins bumped) and confirmed the
+public forest behaves correctly from GitHub, without `--src`.
