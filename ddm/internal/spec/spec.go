@@ -17,12 +17,16 @@ import (
 
 // Spec is the root of sites.yaml.
 type Spec struct {
-	System    System              `yaml:"system"`
-	Paths     Paths               `yaml:"paths"`
-	Domains   []string            `yaml:"domains"`
-	Taxa      []string            `yaml:"taxa"`
-	Workflows map[string]Workflow `yaml:"workflows"`
-	Sites     map[string]Site     `yaml:"sites"`
+	System  System   `yaml:"system"`
+	Paths   Paths    `yaml:"paths"`
+	Domains []string `yaml:"domains"`
+	// PrivateDomain is where private mounts live, e.g. "the.cathe.dev". It and
+	// its subdomains resolve to the server's tailnet address, so only private
+	// mounts may use it, and private mounts may use nothing else.
+	PrivateDomain string              `yaml:"private_domain"`
+	Taxa          []string            `yaml:"taxa"`
+	Workflows     map[string]Workflow `yaml:"workflows"`
+	Sites         map[string]Site     `yaml:"sites"`
 }
 
 // System says where the server's own NixOS config comes from.
@@ -51,6 +55,9 @@ type Workflow struct {
 	Env    Env               `yaml:"env"`
 	Params map[string]string `yaml:"params"`
 	Steps  []Step            `yaml:"steps"`
+	// RootOnly marks workflows whose output uses root-absolute links (e.g.
+	// forester's base-url="/"), so they can only be mounted at path "/".
+	RootOnly bool `yaml:"root_only"`
 }
 
 // Env names where a workflow's tools come from. Steps run inside
@@ -107,6 +114,8 @@ type Site struct {
 	Params   map[string]string `yaml:"params"`
 	Views    map[string]View   `yaml:"views"`
 	Mounts   []Mount           `yaml:"mounts"`
+	// Access is the default for every mount: "public" (default) or "private".
+	Access string `yaml:"access"`
 
 	Taxa        []string `yaml:"taxa"`
 	Description string   `yaml:"description"`
@@ -132,7 +141,8 @@ type Mount struct {
 	View string `yaml:"view"`
 	// Entry is where requests for the mount's root redirect to, e.g. /@jpears/.
 	Entry string `yaml:"entry"`
-	// Access is "public" (default) or "tailnet-owner".
+	// Access is "public" or "private" (served only on the tailnet, and only
+	// to the owner's Tailscale identity). Defaults to the site's access.
 	Access string `yaml:"access"`
 }
 
@@ -140,15 +150,14 @@ const (
 	DefaultView   = "public"
 	DefaultBranch = "main"
 
-	AccessPublic       = "public"
-	AccessTailnetOwner = "tailnet-owner"
+	AccessPublic  = "public"
+	AccessPrivate = "private"
 )
 
 // Builtins are the step names ddm implements in Go. Kept here so the spec can
 // be validated before the workflow runner exists.
 var Builtins = map[string]bool{
 	"mkdocs-config":  true,
-	"rewrite-links":  true,
 	"site-directory": true,
 	"md-ssg":         true,
 }
@@ -212,6 +221,7 @@ func (s *Spec) normalise() {
 	if s.Paths.Caddyfile == "" {
 		s.Paths.Caddyfile = "/var/lib/ddm/Caddyfile"
 	}
+	s.PrivateDomain = strings.ToLower(s.PrivateDomain)
 	for name, site := range s.Sites {
 		if site.Branch == "" {
 			site.Branch = DefaultBranch
@@ -222,6 +232,9 @@ func (s *Spec) normalise() {
 			site.Views = map[string]View{DefaultView: {Workflow: site.Workflow, Params: site.Params}}
 			site.Workflow, site.Params = "", nil
 		}
+		if site.Access == "" {
+			site.Access = AccessPublic
+		}
 		for i := range site.Mounts {
 			m := &site.Mounts[i]
 			m.Host = strings.ToLower(m.Host)
@@ -229,7 +242,7 @@ func (s *Spec) normalise() {
 				m.View = DefaultView
 			}
 			if m.Access == "" {
-				m.Access = AccessPublic
+				m.Access = site.Access
 			}
 			m.Path = normalisePath(m.Path)
 		}

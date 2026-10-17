@@ -32,6 +32,7 @@ type Plan struct {
 	Site, View string
 	Vars       Vars
 	Steps      []Step
+	Spec       *spec.Spec // for builtins that read it, e.g. site-directory
 }
 
 // Step is one resolved step.
@@ -69,7 +70,7 @@ func Resolve(s *spec.Spec, site, view string, vars Vars, overrides map[string]st
 	maps.Copy(params, v.Params)
 	maps.Copy(params, overrides)
 
-	p := &Plan{Site: site, View: view, Vars: vars}
+	p := &Plan{Site: site, View: view, Vars: vars, Spec: s}
 	r := resolver{spec: s, plan: p}
 	r.inline(v.Workflow, params, "")
 	if err := errors.Join(r.errs...); err != nil {

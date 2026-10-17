@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Roadmap
@@ -17,7 +17,9 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | M0 | Rules and docs: this site, the AI marking, `DEVELOPMENT.md`, global rules | **done** 2026-10-16 |
 | M1 | Spec v2 + `ddm` skeleton | **done** 2026-10-16 |
 | M2 | Workflow runner + built-ins | **done** 2026-10-16 |
-| M3 | Publish, links, Caddy generation, `docs.cathe.dev` | next (consider the shared-styling design first) |
+| M3a | Publish, links, Caddy generation, local preview; one site of every kind | **done** 2026-10-17 |
+| — | Shared-styling design session (D27), looking at the M3a preview | next |
+| M3b | The remaining sites, and styling adapters per generator | |
 | M4 | Forest side: `forest-public.toml`, views, the notes filter in the fork | |
 | M5 | NixOS host config | |
 | M6 | ddm daemon | |
@@ -48,19 +50,36 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - **Found:** the forest's public and notes views currently publish people's profiles (D25). M4 must land before
   they go live.
 
-## M3: publish, links, Caddy
-- Versioned roots with a `current` symlink.
-- `rewrite-links`.
-- `internal/caddygen`: entry redirects, per-view roots, the `the.cathe.dev` bind + `forward_auth` block. It replaces
-  the deleted hand-written Caddyfile. Carry over from it (see git history before
-  2026-10-16):
-  - certificates via `acme_dns cloudflare`, with a wildcard per domain;
-  - a shared 404 page for every host;
-  - odoc's root rewrite, since odoc output nests under the package name. This is now just `entry:` on the mount.
-  - Drop its per-request filesystem probing (`@has_odoc` / `@has_site`): each mount knows its root.
-- The `site-directory` built-in for `docs.cathe.dev`.
-- **This site goes live here.** So can every site except the forest's public and notes views, which wait for M4
-  (D25). The private view can go live, behind its tailnet-only host.
+## M3a: publish, links, Caddy, preview (done)
+- `ddm/internal/publish`: `<www>/<view>/<site>/<time>-<sha>/` plus an atomically swapped `current`; keeps 3.
+- `ddm/internal/links`: `site://` (and `mount://`) resolved at publish time (D28). Verified from mkdocs and from
+  forest redirect trees in both forest configs.
+- `ddm/internal/caddygen`: the Caddyfile from mounts. It covers wildcard certificates per domain via Cloudflare
+  DNS-01, entry redirects, the shared 404 page, and the private gate (D30). It carries over everything useful from the
+  deleted hand-written file, and drops its filesystem probing. It passes `caddy validate` with the Cloudflare plugin,
+  which the devShell now builds.
+- `site-directory`: the public directory (`docs.cathe.dev`) and the **private site map** (`the.cathe.dev/sites/`,
+  D29).
+- Spec: `access: public | private`, site-level `access`, `private_domain`, `root_only` (D33), and the `demos` site.
+- `ddm publish`, `ddm caddyfile`, `ddm preview` (D31).
+- One site of every kind publishes and serves in the preview:
+  - forester: `forest`, all three views;
+  - odoc: `cloakaml`;
+  - ocaml-notebook: `demos`;
+  - plain-markdown mkdocs: `indimo`;
+  - themed mkdocs: `ddm`;
+  - generated pages: `docs`, both views.
+- **Nothing is live on the internet yet.** That needs the server (M5) and the cutover (M7). D25 still holds the
+  forest's public and notes views until M4.
+
+## Next: the shared-styling design session
+Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. See the
+[open questions](open-questions.md#shared-styling-across-sites) and D27.
+
+## M3b: the rest
+- Styling adapters per generator, as designed in the session.
+- Any remaining sites, and team project sites.
+- odoc and `site://` (still untested).
 
 ## M4: forest side
 Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
@@ -91,14 +110,14 @@ Reinstall the existing droplet in place (D21): wipe it, install NixOS from this 
 keeps pointing at the same IP. Downtime lasts from the wipe until the first deploy, kept short by proving M5/M6 in a
 VM first. Then point teammates at project sites.
 
-## Shared styling (not yet scheduled; D27)
+## Shared styling (design session next; D27)
 - One source of truth for the palette (today: loose gruvbox in `docs/stylesheets/theme.css`), typography and the
   AI-generated marker, served from one place (e.g. an `assets` site, or a path on `ddm.cathe.dev`).
 - Adapters per generator: mkdocs `extra_css`, the forester theme (`thecathe/forester-base-theme` XSLT and CSS), and
   odoc's `odoc.css` (`--theme-uri` or a post-build override).
 - Possibly a shared header or nav linking the sites, using `site://` links.
-- Likely after M3, since the shared assets need somewhere to be served from. To be designed in its own session;
-  see [open questions](open-questions.md#shared-styling-across-sites).
+- Designed in its own session, after M3a, against the preview. See
+  [open questions](open-questions.md#shared-styling-across-sites).
 
 ## Later
 - The identity widget (after S4).
@@ -127,11 +146,11 @@ The 2026-09 curriculum (Modules 1–14) was written for you to implement. Its co
 | 1 schema | M1 |
 | 2 md SSG | Later (`md-ssg` built-in) |
 | 3 mkdocs, 4 odoc, 5 ocaml | M2 (as workflows) |
-| 6 DomainLink rewriting | M3 (`site://` + `rewrite-links`) |
+| 6 DomainLink rewriting | M3a (`site://`, resolved at publish) |
 | 7 GH Action rebuild, 8 systemd timer | M6 (ddm polling) |
 | 9 home-manager on Ubuntu | dropped (D3) |
 | 10 NixOS migration | M5 + M7 (in place, not blue/green: D21) |
 | 11 webhooks | Later |
-| 12 Caddyfile generation | M3 |
+| 12 Caddyfile generation | M3a |
 | 13 GitHub Pages | Later |
 | 14 port `generate_docs.py` | Later |

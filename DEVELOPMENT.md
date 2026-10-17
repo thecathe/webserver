@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Development log
@@ -310,3 +310,69 @@ What changed on contact with reality:
 
 Worth revisiting: whether hand-kept forest configs stay manageable, and whether styling should shape M3 rather than
 follow it.
+
+---
+
+## 2026-10-17: M3a, publish, links, Caddy and a local preview
+
+Branch `feat/ddm-publish`. **Feature** + **Design** + **Docs**.
+
+**The plan, reshaped by you.** M3 was "publish, links, Caddy, `docs.cathe.dev`", with the shared-styling design
+(D27) possibly first. You chose a middle path (D31): get **one site of every kind** published and viewable side by
+side, hold the styling session against that, then do the rest (M3b). Three requests during planning shaped it:
+- **"Does ddm build everything itself?"** Yes: every site is pulled and built on the server with one read-only token,
+  and no content repo holds a secret. Now stated explicitly as D32, with the push model recorded as rejected.
+- **A private site map** listing every site, address and public/private status, so automatic deployments never get
+  lost, plus public/private declared in the yaml (D29).
+- **Forest trees that redirect to other sites** (`\meta{redirect}{site://cloakaml/}`). This works, in the link form
+  `[text](site://…)`; see below.
+
+**Built** (one commit each unless noted):
+- `c18d3dc` **spec**:
+  - `access: public | private` (was `tailnet-owner`), and a site-level `access` default;
+  - `private_domain: the.cathe.dev`: private mounts must be on it, public ones off it;
+  - `root_only` workflows (D33), and the `demos` site.
+- `beba278` **links**: `site://` resolved at publish time (D28). Same view first, first mount canonical, always
+  absolute, never public → private.
+- `b3a993f` **publish**: `<www>/<view>/<site>/<time>-<sha>/`, `current` swapped by an atomic rename, keep 3.
+- `9251aa2` **site-directory**: the public directory and the private **site map** (`the.cathe.dev/sites/`), both
+  with the shared 404 page. Generated pages link with a new `mount://host/path` form.
+- `4a56a08` **caddygen**:
+  - the Caddyfile from mounts, with one wildcard certificate per domain via Cloudflare DNS-01;
+  - entry redirects, 404s, and the private gate (D30);
+  - golden tests that real `caddy adapt` must accept;
+  - the devShell's Caddy now has the Cloudflare plugin (`packages.caddy`).
+- `dde9cc2` **cli**: `ddm publish`, `ddm caddyfile`, `ddm preview`.
+- Fixes and docs: `42a8ccd`, `b33617e`, `bedd992`, `e8e0446`, `7f3040c`.
+
+**Verified.**
+- All tests pass.
+- The real `sites.yaml`'s prod Caddyfile passes `caddy validate` (with a well-formed fake token).
+- `ddm preview` publishes every site and view, and curl confirms entry redirects, the 404 page on unknown paths
+  and hosts, `/sites` → `/sites/`, and the map's badges (2 private, 9 public mounts).
+- No `site://` or `mount://` is left in any link position.
+
+**Found along the way.**
+- **The tailnet `bind` can't work** (D30). On Linux, a socket bound to the tailnet address can't listen on `:443`
+  while the public blocks' wildcard socket does. A two-socket test confirmed it, so Caddy would have failed at boot
+  on the server. The private gate now checks the source address, strips client identity headers, asks the Tailscale
+  auth helper, and requires `TAILNET_OWNER` (fail-closed). It was tested against a stub helper: owner 200, others
+  403, unset 403, spoofed header 403.
+- **Prose isn't a link.** The first rewriter also rewrote this site's `<code>site://…</code>` examples. Links now
+  only match right after a quote or `(`.
+- **Forest redirect trees.** In the `external` config (the private view), the forest prints a bare meta value as
+  text, so `\meta{redirect}{site://cloakaml/}` stayed unrewritten there. The link form `[cloakaml docs](site://cloakaml/)`
+  renders as an `href` and works in both configs (tested with a throwaway tree, outside the forest repo).
+- `demos` needs `ml_dir: ocaml`, which was known in M2 but missed in the new entry.
+- This site builds from GitHub, where `main` isn't pushed yet. Hence `preview --src ddm=.`.
+
+**Decisions:** D28–D33 (record). **Superseded:** `tailnet-owner`; the tailnet `bind`; `rewrite-links` as a
+workflow built-in.
+
+**Open questions raised:** whether previews should hide private views; the site map as the future status page.
+
+**For you (to-dos page):**
+- look at the preview;
+- for M5/M7: your Tailscale login, a Cloudflare token, and DNS for `the.cathe.dev` and `*.the.cathe.dev`.
+
+**Where the next session starts:** the shared-styling design session, with `bin/ddm preview --serve-only` running.

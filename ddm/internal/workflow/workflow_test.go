@@ -173,7 +173,7 @@ func TestExecuteFailures(t *testing.T) {
 		"failing command":  {{Kind: "run", Run: "exit 3"}},
 		"escaping output":  {{Kind: "output", Output: "../elsewhere"}},
 		"empty result":     {{Kind: "run", Run: "true"}},
-		"unfinished build": {{Kind: "builtin", Builtin: "rewrite-links"}},
+		"unfinished build": {{Kind: "builtin", Builtin: "md-ssg"}},
 		"mkdocs root dir":  {{Kind: "builtin", Builtin: "mkdocs-config", Params: map[string]string{"input_dir": "./"}}},
 	}
 	for name, steps := range cases {

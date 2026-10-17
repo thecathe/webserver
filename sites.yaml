@@ -11,6 +11,11 @@ system:
 
 domains: [cathe.dev, jpears.me]
 
+# Private mounts (access: private) live here and only here: the.cathe.dev and
+# its subdomains point at the server's tailnet address, and are served only to
+# your Tailscale identity.
+private_domain: the.cathe.dev
+
 taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
 
 workflows:
@@ -19,6 +24,7 @@ workflows:
   # copies assets and post-processes SVGs. --strict-private fails the build if
   # a visible tree links to a hidden one, so a non-private view fails closed.
   forester:
+    root_only: true   # links are root-absolute (base-url="/"): mount at / only
     env: { flake: "{{repo}}" }
     params: { config: forest.toml }
     steps:
@@ -59,10 +65,12 @@ workflows:
     steps:
       - output: "{{input_dir}}"
 
+  # Pages generated from this spec: the public directory (page: directory)
+  # or the private site map of every mount (page: map), plus the 404 page.
   site-directory:
+    params: { page: directory }
     steps:
       - builtin: site-directory
-        params: { domain: cathe.dev }
 
 sites:
   forest:
@@ -76,17 +84,24 @@ sites:
       public:  { workflow: forester }
       notes:   { workflow: forester }
       private: { workflow: forester }
+    # The first mount of a view is its canonical address: site://forest/...
+    # links resolve to forest.cathe.dev.
     mounts:
-      - { host: cathe.dev, entry: /@cathe/ }
       - { host: forest.cathe.dev, entry: /index/ }
+      - { host: cathe.dev, entry: /@cathe/ }
       - { host: jpears.me, entry: /@jpears/ }
       - { host: notes.cathe.dev, view: notes, entry: /index/ }
-      - { host: the.cathe.dev, view: private, entry: /index/, access: tailnet-owner }
+      - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
   docs:
-    workflow: site-directory
     indexed: false
-    mounts: [ { host: docs.cathe.dev } ]
+    views:
+      public:  { workflow: site-directory }
+      private: { workflow: site-directory, params: { page: map } }
+    mounts:
+      - { host: docs.cathe.dev }
+      # The full site map: every site, host and mount, public and private.
+      - { host: the.cathe.dev, path: sites, view: private, access: private }
 
   ddm:
     repo: cathe-org/dots
@@ -102,6 +117,14 @@ sites:
     taxa: [docs, project, tool]
     description: cloakaml API documentation
     mounts: [ { host: cloakaml.cathe.dev } ]
+
+  demos:
+    repo: thecathe/demos
+    workflow: ocaml-notebook
+    params: { ml_dir: ocaml }
+    taxa: [demo, project]
+    description: OCaml demos, rendered from their doc comments
+    mounts: [ { host: demos.cathe.dev } ]
 
   indimo:
     repo: thecathe/INDIMO

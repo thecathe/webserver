@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Decision record
@@ -165,6 +165,57 @@ alongside **cross-linking between subdomains**. `site://` links (D13) cover the 
 source of truth: palette, typography, the AI-generated marker, possibly a common header or nav. Each generator then
 gets an adapter. The design is open; see open questions and the roadmap.
 
+### D28. Links are resolved at publish time, in link positions only (2026-10-17, M3a)
+*Refines* D13. `site://name/path` is rewritten when a build is published, not by a workflow step, because the URL
+depends on the target (the server, or a local preview). The rules:
+- the same view if the target has one, else public;
+- the first mount of that view is canonical;
+- URLs are always absolute, because one build may be served on several hosts;
+- a publicly served build may never link to a private mount;
+- only text right after a quote or `(` is a link (attribute values, XML hrefs, JSON strings, CSS `url()`), so a page
+  documenting the syntax keeps its examples.
+
+`mount://host/path` names one exact mount, for ddm's generated pages. **Why:** builds stay target-neutral, and one
+build can be previewed and deployed without rebuilding. **Found:** the first version rewrote this site's own `<code>`
+examples.
+
+### D29. `access: public | private`, a private domain, and a private site map (2026-10-17, M3a)
+*Replaces* the `tailnet-owner` access value. A site-level `access:` is the default for its mounts.
+`private_domain: the.cathe.dev` is where every private mount must live, and no public mount may. The `docs` site
+gains a private view, the **site map** at `the.cathe.dev/sites/`: every site and mount, grouped by host, each marked
+public or private. **Why:** you asked to declare privacy in the yaml and never lose track of what's deployed. Tying
+privacy to one domain makes DNS simple (one record plus a wildcard to the tailnet IP), and makes a typo a validation
+error instead of an exposure.
+
+### D30. The private gate checks the source address, not a bind (2026-10-17, M3a)
+*Refines* D9. Private blocks abort non-Tailscale client addresses, strip any client-sent `Tailscale-Login`, ask
+`services.tailscaleAuth` via `forward_auth`, and return 403 unless the login equals `$TAILNET_OWNER` (unset: fail
+closed). **Why:** binding those blocks to the tailnet address can't coexist with the public blocks on `:443` under
+Linux socket rules (tested), so Caddy wouldn't start. **Rejected:** binding every public block to the public IP
+(the config then depends on the machine's addresses); a second Caddy instance just for the tailnet.
+
+### D31. Local preview, and M3 split around a styling session (2026-10-17, M3a)
+`ddm preview` publishes every site into `.ddm/www` and serves it on `http://<host>.localhost:8080`, using the same
+Caddyfile generator. M3 is split:
+1. **M3a:** one site of every kind published and previewable (forester, odoc, ocaml-notebook, plain-markdown mkdocs,
+   themed mkdocs, generated pages);
+2. then the shared-styling design session (D27), looking at real output;
+3. then **M3b:** everything else.
+
+**Why:** you wanted enough kinds of site to make the styling session meaningful, before doing the rest.
+
+### D32. ddm builds every site itself (2026-10-17)
+*Restates* D14 explicitly, after you asked. No content repo builds or uploads its own output: ddm clones it with one
+read-only token and runs the workflow on the server. **Why:** no per-repo secrets or deploy keys, a single write path
+into the server, and toolchains declared in one place. **Cost:** the server runs every toolchain and needs the CPU
+for the heaviest build. **Fallback, if a build outgrows the droplet:** ddm pulls a CI artifact with the same token.
+Still pull, still no secrets in content repos.
+
+### D33. Workflows can be `root_only` (2026-10-17, M3a)
+A workflow whose output links are root-absolute (forester) is marked `root_only: true`, and the spec rejects
+mounting it under a path prefix. **Why:** S2 showed forest output can't live under a prefix; this makes that a
+validation error instead of a broken site.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
@@ -194,3 +245,6 @@ instructions.
 | `DomainLink` placeholder links | D13 |
 | `ocaml` method chains into mkdocs; `generate_docs.py` stays Python | Kept, as the `ocaml-notebook` workflow |
 | Curriculum mode | D15 |
+| `access: tailnet-owner` | D29 (`access: private` + `private_domain`) |
+| Private blocks `bind` to the tailnet IP | D30 (source-address check) |
+| `rewrite-links` as a workflow built-in | D28 (a publish stage) |

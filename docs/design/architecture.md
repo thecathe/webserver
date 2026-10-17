@@ -4,12 +4,14 @@ generated:
   model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-16
+  edited: 2026-10-17
 ---
 
 # Architecture
 
-!!! warning "Design, not implemented"
+!!! warning "Partly implemented"
+    Building (M2), publishing, `site://` links and the generated Caddyfile (M3a) work, and can be previewed
+    locally. The daemon, its loops and the server itself (M5–M7) are still design.
 
 ```text
              this repo (spec + workflows + ddm + NixOS config)
@@ -21,10 +23,20 @@ generated:
    └──────┬───────────────────────────────────────┘
           │ systemd-run (throwaway user)
           ▼
-    nix develop <env> -c <steps>  ──► scratch output ──► /var/www/<view>/<site>/<sha>/
-                                                           └─ current → <sha>
+    nix develop <env> -c <steps>  ──► scratch output ──► /var/www/<view>/<site>/<time>-<sha>/
+                                                           └─ current → <time>-<sha>
    caddy.service (separate) serves /var/www/<view>/<site>/current per the generated Caddyfile
 ```
+
+## ddm builds everything itself
+
+Every site is **pulled**: ddm clones each repo (one read-only GitHub token for all of them), runs its workflow on
+the server, and publishes the result. No content repo builds its own output or pushes it anywhere, so none needs a
+deploy key or secret. The opposite model, where each repo's CI builds and uploads (the old per-repo Actions with
+`WEBSERVER_*` secrets), was rejected: a secret per repo, a write path into the server from many places, and
+toolchains scattered across CI configs (D14, D32). The cost is that the server needs every toolchain (Nix provides
+them per workflow) and enough CPU for the heaviest build. If a build ever outgrows the droplet, the fallback is
+still pull-shaped: ddm fetches a CI artifact with the same read-only token.
 
 ## Two loops
 
@@ -32,7 +44,7 @@ generated:
   toolchain, a new workflow env or a new ddm. Then it reconciles every site, because a workflow definition may have
   changed.
 - **Site loop.** For each site and view: if the repo's sha (or the workflow's definition) differs from the last
-  successful build, it syncs the checkout, runs the workflow, runs `rewrite-links`, publishes, regenerates the
+  successful build, it syncs the checkout, runs the workflow, publishes (resolving `site://` links), regenerates the
   Caddyfile and reloads Caddy. One site failing never blocks the others, as in the old `deploy.go`.
 
 ddm keeps a small state file (applied system sha; last built sha and result per site and view), so a restart picks up
@@ -53,20 +65,34 @@ reused). Then:
 ## Publish layout
 
 ```text
-/var/www/<view>/<site>/<sha>/    one directory per build
-/var/www/<view>/<site>/current   symlink to the live build
+/var/www/<view>/<site>/<UTC time>-<sha12>/   one directory per publish
+/var/www/<view>/<site>/current               symlink to the live one
 ```
 
-Publishing is an atomic symlink swap, and rolling a site back is one symlink. Nothing is ever deleted in place, which
-retires the risky `rm -rf "$TARGET"` pattern in the old Actions. Old builds are pruned, keeping the last few. Public
-host blocks only ever point into `/var/www/public` or `/var/www/notes`.
+Publishing copies the build, resolves its `site://` links for the target (D28), then swaps `current` by renaming a
+fresh symlink over it, which is atomic. Rolling a site back is one symlink. Nothing live is ever deleted in place,
+which retires the risky `rm -rf "$TARGET"` pattern in the old Actions. The newest three publishes are kept. Names
+lead with the time, so they sort by age, and republishing the same commit (because a spec change altered its links)
+gets a new directory rather than overwriting the live one.
+
+Implemented in `ddm/internal/publish` and `ddm/internal/links`.
 
 ## Caddy
 
-The Caddyfile is **generated** from `mounts`, replacing the old hand-written file (deleted, D19) and its per-request filesystem
-probing (`@has_odoc` / `@has_site`). Each mount becomes a host block (or a path inside one) rooted at the right
-`current`. `entry:` becomes `redir / <entry>`; a redirect, which spike S2 confirmed is all the forest needs (its links
-are root-absolute). Certificates keep coming from Cloudflare DNS-01, with a wildcard for `*.cathe.dev`.
+The Caddyfile is **generated** from `mounts` (`ddm/internal/caddygen`, `ddm caddyfile`), replacing the old
+hand-written file (deleted, D19) and its per-request filesystem probing (`@has_odoc` / `@has_site`).
+
+- **Certificates:** Cloudflare DNS-01 (`acme_dns cloudflare`). Each domain's apex gets its own block, and its direct
+  subdomains share one `*.domain` block, told apart by `host` matchers, so they share one wildcard certificate. The
+  private domain is grouped the same way, separately from the public domain it sits under.
+- **Mounts:** each becomes a `handle` (path `/`) or `handle_path` (a prefix), rooted at that view's `current`.
+  Longer paths come first. `entry:` is a `redir` on exactly `/`, which spike S2 confirmed is all the forest needs.
+- **404s:** every host shows the `docs` site's `404.html`. An unknown subdomain is a 404, not an empty page.
+- **Plugin:** the Cloudflare DNS module isn't in stock Caddy. This repo's flake builds `caddy.withPlugins` (exposed
+  as `packages.caddy`), the devShell uses it, and so will the server, so `caddy validate` on a laptop checks the
+  config the server will run.
+- **Preview:** the same generator, for `http://<host>.localhost:<port>` with no TLS or private gate
+  ([operations](../usage/operations.md#local-preview)).
 
 ## Private access
 
@@ -75,16 +101,33 @@ are root-absolute). Certificates keep coming from Cloudflare DNS-01, with a wild
 | Option | How | Who gets in | Identity known to the site? |
 |---|---|---|---|
 | A. Network only | DNS → the droplet's tailnet IP (100.x); Caddy `bind <tailnet IP>` | any tailnet device the ACLs let through | no; "can reach it" is the only signal |
-| **B. tailscaled whois (chosen)** | as A, plus Caddy `forward_auth` to Tailscale's auth helper (`services.tailscaleAuth`), which asks the local tailscaled who owns the peer's IP | only your login, on your user-owned devices; tagged devices have no user and are refused | yes: login, name. Could back a `/whoami` for the widget |
+| **B. tailscaled whois (chosen)** | DNS → the tailnet IP; Caddy refuses non-tailnet source addresses, then `forward_auth` to Tailscale's auth helper (`services.tailscaleAuth`), which asks the local tailscaled who owns the peer's IP | only your login, on your user-owned devices; tagged devices have no user and are refused | yes: login, name. Could back a `/whoami` for the widget |
 | C. `caddy-tailscale` plugin | Caddy joins the tailnet as its own node; `tailscale_auth` directive | by login | yes. But the plugin is experimental, needs a custom build and has its own node keys |
 | D. `tsidp` + oauth2-proxy | Tailscale as an OIDC provider; a real login flow with cookies | by login | yes. Overkill for one static site |
 
 Not suitable: `tailscale serve` adds identity headers, but only on its own `*.ts.net` name. Funnel makes things
 public.
 
-Why B: stock Caddy, your own hostname and cert, and per-user identity. The `bind` means the public interface never
-answers for `the.cathe.dev`, even with a forged `Host:` header. To confirm in M5: `services.tailscaleAuth` on the
-pinned nixpkgs, and that Caddy's `forward_auth` can reach its socket.
+Why B: stock Caddy (plus the DNS plugin), your own hostname and certificate, and per-user identity.
+
+**How the gate works (as generated, D30).** Every block on the private domain runs, in order:
+1. `abort` unless the client address is a Tailscale one (`100.64.0.0/10`, `fd7a:115c:a1e0::/48`);
+2. drop any client-sent `Tailscale-Login` header;
+3. `forward_auth` to the auth helper's socket, copying back the `Tailscale-Login` it reports;
+4. 403 unless that login equals `TAILNET_OWNER`, an environment variable the NixOS module sets. If it is unset,
+   nobody gets in: the gate fails closed.
+
+The original design bound these blocks to the tailnet address (`bind 100.x`). That turned out to be impossible
+alongside the public blocks: on Linux, a socket bound to one address can't listen on a port that a wildcard socket
+already holds (checked with a two-socket test), so Caddy would fail to start. The source-address check gives the same
+guarantee from the public side. A forged `Host:` header from the internet is aborted at step 1, and a forged source
+address can't complete a TCP handshake. Steps 2–4 were tested against a stub auth helper: the owner gets 200, anyone
+else 403, an unset owner 403, and a spoofed header 403. The real helper's socket path is confirmed in M5.
+
+**What's private is declared in `sites.yaml`** (D29): `access: private` on a site or a mount, and every private mount
+must sit on `private_domain` (`the.cathe.dev`). The spec refuses a private mount anywhere else and a public mount on
+it, so a typo can't move a site across the line. The full **site map** at `the.cathe.dev/sites/` lists every site
+and mount, each marked public or private, and is regenerated on every build.
 
 The **public/private toggle** comes almost free, because paths match across views: the same path on another host.
 An identity-aware widget is deferred (decision D10, spike S4).

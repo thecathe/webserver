@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 
+	"ddm/internal/fsutil"
 	"ddm/internal/gitsync"
 	"ddm/internal/spec"
 	"ddm/internal/workflow"
@@ -101,57 +101,8 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 	if err := os.RemoveAll(dest); err != nil {
 		return nil, err
 	}
-	if err := copyTree(built, dest); err != nil {
+	if err := fsutil.CopyTree(built, dest); err != nil {
 		return nil, fmt.Errorf("copying result: %w", err)
 	}
 	return &Result{Commit: commit, Dir: dest}, nil
-}
-
-// copyTree copies src to dst, keeping symlinks as symlinks.
-func copyTree(src, dst string) error {
-	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		target := filepath.Join(dst, rel)
-		info, err := d.Info()
-		if err != nil {
-			return err
-		}
-		switch {
-		case d.IsDir():
-			return os.MkdirAll(target, 0o755)
-		case info.Mode()&fs.ModeSymlink != 0:
-			link, err := os.Readlink(path)
-			if err != nil {
-				return err
-			}
-			return os.Symlink(link, target)
-		case info.Mode().IsRegular():
-			return copyFile(path, target, info.Mode().Perm())
-		default:
-			return fmt.Errorf("%s: not a regular file, directory or symlink", path)
-		}
-	})
-}
-
-func copyFile(src, dst string, perm fs.FileMode) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-		return err
-	}
-	return out.Close()
 }

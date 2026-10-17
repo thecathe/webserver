@@ -2,9 +2,12 @@
 // with its workflow, and (in later milestones) publishes it and keeps the
 // server's NixOS config current.
 //
-//	ddm check [spec]          validate the spec and summarise what it declares
-//	ddm sites [spec]          list every mount: host, path, site, view, access
-//	ddm build [flags] <site>  build one view of a site locally, without publishing
+//	ddm check [spec]            validate the spec and summarise what it declares
+//	ddm sites [spec]            list every mount: host, path, site, view, access
+//	ddm build [flags] <site>    build one view of a site locally, without publishing
+//	ddm publish [flags] <site>  build one view of a site and publish it
+//	ddm caddyfile [flags]       print the Caddyfile generated from the mounts
+//	ddm preview [flags] [site…] build and publish sites locally, then serve them
 //
 // spec defaults to sites.yaml in the current directory.
 package main
@@ -31,7 +34,14 @@ commands:
   check [spec]          validate the spec and summarise what it declares
   sites [spec]          list every mount (host, path, site, view, access)
   build [flags] <site>  build one view of a site, without publishing
-                        (ddm build -h for flags)
+  publish [flags] <site>
+                        build one view of a site, then publish it
+  caddyfile [flags]     print the Caddyfile generated from the mounts
+  preview [flags] [site ...]
+                        build and publish sites into .ddm/www, then serve
+                        them all on http://<host>.localhost:8080
+
+<command> -h lists a command's flags.
 
 spec defaults to sites.yaml.
 `
@@ -67,7 +77,13 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 		return 0
 	case "build":
-		return cmdBuild(rest, stdout, stderr)
+		return cmdBuild(rest, stdout, stderr, false)
+	case "publish":
+		return cmdBuild(rest, stdout, stderr, true)
+	case "caddyfile":
+		return cmdCaddyfile(rest, stdout, stderr)
+	case "preview":
+		return cmdPreview(rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "ddm: unknown command %q\n\n%s", cmd, usage)
 		return 2
@@ -129,8 +145,12 @@ func (s setFlags) Set(v string) error {
 	return nil
 }
 
-func cmdBuild(args []string, stdout, stderr io.Writer) int {
-	fs := flag.NewFlagSet("build", flag.ContinueOnError)
+func cmdBuild(args []string, stdout, stderr io.Writer, publishToo bool) int {
+	name := "build"
+	if publishToo {
+		name = "publish"
+	}
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	specPath := fs.String("spec", "sites.yaml", "path to the site spec")
 	view := fs.String("view", "public", "which view to build")
@@ -140,8 +160,16 @@ func cmdBuild(args []string, stdout, stderr io.Writer) int {
 	dryRun := fs.Bool("dry-run", false, "print the resolved plan without running it")
 	set := setFlags{}
 	fs.Var(set, "set", "override a workflow param, key=value (repeatable)")
+	var tf *targetFlags
+	if publishToo {
+		tf = addTargetFlags(fs, "preview")
+	}
 	fs.Usage = func() {
-		fmt.Fprint(stderr, "usage: ddm build [flags] <site>\n\nBuilds one view of a site into <work>/out/<site>/<view>/<commit>/. Nothing is published.\n\nflags:\n")
+		if publishToo {
+			fmt.Fprint(stderr, "usage: ddm publish [flags] <site>\n\nBuilds one view of a site, then publishes it to <www>/<view>/<site>/ and points current at it.\n\nflags:\n")
+		} else {
+			fmt.Fprint(stderr, "usage: ddm build [flags] <site>\n\nBuilds one view of a site into <work>/out/<site>/<view>/<commit>/. Nothing is published.\n\nflags:\n")
+		}
 		fs.PrintDefaults()
 	}
 
@@ -174,16 +202,33 @@ func cmdBuild(args []string, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	res, err := build.Run(ctx, build.Request{
+	req := build.Request{
 		Spec: s, Site: site, View: *view, System: system, Work: *work,
 		Src: *src, Branch: *branch, Overrides: set, DryRun: *dryRun, Log: stdout,
-	})
+	}
+	if !publishToo {
+		res, err := build.Run(ctx, req)
+		if err != nil {
+			fmt.Fprintf(stderr, "ddm: build %s (%s): %v\n", site, *view, err)
+			return 1
+		}
+		if !*dryRun {
+			fmt.Fprintf(stdout, "built %s (%s) at %s\n  -> %s\n", site, *view, res.Commit, res.Dir)
+		}
+		return 0
+	}
+	t, err := tf.resolve(s, *work)
 	if err != nil {
-		fmt.Fprintf(stderr, "ddm: build %s (%s): %v\n", site, *view, err)
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 2
+	}
+	dest, err := buildAndPublish(ctx, req, t)
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: publish %s (%s): %v\n", site, *view, err)
 		return 1
 	}
-	if !*dryRun {
-		fmt.Fprintf(stdout, "built %s (%s) at %s\n  -> %s\n", site, *view, res.Commit, res.Dir)
+	if dest != "" {
+		fmt.Fprintf(stdout, "published %s (%s)\n  -> %s\n", site, *view, dest)
 	}
 	return 0
 }
