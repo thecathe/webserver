@@ -166,18 +166,66 @@ Raised 2026-10-17, looking at the preview.
   with the `odoc` workflow (or tagged with a new taxon, e.g. `ocaml`), linking each package's own page.
   - **Lean:** a `site-directory` page filtered by taxon, served as one of the section indexes below (e.g.
     `sites.cathe.dev/ocaml/`). Each entry links with `mount://` straight to the package page.
-- **Splitting `Showable` and `Thing` into their own opam package(s).** This works with ddm as a separate repo, so a
-  separate site. But odoc only resolves cross-package references between packages built **together**. Built
-  separately, membranes' docs would show `Showable.t` as unlinked text, not a link to the shared library's docs.
-  - Option 1, separate sites: simplest. Cross-package type links don't resolve, but prose links via `site://` do.
-  - Option 2, one combined OCaml docs build: a workflow that checks out several repos into one dune workspace and
-    runs `dune build @doc` once, giving one site where everything cross-links. ddm sites have one `repo` today, so
-    this needs `repos:` or a workspace repo with git submodules.
-  - Option 3, odoc 3's driver can link to separately built docs (remapping a dependency to another URL). To verify
-    with the odoc in nixpkgs.
-  - **Lean:** separate sites until the split happens, then try option 3, and fall back to option 2.
-  - **Also:** `#ocaml-docs` will need the new package installed (or pinned from its repo) for membranes and
-    mebi_plugin to build.
+- **Splitting `Showable` and `Thing` into their own opam package(s)** (elaborated 2026-10-17). odoc only links
+  `Showable.t` in membranes' docs if it has `Showable`'s docs **in the same build**. Built separately, odoc writes
+  the reference as unlinked text (an `xref-unresolved` span), so there is no URL anywhere for ddm to fix. The
+  options, from most to least linking:
+  1. **An OCaml docs bundle: one dune workspace.** This is less ad hoc than it sounds: it is dune's standard way to
+     build several projects together (the same mechanism opam-monorepo uses). A directory holding a
+     `dune-workspace` file and each repo as a subdirectory, each with its own `dune-project`, is one workspace:
+     `dune build @doc` at its root documents every package, cross-linked. A library found in the workspace (your
+     `showable`) is used in place of an installed one, so membranes needs no change.
+     - ddm side: a site with several `repos:` (or a workflow that clones the others), plus a two-line
+       `dune-workspace`. A modest feature, since gitsync already does single repos.
+     - Payoff: the bundle's odoc root page **is** the collated "OCaml package documentation" page. Each project
+       keeps its host as a mount of the one build with an `entry`, e.g. `cloakaml.cathe.dev` → `/cloakaml/`, just as
+       the forest serves one build on three hosts. odoc links are relative, so this works.
+     - Costs:
+       - every project must build in one environment (one compiler, the union of dependencies in
+         `#ocaml-docs`). If mebi_plugin needs Rocq, the env grows by Rocq;
+       - any repo's push rebuilds the whole bundle;
+       - one broken project fails the bundle, unless the workflow drops failing projects and retries.
+  2. **Vendor the shared library into each project** (a git submodule or a pinned copy in the repo). Each site's
+     own build includes `showable`'s docs, so links work, but those docs are duplicated per site and the copies
+     can drift.
+  3. **odoc 3 cross-build linking.** odoc 3's driver can map a dependency's references to another site's URL (built
+     for ocaml.org). As far as I know `dune build @doc` doesn't expose this, so it would mean driving odoc
+     directly. Unverified.
+  4. **ddm rewrites unresolved references after the build.** It would map each `xref-unresolved` `Showable.t` to
+     `site://showable/Showable/index.html#type-t`. Workable, since the span carries the path, but heuristic (type,
+     value and module anchors differ) and tied to odoc's HTML. Messy, as you suspected.
+  5. **Plain text.** The fallback, and the state of things today.
+
+  - **Lean:** option 1, when the split happens. It is the only one that gives real odoc links with no per-link
+    machinery, and it also produces the collated page. Spike it with cloakaml plus a stub second package first.
+    Not committed to: plain text remains acceptable.
+  - **Also:** for the projects' own builds (not docs), membranes and mebi_plugin depend on the new package as
+    usual (opam pin or release). The bundle only concerns docs.
+
+## INDIMO's notes: port to forester, into the main forest?
+
+Raised 2026-10-17. You're tempted to port `.md` notes (INDIMO first) to `.tree` files, and unsure whether that means
+separate forests or one.
+
+- **Lean: one forest**, with INDIMO's trees under a folder such as `trees/indimo/`, tagged `indimo`:
+  - your `forest.toml` already declares an `indimo` tag page (a build warns that no tree carries it yet);
+  - folder rules can tag everything in that folder automatically;
+  - the notes view's tag filter (M4) and `private` tagging decide what is public;
+  - links between INDIMO notes and the rest of your notes become ordinary forester links rather than `site://`;
+  - one theme, so styling is solved once;
+  - the build grows, but the forest takes about 10 s today.
+- **`indimo.cathe.dev` can stay** as a mount of the forest landing on the tag page (`entry: /indimo/` or wherever the
+  tag page lives), retiring the separate mkdocs site.
+- **When a separate forest is better:** if other people edit INDIMO's notes. Collaborators would otherwise need
+  access to your personal forest. A separate forest repo (same template, same theme) is then its own ddm site,
+  linked with `site://`.
+- **Porting:** mechanical for plain markdown (headings, lists, links, maths), so it can be scripted (e.g. pandoc to
+  a rough draft plus hand fixes) in a forest-repo branch. It belongs with the forest work (M4). The mkdocs
+  `indimo` site is a useful sample for the styling session until then.
+- **Open:**
+  - Is anyone else editing INDIMO?
+  - Should INDIMO's notes be public, notes-view only, or private?
+  - Do other `.md` note repos follow the same path?
 
 ## Site navigation: a shared header, and section indexes
 
@@ -221,8 +269,7 @@ Raised 2026-10-17. This belongs to the shared-styling session (D27), which it ex
   theme XSLT), odoc output and other generators.
 - **Lean:** one shared CSS file, served from this site or a common assets mount, with each generator adding the
   class and data attribute.
-- **Effort level:** recorded from 2026-10-17 (you stated `medium`). It is the effort of the session that last edited
-  the page; older untouched pages keep `unrecorded`.
+- **Effort level:** answered: every session so far ran at `medium`, and every page now records it.
 
 ## `cathe.work` sunset
 

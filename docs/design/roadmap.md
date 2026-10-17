@@ -78,7 +78,7 @@ Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds si
 - the **shared header toolbar** and **section indexes**, including `docs.cathe.dev` → `sites.cathe.dev`
   ([site navigation](open-questions.md#site-navigation-a-shared-header-and-section-indexes));
 - how far each generator can be themed, odoc especially;
-- the collated OCaml docs page ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
+- the collated OCaml docs page and the docs-bundle idea ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
 
 ## M3b: the rest
 - Styling adapters per generator, as designed in the session.
@@ -93,6 +93,8 @@ Each repo gets its own branch and its own `DEVELOPMENT.md` entry.
   set to the public host. Point the public and notes views in `sites.yaml` at it (`params: { config:
   forest-public.toml }`), then rebuild and check that no other `@…` directory appears in the output. **This unblocks
   publishing the public views (D25).**
+- **forest**: port INDIMO's notes into the forest, if you decide to
+  ([open question](open-questions.md#indimos-notes-port-to-forester-into-the-main-forest)).
 - **forest**: taxa for posts, papers and works. A start on `@cathe` (the `cathe.dev` landing page) whenever you've
   decided what goes there.
 - **vscode-forester** *(only if the hand-kept configs drift)*: a `site.yaml` reader and per-view TOML generator (D12).
