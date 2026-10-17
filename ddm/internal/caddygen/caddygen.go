@@ -120,6 +120,15 @@ func Generate(s *spec.Spec, t Target) string {
 		}
 		w(0, "}")
 	}
+	if t.Preview {
+		// Any other host on the port gets the 404 page, as an unknown
+		// subdomain does in prod.
+		w(0, "")
+		w(0, "http://:%d {", t.Port)
+		w(1, "import errors")
+		w(1, "error 404")
+		w(0, "}")
+	}
 	return b.String()
 }
 

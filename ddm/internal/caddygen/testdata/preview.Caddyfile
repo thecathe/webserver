@@ -76,3 +76,8 @@ http://the.cathe.dev.localhost:8080 {
 		file_server
 	}
 }
+
+http://:8080 {
+	import errors
+	error 404
+}
