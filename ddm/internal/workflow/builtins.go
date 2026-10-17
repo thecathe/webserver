@@ -24,7 +24,6 @@ type BuiltinFunc func(ctx context.Context, a BuiltinArgs) error
 // checks this), so a spec that validates never names a missing builtin.
 var Builtins = map[string]BuiltinFunc{
 	"mkdocs-config":  mkdocsConfig,
-	"rewrite-links":  notYet("M3"),
 	"site-directory": notYet("M3"),
 	"md-ssg":         notYet("a later milestone"),
 }

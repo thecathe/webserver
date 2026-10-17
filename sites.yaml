@@ -11,6 +11,11 @@ system:
 
 domains: [cathe.dev, jpears.me]
 
+# Private mounts (access: private) live here and only here: the.cathe.dev and
+# its subdomains point at the server's tailnet address, and are served only to
+# your Tailscale identity.
+private_domain: the.cathe.dev
+
 taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
 
 workflows:
@@ -19,6 +24,7 @@ workflows:
   # copies assets and post-processes SVGs. --strict-private fails the build if
   # a visible tree links to a hidden one, so a non-private view fails closed.
   forester:
+    root_only: true   # links are root-absolute (base-url="/"): mount at / only
     env: { flake: "{{repo}}" }
     params: { config: forest.toml }
     steps:
@@ -81,7 +87,7 @@ sites:
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: jpears.me, entry: /@jpears/ }
       - { host: notes.cathe.dev, view: notes, entry: /index/ }
-      - { host: the.cathe.dev, view: private, entry: /index/, access: tailnet-owner }
+      - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
   docs:
     workflow: site-directory
@@ -102,6 +108,13 @@ sites:
     taxa: [docs, project, tool]
     description: cloakaml API documentation
     mounts: [ { host: cloakaml.cathe.dev } ]
+
+  demos:
+    repo: thecathe/demos
+    workflow: ocaml-notebook
+    taxa: [demo, project]
+    description: OCaml demos, rendered from their doc comments
+    mounts: [ { host: demos.cathe.dev } ]
 
   indimo:
     repo: thecathe/INDIMO

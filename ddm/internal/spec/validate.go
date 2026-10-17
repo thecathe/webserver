@@ -58,6 +58,13 @@ func (s *Spec) validateDomains(p *problems) {
 		}
 		seen[d] = true
 	}
+	if pd := s.PrivateDomain; pd != "" {
+		if !hostRE.MatchString(pd) {
+			p.add("private_domain: %q is not a valid lowercase domain name", pd)
+		} else if s.domainOf(pd) == "" {
+			p.add("private_domain: %q is not under any declared domain (%s)", pd, strings.Join(s.Domains, ", "))
+		}
+	}
 }
 
 func (s *Spec) validateWorkflows(p *problems) {
@@ -167,6 +174,9 @@ func (s *Spec) validateSites(p *problems) {
 				p.add("%s.views.%s: unknown workflow %q", where, vname, v.Workflow)
 			}
 		}
+		if !validAccess(site.Access) {
+			p.add("%s: access %q must be %q or %q", where, site.Access, AccessPublic, AccessPrivate)
+		}
 		for _, t := range site.Taxa {
 			if len(s.Taxa) > 0 && !slices.Contains(s.Taxa, t) {
 				p.add("%s: taxon %q is not declared in taxa", where, t)
@@ -188,8 +198,13 @@ func (s *Spec) validateSites(p *problems) {
 			if m.Entry != "" && !strings.HasPrefix(m.Entry, "/") {
 				p.add("%s: entry %q must start with /", at, m.Entry)
 			}
-			if m.Access != AccessPublic && m.Access != AccessTailnetOwner {
-				p.add("%s: access %q must be %q or %q", at, m.Access, AccessPublic, AccessTailnetOwner)
+			if !validAccess(m.Access) {
+				p.add("%s: access %q must be %q or %q", at, m.Access, AccessPublic, AccessPrivate)
+			} else if hostRE.MatchString(m.Host) {
+				s.validateAccessHost(p, at, m)
+			}
+			if v, ok := site.Views[m.View]; ok && s.Workflows[v.Workflow].RootOnly && m.Path != "/" {
+				p.add("%s: workflow %s is root_only (its links are root-absolute), so it can't be mounted at path %s", at, v.Workflow, m.Path)
 			}
 			// One host+path serves exactly one thing, whatever its view.
 			k := mountKey{m.Host, m.Path}
@@ -200,6 +215,28 @@ func (s *Spec) validateSites(p *problems) {
 			}
 		}
 	}
+}
+
+func validAccess(a string) bool { return a == AccessPublic || a == AccessPrivate }
+
+// validateAccessHost keeps private mounts on the private domain and public
+// mounts off it, so a typo can't publish something meant to stay private.
+func (s *Spec) validateAccessHost(p *problems, at string, m Mount) {
+	onPrivate := s.IsPrivateHost(m.Host)
+	switch {
+	case m.Access == AccessPrivate && s.PrivateDomain == "":
+		p.add("%s: access is private, but no private_domain is declared", at)
+	case m.Access == AccessPrivate && !onPrivate:
+		p.add("%s: private mounts must be on %s or a subdomain of it, not %q", at, s.PrivateDomain, m.Host)
+	case m.Access == AccessPublic && onPrivate:
+		p.add("%s: %q is on the private domain, so its access must be private", at, m.Host)
+	}
+}
+
+// IsPrivateHost reports whether host is the private domain or under it.
+func (s *Spec) IsPrivateHost(host string) bool {
+	pd := s.PrivateDomain
+	return pd != "" && (host == pd || strings.HasSuffix(host, "."+pd))
 }
 
 // domainOf returns the declared domain host falls under, or "".

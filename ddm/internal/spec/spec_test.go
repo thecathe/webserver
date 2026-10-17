@@ -9,14 +9,14 @@ import (
 // base is a small valid spec; cases below each break one thing.
 const base = `
 domains: [cathe.dev, jpears.me]
+private_domain: the.cathe.dev
 taxa: [docs, notes]
 workflows:
   forester:
     env: { flake: "{{repo}}" }
+    root_only: true
     steps:
       - run: forester build
-      - builtin: rewrite-links
-        unless: { view: private }
       - output: output/
   mkdocs:
     steps:
@@ -30,7 +30,7 @@ sites:
       private: { workflow: forester, params: { view: private } }
     mounts:
       - { host: jpears.me, entry: /@jpears/ }
-      - { host: the.cathe.dev, view: private, access: tailnet-owner }
+      - { host: the.cathe.dev, view: private, access: private }
   docs:
     repo: thecathe/docs
     workflow: mkdocs
@@ -61,8 +61,25 @@ func TestValid(t *testing.T) {
 	if time.Duration(s.System.Poll) != 10*time.Minute {
 		t.Errorf("poll default: got %s", s.System.Poll)
 	}
+	if got := s.Sites["forest"].Mounts[1].Access; got != AccessPrivate {
+		t.Errorf("mount access: got %q", got)
+	}
 	if !docs.IsIndexed() {
 		t.Errorf("sites are indexed by default")
+	}
+}
+
+// A site-level access is every mount's default; a mount can override it.
+func TestSiteAccessDefault(t *testing.T) {
+	src := strings.Replace(base, "    taxa: [docs]\n    mounts: [ { host: docs.cathe.dev, path: guide/ } ]",
+		"    access: private\n    mounts: [ { host: docs.the.cathe.dev }, { host: docs.cathe.dev, access: public } ]", 1)
+	s, err := Parse([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ms := s.Sites["docs"].Mounts
+	if ms[0].Access != AccessPrivate || ms[1].Access != AccessPublic {
+		t.Errorf("got %q, %q; want private, public", ms[0].Access, ms[1].Access)
 	}
 }
 
@@ -92,7 +109,13 @@ func TestInvalid(t *testing.T) {
 		{"unknown builtin", "builtin: mkdocs-config", "builtin: mkdocs-magic", `unknown builtin "mkdocs-magic"`},
 		{"bad site name", "  docs:\n    repo", "  Docs_Site:\n    repo", "sites.Docs_Site: name must match"},
 		{"bad entry", "entry: /@jpears/", "entry: \"@jpears/\"", "must start with /"},
-		{"bad access", "access: tailnet-owner", "access: everyone", `access "everyone"`},
+		{"bad access", "access: private }", "access: everyone }", `access "everyone"`},
+		{"bad site access", "taxa: [docs]\n    mounts", "taxa: [docs]\n    access: secret\n    mounts", `sites.docs: access "secret"`},
+		{"private off the private domain", "host: the.cathe.dev, view: private", "host: secret.cathe.dev, view: private", `private mounts must be on the.cathe.dev`},
+		{"public on the private domain", "host: docs.cathe.dev, path: guide/", "host: docs.the.cathe.dev, path: guide/", `"docs.the.cathe.dev" is on the private domain`},
+		{"private without a private domain", "private_domain: the.cathe.dev\n", "", "no private_domain is declared"},
+		{"private domain outside domains", "private_domain: the.cathe.dev", "private_domain: the.cathe.work", `private_domain: "the.cathe.work" is not under`},
+		{"root_only under a path", "{ host: jpears.me, entry: /@jpears/ }", "{ host: jpears.me, path: forest, entry: /@jpears/ }", "root_only"},
 		{"no mounts", "    mounts: [ { host: docs.cathe.dev, path: guide/ } ]\n", "", "no mounts"},
 		{"bad repo", "repo: thecathe/forest", "repo: forest", `repo "forest" must be owner/name`},
 		{"use unknown", "- builtin: mkdocs-config", "- use: nope", `uses unknown workflow "nope"`},
