@@ -52,8 +52,9 @@ move it to the [decision record](record.md) and note it in the [development log]
 ## Forest configs: `forest-public.toml` now, `site.yaml` later?
 
 - **Decided (D26):** start with a hand-made `forest-public.toml` next to `forest.toml`.
-- **Answered (D39):** no exception mechanism is needed. `@jpears` has no redirect meta and `@cathe` is an
-  `Alias`, so following redirects keeps both. Three people without a redirect meta remain public (to-dos).
+- **Answered (D39, D42):** following redirects keeps `@jpears` and `@cathe`; and unpublished taxa (a fork
+  addition) keep every other person off the public forest, redirect or not, with `publish = ["@jpears"]` as the
+  exception list.
 - **Later question:** whether to generate the TOMLs from a forest `site.yaml` (D12). Only worth it if the two hand-kept
   files drift. If so, the yaml holds views and the content model, and every TOML (dev included) is generated.
 - **Stake:** editor tooling (forest-keeper, vscode-forester) must keep finding a config. Check what it reads before

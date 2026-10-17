@@ -561,3 +561,40 @@ Branches: `feat/forest-public` in the **forest** repo, and `feat/forest-public-v
 - Three people have no redirect meta and so stay public (to-dos).
 - The forest has `taxon-notes` pages (`\taxon{Notes}`/`{Note}`) besides the `notes` tag (3 trees). `notes.cathe.dev`
   uses the tag.
+
+---
+
+## 2026-10-17 (later): the toolbar switch, private repos, unpublished people
+
+Branches:
+- here: `feat/bar-switch`;
+- forest: `feat/people-private`;
+- ocaml-forester: `feat/unpublished-taxon`;
+- vscode-forester: `feat/unpublished-taxa`.
+
+All merged locally; nothing pushed. **Feature** + **Design**.
+
+**Toolbar (D41).**
+- **Private pages** get a fixed `public` button, greyed out when the page has no public version. ddm checks it
+  against the public build's page list, which is private-only data.
+- **Public pages** get a `private` button only in a local preview; production can't produce it.
+- **Status line:** public pages show the repo only for repos GitHub serves publicly (checked anonymously, failing
+  closed), so `thecathe/forest` no longer appears on `indimo.cathe.dev`.
+- Checked in Chromium screenshots: greyed on `the.cathe.dev/@lbocchi/`, active on `the.cathe.dev/indimo/`, preview
+  button and no repo on `forest.cathe.dev/indimo/`.
+
+**People private by default (D42).**
+- **First try:** a `hide` tag on `trees/people`. It failed `--strict-private` on every paper and project naming a
+  person, because hiding treats links as leaks and also overrides redirects.
+- **The fork:** `[forest.taxon.<T>] unpublished = true, publish = [...]`. Precedence is: hide tag, then redirect,
+  then unpublished. An unpublished tree is not built and is filtered from backmatter; links to it are plain text, a
+  full transclusion of it is empty, and it isn't reported as a leak. 3 commits with tests.
+- **`forest_gen.py`** leaves unpublished trees out of the timeline and the taxa index.
+- **Forest:** `forest-public.toml` sets it for Person, with `publish = ["@jpears"]`.
+
+  A local build of the forest (both inputs overridden) passes `--strict-private`, with only `@jpears` and `@cathe`
+  pages left. Other names appear only as plain-text author lists on papers.
+- **Project taxons** on `indimo` and `mebi`.
+
+**For you:** push the three repos and bump the forest's flake lock (to-dos). Until then, the preview's public
+forest is built with the old fork.

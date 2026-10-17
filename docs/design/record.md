@@ -281,6 +281,32 @@ get plain HTML with the same look. **Why:** Chromium is removing XSLT, and this 
 fork. It takes about 2 s for 150 trees. **Rejected for now:** a static-HTML mode in the fork (more work, revisit if
 upstream ships one); an in-page XSLT polyfill.
 
+### D41. The toolbar's switch, and no private repos on public pages (2026-10-17)
+*Refines* D36. The view list becomes one fixed switch: on private pages a `public` button, greyed out when the page
+has no public version (checked against the public build's page list); on public pages a `private` button **only in
+a local preview**, for testing, and structurally absent in production. Public status files drop the repo, branch and
+commit of any repo GitHub doesn't serve anonymously, failing closed. **Why:** your requests after seeing
+`thecathe/forest` (a private repo) on `indimo.cathe.dev`.
+
+### D42. No person is public unless listed (2026-10-17)
+*Supersedes* D39's "still public" caveat. The forester fork gains **unpublished taxa**:
+
+```toml
+[forest.taxon.Person]
+unpublished = true
+publish = ["@jpears"]
+```
+
+A Person with a `\meta{redirect}` still redirects. Any other Person not in `publish` is not built, is left out of
+backlinks, related and contributions, and links to them (author credits included) render as plain text. A full
+transclusion of them renders nothing, and the forest's generated timeline skips them (`forest_gen.py`). It isn't a
+`--strict-private` leak, since nothing about them is published. **Why:** you never want a person's page public,
+including before you've set up their redirect. **Rejected:** a `hide` tag on `trees/people` (tested). Hiding makes
+every link to a person a leak, so the build fails, and it overrides redirects. **Verified:** on your forest, the only
+people pages left are `@jpears` and `@cathe` (an `Alias`); no output file contains any other person's address; the
+build passes `--strict-private`. Fork tests cover planting, redirect precedence, the `publish` list, plain-text
+links, backlinks, transclusion and config parsing.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
