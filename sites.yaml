@@ -65,10 +65,12 @@ workflows:
     steps:
       - output: "{{input_dir}}"
 
+  # Pages generated from this spec: the public directory (page: directory)
+  # or the private site map of every mount (page: map), plus the 404 page.
   site-directory:
+    params: { page: directory }
     steps:
       - builtin: site-directory
-        params: { domain: cathe.dev }
 
 sites:
   forest:
@@ -92,9 +94,14 @@ sites:
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
   docs:
-    workflow: site-directory
     indexed: false
-    mounts: [ { host: docs.cathe.dev } ]
+    views:
+      public:  { workflow: site-directory }
+      private: { workflow: site-directory, params: { page: map } }
+    mounts:
+      - { host: docs.cathe.dev }
+      # The full site map: every site, host and mount, public and private.
+      - { host: the.cathe.dev, path: sites, view: private, access: private }
 
   ddm:
     repo: cathe-org/dots

@@ -58,6 +58,26 @@ func TestResolve(t *testing.T) {
 		{"forest", "public", "secret", "/", "", "is private"},                                 // never leak a private host
 		{"forest", "public", "nope", "/", "", `no site named "nope"`},
 	}
+	mounts := []struct {
+		from, view, host, path string
+		want, wantErr          string
+	}{
+		{"forest", "public", "jpears.me", "/@jpears/", "https://jpears.me/@jpears/", ""},
+		{"forest", "public", "docs.cathe.dev", "", "https://docs.cathe.dev/", ""},
+		{"forest", "private", "secret.the.cathe.dev", "/", "https://secret.the.cathe.dev/", ""},
+		{"forest", "public", "secret.the.cathe.dev", "/", "", "is private"},
+		{"forest", "public", "nope.cathe.dev", "/", "", "nothing is mounted"},
+	}
+	for _, c := range mounts {
+		got, err := r.ResolveMount(c.from, c.view, c.host, c.path)
+		if c.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+				t.Errorf("mount://%s: want error %q, got %q, %v", c.host, c.wantErr, got, err)
+			}
+		} else if err != nil || got != c.want {
+			t.Errorf("mount://%s%s: got %q, %v; want %q", c.host, c.path, got, err, c.want)
+		}
+	}
 	for _, c := range cases {
 		got, err := r.Resolve(c.from, c.view, c.target, c.path)
 		if c.wantErr != "" {
@@ -82,6 +102,7 @@ func TestRewrite(t *testing.T) {
 		"page.html":       `<a href="site://forest/index/">forest</a> <a href='site://guide/a.html#x'>guide</a>`,
 		"style.css":       `a { background: url(site://cloakaml/logo.svg); }`,
 		"notes.txt":       `site://cloakaml/ stays: not a rewritable type`,
+		"map.html":        `<a href="mount://jpears.me/@jpears/">jpears.me</a>`,
 	}
 	for name, body := range files {
 		path := filepath.Join(dir, name)
@@ -92,14 +113,15 @@ func TestRewrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n != 5 {
-		t.Errorf("rewrote %d links, want 5", n)
+	if n != 6 {
+		t.Errorf("rewrote %d links, want 6", n)
 	}
 	want := map[string]string{
 		"index/index.xml": `<f:link href="https://cloakaml.cathe.dev/" type="external">cloakaml</f:link><f:link href="https://cloakaml.cathe.dev/">bare</f:link>`,
 		"page.html":       `<a href="https://forest.cathe.dev/index/">forest</a> <a href='https://docs.cathe.dev/guide/a.html#x'>guide</a>`,
 		"style.css":       `a { background: url(https://cloakaml.cathe.dev/logo.svg); }`,
 		"notes.txt":       files["notes.txt"],
+		"map.html":        `<a href="https://jpears.me/@jpears/">jpears.me</a>`,
 	}
 	for name, w := range want {
 		got, _ := os.ReadFile(filepath.Join(dir, name))

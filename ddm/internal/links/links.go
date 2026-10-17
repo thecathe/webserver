@@ -1,5 +1,6 @@
 // Package links resolves site://<name>/<path> links (the rewrite-links
-// stage). It runs at publish time, not as a workflow step, because the URL a
+// stage), and mount://<host>/<path> links, which name one mount exactly (ddm's
+// generated pages use them to list every address). It runs at publish time, not as a workflow step, because the URL a
 // link becomes depends on where the build is published (prod or a local
 // preview), not on the build itself.
 package links
@@ -23,10 +24,10 @@ type BaseURL func(host string) string
 // Prod serves every host over https.
 func Prod(host string) string { return "https://" + host }
 
-// linkRE matches site://name and site://name/path. The path stops at
-// whitespace, quotes, brackets and parentheses, which end a URL in HTML
+// linkRE matches site://name[/path] and mount://host[/path]. The path stops
+// at whitespace, quotes, brackets and parentheses, which end a URL in HTML
 // attributes, XML, CSS url(...) and JSON strings alike.
-var linkRE = regexp.MustCompile("site://([a-z0-9][a-z0-9-]*)(/[^\\s\"'`<>()]*)?")
+var linkRE = regexp.MustCompile("(site|mount)://([a-z0-9][a-z0-9.-]*)(/[^\\s\"'`<>()]*)?")
 
 // rewritable are the file types that can contain links.
 var rewritable = map[string]bool{
@@ -82,6 +83,30 @@ func (r Resolver) Resolve(from, view, target, path string) (string, error) {
 	return url + path, nil
 }
 
+// ResolveMount returns the URL for mount://<host><path> written in site
+// from, view view. host must be mounted by some site.
+func (r Resolver) ResolveMount(from, view, host, path string) (string, error) {
+	private, mounted := false, false
+	for _, site := range r.Spec.Sites {
+		for _, m := range site.Mounts {
+			if m.Host == host {
+				mounted = true
+				private = private || m.Access == spec.AccessPrivate
+			}
+		}
+	}
+	if !mounted {
+		return "", fmt.Errorf("mount://%s: nothing is mounted on %s", host, host)
+	}
+	if private && r.hasPublicMount(from, view) {
+		return "", fmt.Errorf("mount://%s: %s (%s) is publicly served, but %s is private", host, from, view, host)
+	}
+	if path == "" {
+		path = "/"
+	}
+	return r.Base(host) + path, nil
+}
+
 func (r Resolver) hasPublicMount(site, view string) bool {
 	for _, m := range r.Spec.Sites[site].Mounts {
 		if m.View == view && m.Access == spec.AccessPublic {
@@ -91,7 +116,7 @@ func (r Resolver) hasPublicMount(site, view string) bool {
 	return false
 }
 
-// Rewrite replaces every site:// link in the text files under dir, in place.
+// Rewrite replaces every site:// and mount:// link in the text files under dir, in place.
 // It returns how many links it rewrote. Links that can't be resolved are
 // left as they are and reported together in the error.
 func (r Resolver) Rewrite(dir, site, view string) (int, error) {
@@ -103,13 +128,17 @@ func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 			return err
 		}
 		data, err := os.ReadFile(path)
-		if err != nil || !bytes.Contains(data, []byte("site://")) {
+		if err != nil || (!bytes.Contains(data, []byte("site://")) && !bytes.Contains(data, []byte("mount://"))) {
 			return err
 		}
 		changed := false
 		out := linkRE.ReplaceAllFunc(data, func(m []byte) []byte {
 			sub := linkRE.FindSubmatch(m)
-			url, err := r.Resolve(site, view, string(sub[1]), string(sub[2]))
+			resolve := r.Resolve
+			if string(sub[1]) == "mount" {
+				resolve = r.ResolveMount
+			}
+			url, err := resolve(site, view, string(sub[2]), string(sub[3]))
 			if err != nil {
 				if msg := err.Error(); !seen[msg] {
 					seen[msg] = true
