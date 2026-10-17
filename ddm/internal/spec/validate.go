@@ -61,7 +61,7 @@ func (s *Spec) validateDomains(p *problems) {
 	if pd := s.PrivateDomain; pd != "" {
 		if !hostRE.MatchString(pd) {
 			p.add("private_domain: %q is not a valid lowercase domain name", pd)
-		} else if s.domainOf(pd) == "" {
+		} else if s.DomainOf(pd) == "" {
 			p.add("private_domain: %q is not under any declared domain (%s)", pd, strings.Join(s.Domains, ", "))
 		}
 	}
@@ -189,7 +189,7 @@ func (s *Spec) validateSites(p *problems) {
 			at := fmt.Sprintf("%s.mounts[%d]", where, i)
 			if !hostRE.MatchString(m.Host) {
 				p.add("%s: host %q is not a valid domain name", at, m.Host)
-			} else if s.domainOf(m.Host) == "" {
+			} else if s.DomainOf(m.Host) == "" {
 				p.add("%s: host %q is not under any declared domain (%s)", at, m.Host, strings.Join(s.Domains, ", "))
 			}
 			if _, ok := site.Views[m.View]; !ok && len(site.Views) > 0 {
@@ -239,8 +239,8 @@ func (s *Spec) IsPrivateHost(host string) bool {
 	return pd != "" && (host == pd || strings.HasSuffix(host, "."+pd))
 }
 
-// domainOf returns the declared domain host falls under, or "".
-func (s *Spec) domainOf(host string) string {
+// DomainOf returns the declared domain host falls under, or "".
+func (s *Spec) DomainOf(host string) string {
 	for _, d := range s.Domains {
 		if host == d || strings.HasSuffix(host, "."+d) {
 			return d
