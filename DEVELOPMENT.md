@@ -416,3 +416,64 @@ Branch `docs/ocaml-bundle-and-indimo`. **Design** only.
 
 **Addendum (same day).** INDIMO: only you edit it, so it merges into the main forest. A tree tagged `indimo` is
 public, and `indimo` plus `private` stays private, which the existing `private` tag already gives.
+
+---
+
+## 2026-10-17 (evening): the OCaml docs pool, and new addresses
+
+Branch `feat/ocaml-pool`. **Feature** + **Design** + **Docs**.
+
+**Decided with you** (D34, D35):
+- **The pool, as you framed it.** Each OCaml repo stays its own site. A workflow marked `pool: true` builds every
+  site that uses it together, in one dune workspace, and serves the one result from all their mounts. Membership is
+  the spec: anything left out stays plain text, which is acceptable.
+- **Exact versions.** The environment is one opam switch, from the lockfiles where they agree.
+- **mebi_plugin joins the pool** while builds run on your machine, to measure the cost.
+- **New forest addresses:** `indimo.cathe.dev`, `mebi.cathe.dev` and `projects.cathe.dev`.
+- **INDIMO's notes** move to `indimo-notes.cathe.dev` (they are notes, not documentation).
+- **A header status line** (repo, branch, commit, freshness) joins the styling session's agenda.
+
+**Built.**
+- **Spec:** `pool:` on workflows, and pool members need no mounts. Helpers: `PoolOf`, `PoolMembers`, `Served`,
+  `MountsServing`.
+- **`build/pool.go`:**
+  - syncs every member at its own branch;
+  - copies the checkouts (without `.git`/`_build`/`_opam`) into one workspace with a `dune-workspace`;
+  - runs once;
+  - publishes as `@odoc-pool`, with `ddm-build.json` listing each member's repo, branch and commit (ready for the
+    status line).
+- **Workflows:** `{{cache}}`, kept between builds, and peak memory logged for every step.
+- **Publishing, links, Caddy and the CLI** all go through `Served`. A preview builds a pool once, and the site map
+  gains "Without an address of their own".
+- **`scripts/opam-pool-switch.sh`** (cached opam root and switch: lockfiles first, else one solve), plus the
+  `#ocaml-opam` devShell.
+
+**Measured on this machine** (pool: cloakaml + mebi_plugin):
+
+| | Time | Peak memory (largest process) | Disk |
+|---|---|---|---|
+| First switch build (Rocq 9.2.0 and everything, from source) | 6 min | 608 MiB | 1.3 GB switch + 211 MB opam root |
+| Switch check on later builds | 18 s | 398 MiB | |
+| `dune build @doc` for the pool | 59 s | 521 MiB | |
+
+Peak memory is per process (the largest), so parallel jobs can add up to more. The droplet would also need room for
+a second switch during upgrades. A rebuild with the switch cached takes about 1 min 20 s end to end.
+
+**Found.**
+- **A pool needs one version of every shared tool.** Rocq 9.2.0 requires `dune < 3.24`, and membranes requires
+  `dune >= 3.24`. No switch can build both, even ignoring the lockfiles, so membranes is commented out of the pool
+  (see your to-dos). cloakaml and mebi_plugin's lockfile agree, so their switch uses exact versions.
+- **`--deps-only` applies to every package on the command line**, so naming `odoc` beside the projects installed
+  only odoc's dependencies. odoc is now installed separately.
+- **dune marks its outputs read-only.** Copies are now owner-writable, so publishing can rewrite links.
+- **The forest's Project page lists only Cloakaml.** The `indimo` and `mebi` trees don't carry `\taxon{Project}`
+  (your to-dos).
+
+**Verified.**
+- Tests pass, including new pool tests (spec, build, caddygen goldens).
+- In the preview:
+  - `ocaml.cathe.dev` lists `cloakaml` and `rocq-mebi` with all of mebi's libraries;
+  - `cloakaml.cathe.dev` → `/cloakaml/`;
+  - `indimo`, `mebi` and `projects` redirect into the forest;
+  - `indimo-notes` serves the mkdocs notes;
+  - the site map lists mebi-plugin as served by the pool.

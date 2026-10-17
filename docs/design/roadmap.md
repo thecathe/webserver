@@ -72,13 +72,20 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - **Nothing is live on the internet yet.** That needs the server (M5) and the cutover (M7). D25 still holds the
   forest's public and notes views until M4.
 
+## After M3a (2026-10-17)
+- The **OCaml docs pool** (D34): `cloakaml`, `mebi-plugin` and `membranes` built together, served at
+  `ocaml.cathe.dev`, with build cost measured on your machine.
+- Forest addresses `indimo.cathe.dev`, `mebi.cathe.dev`, `projects.cathe.dev`; INDIMO's mkdocs notes at
+  `indimo-notes.cathe.dev` (D35).
+
 ## Next: the shared-styling design session
 Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:
 - the palette, typography and AI marker ([shared styling](open-questions.md#shared-styling-across-sites), D27);
 - the **shared header toolbar** and **section indexes**, including `docs.cathe.dev` → `sites.cathe.dev`
   ([site navigation](open-questions.md#site-navigation-a-shared-header-and-section-indexes));
 - how far each generator can be themed, odoc especially;
-- the collated OCaml docs page and the docs-bundle idea ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
+- the status line (repo, branch, commit; "up to date" once the daemon exists);
+- the collated OCaml docs page beyond the pool ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
 
 ## M3b: the rest
 - Styling adapters per generator, as designed in the session.

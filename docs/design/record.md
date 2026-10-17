@@ -216,6 +216,28 @@ A workflow whose output links are root-absolute (forester) is marked `root_only:
 mounting it under a path prefix. **Why:** S2 showed forest output can't live under a prefix; this makes that a
 validation error instead of a broken site.
 
+### D34. OCaml docs are built as one pool (2026-10-17)
+*Answers* the cross-linking question. A workflow can be `pool: true`. Every site using it is built in one run: each
+member's checkout is copied into one dune workspace, and one `dune build @doc` documents every package, cross-linked.
+Every member's mounts serve the one result. The spec is the inclusion rule. The environment is one opam switch,
+cached between builds: the members' lockfiles if they agree, else one solve over their `.opam` files. **Why:** odoc
+only links packages built together, and this needs no per-link machinery. A dune workspace is dune's standard
+multi-project mechanism. **Rejected:** a site with several `repos:`, since your framing, where each repo stays its
+own site and the workflow pools them, is simpler; vendoring shared libraries; rewriting odoc's unresolved
+references. **Found:** a pool needs **one version of every shared tool**. Rocq 9.2.0 (mebi_plugin) requires
+`dune < 3.24`, and membranes requires `dune >= 3.24` (its `(lang dune 3.24)`), so no switch can build both, even
+ignoring the lockfiles. membranes is out of the pool (commented out in `sites.yaml`) until one of them moves.
+Lowering membranes to `(lang dune 3.23)` is the likely fix, if it uses nothing from 3.24.
+
+### D35. Addresses after the first preview (2026-10-17)
+- `indimo.cathe.dev`, `mebi.cathe.dev` and `projects.cathe.dev` are forest addresses. They land on the forest's
+  `indimo` and `mebi` trees and its `Project` taxon page.
+- INDIMO's mkdocs notes move to `indimo-notes.cathe.dev`, as the site `indimo-notes` (taxon `notes`, since they are
+  notes, not documentation), until they are ported into the forest.
+- `ocaml.cathe.dev` serves the OCaml docs pool's package list. `cloakaml.cathe.dev` lands on its package.
+  mebi_plugin (and membranes, once it joins) has no address of its own yet, and the private site map lists them under "Without an address of
+  their own".
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
