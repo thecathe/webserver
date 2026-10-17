@@ -29,9 +29,10 @@ import (
 //go:embed bar.js
 var script []byte
 
-// Script is the tag publishing adds before </head>. defer="defer" keeps it
-// valid XML, for XSLT stylesheets such as the forest's.
-const Script = `<script src="/_ddm/bar.js" defer="defer"></script>`
+// Script is the tag publishing adds before </head>. A module script, like
+// the forest's own forester.js: it runs after the page is parsed, including
+// pages that an XSLT stylesheet builds in the browser, and is valid XML there.
+const Script = `<script type="module" src="/_ddm/bar.js"></script>`
 
 // Dir is where the toolbar's files for one audience live.
 func Dir(www string, private bool) string {

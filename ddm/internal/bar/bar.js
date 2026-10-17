@@ -73,7 +73,7 @@
     }
   }
 
-  const host = el("div", { id: "ddm-bar" });
+  const host = el("div", { id: "ddm-bar", style: "display:block" });
   const root = host.attachShadow({ mode: "open" });
   root.append(
     el("style", {}, `
@@ -97,5 +97,7 @@
     `),
     el("div", { class: "bar" }, links, views, status),
   );
-  document.body.prepend(host);
+  // Before <body>, not in it, so no page's layout (odoc lays its body out as
+  // a grid) can move or squeeze the bar.
+  document.documentElement.insertBefore(host, document.body);
 })();
