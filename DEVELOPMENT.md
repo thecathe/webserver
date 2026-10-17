@@ -524,3 +524,40 @@ recorded:
 - the XSLT options, plus the finding that your fork's XML output is already called "legacy";
 - why the forest's views look alike today (no `forest-public.toml` yet, no notes filter);
 - the lean to merge the notes view into public.
+
+---
+
+## 2026-10-17 (late): the public forest, notes and recents, build-time XSLT
+
+Branches: `feat/forest-public` in the **forest** repo, and `feat/forest-public-views` here. **Feature** + **Design**.
+
+**Decided with you:**
+- Notes is a page of the public forest, not a view; a `private` tag still overrides (D38).
+- `recents.cathe.dev` is the forest's timeline.
+- XSLT runs at build time (D40).
+- `forest-public.toml` starts now (D39).
+
+**Built.**
+- **Forest repo:**
+  - `3ff7321` adds a `notes` tag page;
+  - `8fbeda3` adds `forest-public.toml`, which is `forest.toml` with the public `url` and redirects followed.
+
+  Merged into the forest's local `main`, not pushed.
+- **Here:**
+  - `9f6db44`: the public view uses `forest-public.toml`; the notes view is removed; `notes.cathe.dev` → `/tag-notes/`
+    and `recents.cathe.dev` → `/timeline/`, both added to the toolbar;
+  - `8cfec6f`: the `forest-html` step (`xsltproc` in a new `#xslt` devShell).
+
+**Verified** (preview, forest built with `--src` from the branch):
+- public has 135 pages and private 151;
+- `/@lbocchi/` is a 404 publicly but a page privately, while `@jpears` is in both;
+- INDIMO's public page links people to their own sites and lists only you in "Related", while the private page
+  lists everyone (screenshots);
+- forest pages are now plain HTML, and Chromium shows no XSLT banner;
+- notes and recents redirect to their pages.
+
+**Found.**
+- D26's open question had a free answer: `@jpears` has no redirect meta, and `@cathe` is an `Alias`.
+- Three people have no redirect meta and so stay public (to-dos).
+- The forest has `taxon-notes` pages (`\taxon{Notes}`/`{Note}`) besides the `notes` tag (3 trees). `notes.cathe.dev`
+  uses the tag.

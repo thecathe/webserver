@@ -148,7 +148,6 @@ All three views build from the same checkout, with different generated configs:
 | View | Config | Effect |
 |---|---|---|
 | public | `forest-public.toml` (D26) | `[forest.tag.private] behaviour = "hide"`, plus redirect meta rules that expose only the `@jpears` and `@cathe` people pages |
-| notes | `forest-public.toml` + the notes filter | public rules, plus *keep only trees tagged `notes`* (the home tree exempt) |
 | private | `forest.toml` (today's dev config) | nothing hidden; redirect meta shown as external links |
 
 The "keep only tagged" rule doesn't exist yet. It is a small addition to the forester fork (`thecathe/ocaml-forester`,

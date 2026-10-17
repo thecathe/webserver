@@ -62,6 +62,11 @@
         ];
       };
 
+      # xsltproc, for rendering a forest's XSLT at build time (forest-html).
+      xslt = pkgs.mkShell {
+        buildInputs = [pkgs.libxslt pkgs.findutils];
+      };
+
       ocaml-docs = pkgs.mkShell {
         buildInputs = with pkgs.ocamlPackages; [
           ocaml

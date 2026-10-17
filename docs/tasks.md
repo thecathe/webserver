@@ -50,6 +50,13 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
   `sites.yaml`. Otherwise it waits for a Rocq release that allows newer dune.
 
+- [ ] **Push the forest's `main`** (added 2026-10-17). `forest-public.toml` and the `notes` tag page are merged into
+  your forest's local `main` (not pushed). ddm builds the forest from GitHub, so until you push, the public forest
+  only builds with `--src`: `bin/ddm preview --src forest=$HOME/Documents/git/thecathe/forest`.
+- [ ] **Three people without a redirect stay public** (added 2026-10-17): `@lstefanesco`, `@afrancalanza`,
+  `@mpretnar` have no `\meta{redirect}`, so the public forest still builds their pages. Give each a redirect (to
+  their own page), or tag them `private`, or decide they can stay.
+
 ## Done
 
 - [x] Told Claude the session's effort level (`medium`), 2026-10-17.

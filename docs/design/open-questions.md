@@ -46,39 +46,14 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## The forest notes view
 
-- **Raised 2026-10-17:** in the preview, private, public and notes look the same on `indimo`. That is expected for
-  now:
-  - **Public and private** differ only by `private`-tagged trees until `forest-public.toml` exists (M4, D26): both
-    build from `forest.toml`, where people's `redirect` metas are shown as external links rather than followed. So
-    the people check you want needs `forest-public.toml` first.
-  - **Notes** is meant to be the public forest *filtered* to trees tagged `notes` (D8). That filter is a fork
-    addition that doesn't exist yet, so today notes equals public.
-- **Should notes merge into public?** Lean: yes. Drop the notes view, and make `notes.cathe.dev` a mount of the
-  public forest landing on the `notes` tag page, as `projects.cathe.dev` lands on the Project taxon page. You lose
-  only the hiding of non-notes trees from that host (they would still be reachable by link), and M4 loses a whole
-  fork feature. Your call.
-- **Earlier questions** (if the filter is kept):
-
-- **Question:** a fork addition ("keep only trees with any of these tags") or a script-level filter?
-- **Lean:** the fork addition, small and tested next to `Test_redirect_meta.ml`. A script filter can't remove trees
-  from forester's own indexes.
-- **Also open:**
-  - What happens to a notes tree that links to a non-notes tree? It should probably be a `--strict-private`-style
-    failure, or a link to the public copy via `site://`.
-  - Is the home tree the right exemption?
+**Decided 2026-10-17 (D38):** no notes view. `notes.cathe.dev` is the public forest's `notes` tag page, and a
+`private` tag still hides a tree everywhere public. The keep-only-tagged fork filter is dropped.
 
 ## Forest configs: `forest-public.toml` now, `site.yaml` later?
 
 - **Decided (D26):** start with a hand-made `forest-public.toml` next to `forest.toml`.
-- **Open: expressing "only these people".** Today the meta rules are per key and per taxon
-  (`[forest.meta.redirect.Person]`), so the public config can redirect *every* `Person`. How do `@jpears` and
-  `@cathe` stay visible? Options:
-  - drop `\meta{redirect}` from those two trees, so the rule has nothing to act on;
-  - a tag (e.g. `public-person`) with its own behaviour;
-  - a small fork addition for per-address exceptions.
-
-  The lean is the first, since it needs no code. Check what the redirect target on those trees is for before
-  removing it.
+- **Answered (D39):** no exception mechanism is needed. `@jpears` has no redirect meta and `@cathe` is an
+  `Alias`, so following redirects keeps both. Three people without a redirect meta remain public (to-dos).
 - **Later question:** whether to generate the TOMLs from a forest `site.yaml` (D12). Only worth it if the two hand-kept
   files drift. If so, the yaml holds views and the content model, and every TOML (dev included) is generated.
 - **Stake:** editor tooling (forest-keeper, vscode-forester) must keep finding a config. Check what it reads before
@@ -234,26 +209,9 @@ separate forests or one.
 
 ## Browsers are removing XSLT, which the forest depends on
 
-**Found 2026-10-17, worth acting on soon.** Chromium now shows a banner on forest pages: "This site uses XSLT; that
-functionality is being removed from this browser very soon." Every forest page is XML that the browser turns into
-HTML with `default.xsl`. Once Chrome drops XSLT, the forest stops rendering there (Firefox still works).
-
-- **Upstream:** every forester site that ships the XML + XSLT output has this problem. Your fork already has
-  `Html_client`/`Htmx_client` modules, and the XML output is named `Legacy_xml_client`, which suggests forester's own
-  direction is HTML rendered by forester, served dynamically with HTMX. I haven't confirmed upstream's plans or a
-  timeline for static HTML. Waiting for them is a risk if Chrome's removal lands first.
-- **Options:**
-  1. **Render the XSLT at build time** (lean). A step after `build-forest` runs `xsltproc` (libxslt, XSLT 1.0, the
-     same engine family browsers use) with `default.xsl` over every `index.xml`, writing the tree's `index.html`
-     (today a redirect stub). No forest or fork change, the same look, faster pages, and it works without
-     JavaScript. To check: `forester.js` (search, KaTeX) on the rendered pages, any `document()` calls in the XSL,
-     and build time over about 150 trees.
-  2. **Static HTML from the fork**, using its `Html_client`: a `forester build --html` mode. More work in OCaml, but
-     it aligns with forester's own direction, and the XSL theme would need porting to CSS.
-  3. **An XSLT polyfill:** a WebAssembly build of libxslt that runs in the page. Chrome's team has pointed to one.
-     Every page then loads it and transforms on every visit: slower, and one more moving part.
-  4. **Wait for upstream.**
-- **Lean:** option 1 now, since it is small and reversible, and revisit option 2 if upstream ships static HTML.
+**Decided 2026-10-17 (D40):** the forest's XSLT runs at build time (`forest-html`, `xsltproc`). Still to check in
+use: `forester.js` features (search, KaTeX) on the rendered pages. Revisit if forester upstream ships static HTML
+(your fork's XML output is already named `Legacy_xml_client`).
 
 ## Site navigation: a shared header, and section indexes
 

@@ -55,7 +55,7 @@ declared domains. Before it lapses, update anything that links to `cathe.work`.
 - `<project>.cathe.dev` → docs sites.
 - `ddm.cathe.dev` → this site.
 
-### D8. The forest has three views (2026-10-16)
+### D8. The forest has three views (2026-10-16; notes merged into public by D38)
 - **public**: hides `private`.
 - **notes**: only trees tagged `notes`, and never `private`.
 - **private**: everything.
@@ -256,6 +256,30 @@ The directory of every site, titled "Sites", moves to `sites.cathe.dev` (the sit
 the site map at `the.cathe.dev/sites/`). `docs.cathe.dev` is a new generated index of the `docs` taxon: every
 documentation site, including `ocaml.cathe.dev`, with room for other kinds of documentation. **Why:** the name
 should match the page.
+
+### D38. Notes is a page of the public forest, not a view (2026-10-17)
+*Supersedes* the notes view of D8. `notes.cathe.dev` is a mount of the **public** forest landing on the `notes` tag
+page (`/tag-notes/`), the same pattern as `projects.cathe.dev` (Project taxon page) and the new
+`recents.cathe.dev` (`/timeline/`). A `private` tag still overrides: such a tree is hidden from every public page,
+including the notes tag page. The toolbar lists notes and recents with the other links, and its view switches offer
+only private ↔ public. **Why:** you don't need non-notes trees hidden from that host, and it drops a planned fork
+feature (the keep-only-tagged filter) from M4.
+
+### D39. `forest-public.toml` exists; the public forest follows redirects (2026-10-17)
+*Answers* D26's open question. `forest-public.toml` (forest repo, branch `feat/forest-public`) is `forest.toml`
+with two changes: the public `url`, and `\meta{redirect}` **followed** (`redirect`) rather than shown (`external`),
+for every tree and for `Person`. No per-person exception is needed: `@jpears` has no redirect meta and `@cathe` is
+an `Alias`, so both keep their pages. Every person with a redirect loses theirs, and links to them go to their own
+page. Verified on INDIMO's page: public "Related" lists only you and the institutions, while private lists
+everyone. **Still public:** people without a redirect meta (`@lstefanesco`, `@afrancalanza`, `@mpretnar`); see
+your to-dos. D25 is resolved for every other person.
+
+### D40. The forest's XSLT runs at build time (2026-10-17)
+A `forest-html` step after `build-forest` runs `xsltproc` with the forest's own `default.xsl` over every
+`index.xml`, writing the result over the tree's `index.html`, which used to be a redirect stub to the XML. Browsers
+get plain HTML with the same look. **Why:** Chromium is removing XSLT, and this needs no change to the forest or the
+fork. It takes about 2 s for 150 trees. **Rejected for now:** a static-HTML mode in the fork (more work, revisit if
+upstream ships one); an in-page XSLT polyfill.
 
 ## AI-generated content marking
 
