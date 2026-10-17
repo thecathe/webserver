@@ -40,7 +40,7 @@ Two more goals run through the design:
 | `jpears.me` | the forest, landing on `/@jpears/` (profile, CV pages, the CV itself) | public |
 | `cathe.dev` | the forest, landing on `/@cathe/` (content to come) | public |
 | `forest.cathe.dev` | the forest, landing on `/index/` | public |
-| `notes.cathe.dev` | forest trees tagged `notes` (and not `private`) | notes |
+| `notes.cathe.dev`, `recents.cathe.dev` | the public forest's `notes` tag page, and its timeline | public |
 | `projects.cathe.dev`, `indimo.cathe.dev`, `mebi.cathe.dev` | the forest's Project taxon page, and its INDIMO and MeBi pages | public |
 | `the.cathe.dev` | the whole forest, private trees included; tailnet-only, your identity only | private |
 | `the.cathe.dev/sites/` | the full site map: every site and address, public and private | private |

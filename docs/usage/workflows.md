@@ -95,7 +95,8 @@ later builds reuse it.
 
 | Workflow | Steps | Verified on |
 |---|---|---|
-| `forester` | `build-forest {{config}}` (`--strict-private` unless private) → `output/` | `forest`, about 10 s |
+| `forester` | `build-forest {{config}}` (`--strict-private` unless private) → `use: forest-html` → `output/` | `forest`: public with `config: forest-public.toml`, private with `forest.toml`; about 10 s |
+| `forest-html` | `scripts/forest-render-html.sh output` (`xsltproc` with the forest's `default.xsl`, in `#xslt`) | rendering every tree's `index.html` at build time (D40), about 2 s |
 | `mkdocs` | `mkdocs-config` → `mkdocs build -d {{out}}` | `indimo` (no mkdocs.yml, so one is generated), `ddm` (this site) |
 | `odoc` | `dune build @doc` → `_build/default/_doc/_html` | `cloakaml` (`docs` branch), before the pool; kept for a project built on its own |
 | `odoc-pool` | pooled: `opam-pool-switch.sh` → `dune build @doc --profile release` in one opam switch → `_build/default/_doc/_html` | `ocaml` (index), `cloakaml`, `mebi-plugin` (membranes waits on a dune version clash, D34) |

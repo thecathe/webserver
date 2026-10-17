@@ -81,9 +81,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   `docs.cathe.dev` the documentation index (D37). On a package's own host, odoc's `Index` now opens
   `ocaml.cathe.dev`.
 
-## Soon: server-side XSLT for the forest
-Chromium is removing XSLT, which every forest page needs. Render it at build time
-([open question](open-questions.md#browsers-are-removing-xslt-which-the-forest-depends-on)).
+- **The forest's public view** builds from `forest-public.toml` (D39), with notes and recents as public pages
+  (D38). Its XSLT is rendered at build time (D40). This brings forward M4's first item.
 
 ## Next: the shared-styling design session
 Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:
