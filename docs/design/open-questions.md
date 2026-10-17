@@ -121,148 +121,32 @@ move it to the [decision record](record.md) and note it in the [development log]
 ## Shared styling across sites
 
 - **Goal (D27):** a consistent look across the forest, mkdocs sites, odoc output and anything later, plus
-  cross-linking between subdomains.
-- **Questions:**
-  - **Source of truth:** one CSS file of design tokens (palette, fonts, spacing) plus the AI-marker styles? Where is
-    it served from: an `assets` site on its own host, or a path on an existing one?
-  - **Delivery:** link to it at runtime (one fetch, always current, but cross-origin) or copy it into each build
-    (self-contained and versioned with the build)? The lean is copying, via a `theme` built-in run after every
-    build, which also suits `rewrite-links`.
-  - **Per generator:**
-    - mkdocs: `extra_css` plus Material palette overrides;
-    - forester: the base-theme fork's CSS and XSLT;
-    - odoc: replace `odoc.support/odoc.css`.
+  cross-linking between subdomains (done: `site://`, the toolbar).
+- **Session opened 2026-10-17**, with a [style lab](https://claude.ai/artifact/Uw23oYRagRwf6ahtirxgcA) (private to
+  you) previewing three palettes (Gruvbox, Nord, Everforest) and three type pairings (Inria, IBM Plex, Source) on
+  real content, light and dark.
+- **What each generator offers:**
 
-    How far can each go before fighting its generator's own design?
-  - **Shared chrome:** a common header or footer linking `cathe.dev`, `jpears.me`, `docs.cathe.dev`?
-  - **Light and dark:** all generators should honour `prefers-color-scheme`, with the same token names.
-- **Stake:** the more sites go live with their own default looks, the more retrofitting there is. Worth designing
-  before or alongside M3.
+  | | Fonts | Colours | Dark mode | Hook |
+  |---|---|---|---|---|
+  | forest | Inria Sans, self-hosted | hard-coded in a 944-line `style.css` | none | override sheet, or rework the base theme |
+  | odoc | Noticia Text + Fira Mono | 105 CSS variables | yes | override the variables |
+  | mkdocs-material | Roboto | `--md-*` variables | yes, with a toggle | `extra_css` |
 
-## OCaml docs: landing pages, a shared index, shared libraries
-
-Raised 2026-10-17, looking at the preview.
-
-- **The landing page.** `dune build @doc` writes a root `index.html` listing the packages **of that dune
-  project**: one entry per `.opam` file in the repo, not dependencies. For a one-package repo like cloakaml it is
-  always a one-item list.
-  - It only grows if a repo defines several opam packages, e.g. if `Showable` and `Thing` were split out as
-    packages *inside* the membranes repo.
-  - **Done (2026-10-17):** odoc mounts land on the package with `entry: /cloakaml/`, which redirects `/` there. odoc's
-    own index stays reachable at `/index.html`. Rejected: publishing only the package subdirectory, because its
-    pages link to `../odoc.support/` for styles and search.
-- **A collated "OCaml package documentation" page.** This is a generated index, like the directory: every site built
-  with the `odoc` workflow (or tagged with a new taxon, e.g. `ocaml`), linking each package's own page.
-  - **Lean:** a `site-directory` page filtered by taxon, served as one of the section indexes below (e.g.
-    `sites.cathe.dev/ocaml/`). Each entry links with `mount://` straight to the package page.
-- **Cross-linking: decided 2026-10-17 (D34), the pool.** Every OCaml docs site uses the pooled `odoc-pool`
-  workflow: one dune workspace, one `dune build @doc`, in one opam switch built from the lockfiles. Being in the spec
-  is the inclusion rule: a project left out stays separate, and references to it stay plain text, which is
-  acceptable. Rejected: vendoring shared libraries into each project; ddm rewriting odoc's unresolved references
-  (heuristic). odoc 3 linking to separately built docs stays unverified.
-- **Still open:**
-  - **The pool on the droplet.** mebi_plugin brings Rocq. It is in the pool now, on your machine, to measure the
-    cost (see the development log). If the droplet can't afford it, mebi_plugin's docs would be built here and
-    copied over, which ddm doesn't model yet. Options:
-    - a site kind whose output is a directory ddm only publishes (it becomes the one push-shaped exception to D32);
-    - the droplet pulls a release artifact you publish (still pull).
-
-    Either way, the collated page should still list it.
-  - **The collated page when not everything is in the pool.** odoc's root page only lists the pool's own
-    packages. If mebi_plugin ever builds outside the pool, `ocaml.cathe.dev` would need a ddm-generated index
-    instead, listing packages wherever they are built, and ideally each package's libraries (odoc's package pages
-    list them; ddm could read them from the output).
-  - **Splitting libraries out.** `Showable`/`Thing` (and some of mebi_plugin's libraries) may become their own
-    repos. Each is then just another pool member, and its users depend on it as an opam package as usual. In the
-    workspace, dune uses the pool's copy.
-  - **Rebuild cost.** Any member's push rebuilds the pool. dune's cache keeps unchanged members fast, and the opam
-    switch is reused, but a first build compiles Rocq.
-
-## INDIMO's notes: port to forester, into the main forest?
-
-Raised 2026-10-17. You're tempted to port `.md` notes (INDIMO first) to `.tree` files, and unsure whether that means
-separate forests or one.
-
-- **Lean: one forest**, with INDIMO's trees under a folder such as `trees/indimo/`, tagged `indimo`:
-  - your `forest.toml` already declares an `indimo` tag page (a build warns that no tree carries it yet);
-  - folder rules can tag everything in that folder automatically;
-  - the notes view's tag filter (M4) and `private` tagging decide what is public;
-  - links between INDIMO notes and the rest of your notes become ordinary forester links rather than `site://`;
-  - one theme, so styling is solved once;
-  - the build grows, but the forest takes about 10 s today.
-- **`indimo.cathe.dev` can stay** as a mount of the forest landing on the tag page (`entry: /indimo/` or wherever the
-  tag page lives), retiring the separate mkdocs site.
-- **Separate forest: not needed.** Only you edit INDIMO's notes (answered 2026-10-17).
-- **Privacy (decided 2026-10-17):**
-  - a tree tagged `indimo` is public;
-  - a tree tagged `indimo` and `private` stays private.
-
-  This needs no new rule: the forest's existing `private` tag already hides a tree from the public and notes
-  views, whatever its other tags.
-- **Porting:** mechanical for plain markdown (headings, lists, links, maths), so it can be scripted (e.g. pandoc to
-  a rough draft plus hand fixes) in a forest-repo branch. It belongs with the forest work (M4). The mkdocs
-  `indimo` site is a useful sample for the styling session until then.
-- **Open:**
-  - Should INDIMO trees also appear in the notes view (`notes.cathe.dev`)? A folder rule could tag them `notes` as
-    well.
-  - Should other markdown note repos follow? That is: personal notes live in the forest, and mkdocs is only for
-    project documentation.
-
-## Browsers are removing XSLT, which the forest depends on
-
-**Decided 2026-10-17 (D40):** the forest's XSLT runs at build time (`forest-html`, `xsltproc`). Still to check in
-use: `forester.js` features (search, KaTeX) on the rendered pages. Revisit if forester upstream ships static HTML
-(your fork's XML output is already named `Legacy_xml_client`).
-
-## Site navigation: a shared header, and section indexes
-
-Raised 2026-10-17. This belongs to the shared-styling session (D27), which it extends.
-
-- **Status (2026-10-17, D36, D37):** a first toolbar is live in the preview on every site: nav links, view
-  switches and a status line. `docs.cathe.dev` → `sites.cathe.dev` is done, and `docs.cathe.dev` is now the index
-  of the `docs` taxon. Still open below: the look, section indexes beyond `docs`, and the "up to date" part of the
-  status line.
-- **Goal:** every public site carries the same header toolbar, linking the central pillars: `cathe.dev`,
-  `jpears.me`, and one index page per **section** (docs, projects, demos, presentations, …). Private and personal
-  sites are not in it.
-- **Directory split.**
-  - Today's `docs.cathe.dev` (everything, by taxon) becomes **`sites.cathe.dev`**.
-  - `docs.cathe.dev` becomes the index of just the `docs` section. Each other section gets its own index page too.
-- **Shape (lean):**
-  - **Taxa grow into sections.** `taxa` entries can carry a title and an `index: true`, so the spec says which taxa
-    are pillars. `personal` and `notes` stay plain taxa: not in the header, no index.
-  - **Index pages** are generated by `site-directory` with a `taxon` param: one page per section.
-  - **Where they live:**
-    - option A: paths on `sites.cathe.dev` (`/docs/`, `/project/`, …), with `docs.cathe.dev` an alias mount;
-    - option B: a subdomain each.
-
-    Option B collides with real sites: `demos.cathe.dev` is already the demos site, so the "demo" section can't
-    also be `demos.cathe.dev`. The lean is A, with subdomains only where a section name is free and memorable
-    (`docs`).
-  - **The header** is generated from the spec (pillars plus section indexes), so adding a section updates every
-    site. Links are `site://`/`mount://`, so the preview works too.
-- **How it gets into each generator** (the session's main question):
-  - mkdocs: a theme override block (`overrides/main.html` already exists here);
-  - forester: the base theme's XSLT;
-  - odoc: odoc's HTML has no template hook, so either a publish-time injection (insert a `<header>` and a
-    stylesheet link after `<body>`, like link rewriting) or leave odoc pages header-less with a link back.
-
-  A publish-time injection works everywhere ddm publishes HTML, but is the most brittle against each generator's
-  own CSS.
-- **A status line** (raised 2026-10-17), like nvim's or VS Code's, at the edge of the header on generated sites:
-  - the repo (linked), the branch and commit it was built from, and when;
-  - if cheap, whether that is still the branch's latest commit.
-
-  The first part is cheap: publishing already knows all of it (pools write it to `ddm-build.json`), so ddm can write
-  a small status file next to each publish for the header to show.
-
-  "Up to date" is live state: the branch may move after publishing. The cheap version: ddm's poll loop (M6) already
-  checks every branch's head, so it can update a status file that the header fetches. Until the daemon exists, the
-  status line can only say what was built.
-- **Open:**
-  - Section names and titles: is it "projects" or "project"? "presentations"?
-  - Does `cathe.dev` itself, the forest's `@cathe` page, show the same header?
-  - Is the header itself the AI-marker's home on non-mkdocs sites?
+- **Delivery (lean, changed by the toolbar):** every host already serves `/_ddm/`. So `theme/tokens.css`, one
+  adapter per generator and the fonts live in this repo and are served from `/_ddm/`, and publishing inserts the
+  `<link>`s before `</head>`, as it does the toolbar script. They are linked same-origin, not copied into each build
+  (the earlier lean).
+- **To decide** (leans in the style lab):
+  - palette (lean: Gruvbox, already used by two surfaces);
+  - type pairing;
+  - self-hosted fonts (lean: yes);
+  - a light/dark toggle remembered in a `.cathe.dev` cookie (lean: yes);
+  - how far to push each generator (lean: colours, fonts and links only; layouts stay their own);
+  - the forest: override sheet now, rework the base theme later (lean);
+  - the shared AI-marker class (lean: styles shared, markup per generator later);
+  - the toolbar scrolls away rather than sticking (lean).
+- **Stake:** lower than before. Nothing is live yet, and the toolbar already gives every site a common element.
 
 ## AI marking beyond this site
 
