@@ -516,3 +516,11 @@ You asked for three things after browsing the preview; none needed anything from
   the XSLT at build time; it is next on the roadmap.
 - A classic `defer` script didn't run in XSLT-rendered pages. odoc's grid `<body>` displaced the bar. Both are fixed
   (D36).
+
+**Addendum (later).** The toolbar's status line stuck to cloakaml on every `ocaml.cathe.dev` page, because all of
+them belong to the repo-less index site. Pooled builds now record each member's opam packages, and the bar picks
+the member from the page's first path segment, or shows the pool on the index (`fix/bar-pool-member`). Also
+recorded:
+- the XSLT options, plus the finding that your fork's XML output is already called "legacy";
+- why the forest's views look alike today (no `forest-public.toml` yet, no notes filter);
+- the lean to merge the notes view into public.
