@@ -37,7 +37,7 @@ Every page Claude writes or substantially edits carries front matter:
 generated:
   by: Claude
   model: Opus 5.5        # the model actually used
-  effort: unrecorded     # the session's effort level, if known
+  effort: medium         # the session's effort level (medium for every session so far)
   date: 2026-10-16       # first generated
   edited: 2026-10-16     # last edited
 ---

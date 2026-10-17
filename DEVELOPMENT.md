@@ -395,3 +395,21 @@ After looking at the preview you raised three things.
   (`demos.cathe.dev` is already taken by a site). All of this joins the styling session's agenda (roadmap).
 
 Also: you gave the effort level (`medium`), now recorded on pages edited today. The convention is in the record.
+
+---
+
+## 2026-10-17 (later still): an OCaml docs bundle, and INDIMO into the forest
+
+Branch `docs/ocaml-bundle-and-indimo`. **Design** only.
+
+- **Effort:** every session so far ran at `medium` (you confirmed). Every page now records that, and the
+  `CLAUDE.md` template says so.
+- **Cross-linking OCaml docs across projects.** odoc only links packages built in one run. Separately built docs
+  leave references as unlinked text, so there is nothing for ddm to rewrite cleanly. Five options are in the open
+  questions. The lean is a **dune-workspace bundle**: each repo as a subdirectory under one `dune-workspace`, which
+  is dune's standard multi-project mechanism, not a hack. One `dune build @doc` cross-links everything, and its root
+  page doubles as the collated OCaml index. Each project keeps its host as a mount of the one build. Costs: one
+  shared environment, and every push rebuilds the bundle. Not committed to; plain text stays acceptable.
+- **INDIMO's notes into forester.** The lean is to merge them into the main forest (a folder plus the `indimo` tag,
+  which `forest.toml` already declares), with `indimo.cathe.dev` becoming a forest mount. A separate forest only if
+  others edit them. Scheduled with the forest work (M4), if you decide to.
