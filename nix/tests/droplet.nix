@@ -14,6 +14,11 @@
   }: {
     virtualisation.memorySize = 2048;
     services.ddm.tailnetOwner = lib.mkForce "owner@github";
+    # The secrets are encrypted to the real droplet's host key, which the VM
+    # doesn't have; it needs neither.
+    age.secrets = lib.mkForce {};
+    services.ddm.cloudflareEnvironmentFile = lib.mkForce null;
+    services.ddm.githubTokenFile = lib.mkForce null;
     # Certificates from Caddy's own CA instead of Let's Encrypt via
     # Cloudflare; everything else is the generated config.
     services.caddy.configFile = lib.mkForce (pkgs.runCommand "Caddyfile" {} ''
