@@ -83,6 +83,25 @@ func TestSiteAccessDefault(t *testing.T) {
 	}
 }
 
+func TestSearchDefault(t *testing.T) {
+	src := strings.Replace(base, "    taxa: [docs]\n    mounts: [ { host: docs.cathe.dev, path: guide/ } ]",
+		"    taxa: [docs]\n    search: entry\n    assistants: true\n    mounts: [ { host: docs.cathe.dev }, { host: guide.cathe.dev, search: none }, { host: docs.the.cathe.dev, access: private } ]", 1)
+	s, err := Parse([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ms := s.Sites["docs"].Mounts
+	if ms[0].Search != SearchEntry || ms[1].Search != SearchNone || ms[2].Search != SearchNone {
+		t.Errorf("search: got %q, %q, %q; want entry, none, none (private)", ms[0].Search, ms[1].Search, ms[2].Search)
+	}
+	if !ms[0].Assistants || ms[2].Assistants {
+		t.Errorf("assistants: got %v, %v; want true, false (private)", ms[0].Assistants, ms[2].Assistants)
+	}
+	if s.Sites["forest"].Mounts[0].Search != SearchNone {
+		t.Errorf("a site that says nothing must default to none")
+	}
+}
+
 func TestPool(t *testing.T) {
 	src := `
 domains: [cathe.dev]
@@ -131,6 +150,7 @@ func TestInvalid(t *testing.T) {
 		{"duplicate mount", "host: docs.cathe.dev, path: guide/", "host: jpears.me", "jpears.me/ is already mounted by sites.docs.mounts[0]"},
 		{"unknown field", "repo: thecathe/docs", "repo: thecathe/docs\n    reop: typo", "field reop not found"},
 		{"both forms", "views:\n      public:  { workflow: forester }", "workflow: forester\n    views:\n      public:  { workflow: forester }", "use either workflow"},
+		{"bad search", "taxa: [docs]\n    mounts", "taxa: [docs]\n    search: some\n    mounts", `search "some" must be`},
 		{"undeclared taxon", "taxa: [docs]\n    mounts", "taxa: [blog]\n    mounts", `taxon "blog" is not declared`},
 		{"two kinds in one step", "- run: forester build", "- { run: forester build, output: x }", "set exactly one of run, builtin, use, output"},
 		{"unknown builtin", "builtin: mkdocs-config", "builtin: mkdocs-magic", `unknown builtin "mkdocs-magic"`},

@@ -35,6 +35,43 @@ nav:
   - { title: private, link: "mount://the.cathe.dev/" }
   - { title: site map, link: "mount://the.cathe.dev/sites/" }
 
+# Crawlers (D50). Every host gets a generated robots.txt: these training
+# crawlers are refused everywhere; these assistants (fetching a page because
+# someone asked) only on sites with `assistants: true`; and every other
+# crawler, search engines included, may index what each mount's `search:`
+# allows (none by default, entry, or all). Private hosts refuse everything.
+# robots.txt is a request: well-behaved crawlers follow it.
+robots:
+  training:
+    - GPTBot
+    - ClaudeBot
+    - anthropic-ai
+    - Google-Extended
+    - Applebot-Extended
+    - CCBot
+    - Meta-ExternalAgent
+    - FacebookBot
+    - Bytespider
+    - Amazonbot
+    - cohere-ai
+    - cohere-training-data-crawler
+    - Diffbot
+    - AI2Bot
+    - Ai2Bot-Dolma
+    - Omgilibot
+    - ImagesiftBot
+    - Timpibot
+    - PanguBot
+  assistants:
+    - ChatGPT-User
+    - OAI-SearchBot
+    - Claude-User
+    - Claude-SearchBot
+    - Perplexity-User
+    - PerplexityBot
+    - MistralAI-User
+    - DuckAssistBot
+
 workflows:
   # A forest built with the forester fork, in the forest repo's own devShell.
   # build-forest (from vscode-forester) runs forest_gen.py, forester build,
@@ -129,13 +166,17 @@ sites:
       private: { workflow: forester }
     # The first mount of a view is its canonical address: site://forest/...
     # links resolve to forest.cathe.dev.
+    # Search engines see each host's entry page only (D50); later, trees
+    # tagged indexme too.
+    search: entry
     mounts:
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: cathe.dev, entry: /@cathe/ }
       - { host: jpears.me, entry: /@jpears/ }
+      - { host: cv.jpears.me, entry: /cv/ }
       - { host: projects.cathe.dev, entry: /taxon-project/ }
-      - { host: indimo.cathe.dev, entry: /indimo/ }
-      - { host: mebi.cathe.dev, entry: /mebi/ }
+      - { host: indimo.cathe.dev, entry: /indimo/, search: none }
+      - { host: mebi.cathe.dev, entry: /mebi/, search: none }
       - { host: notes.cathe.dev, entry: /tag-notes/ }
       - { host: recents.cathe.dev, entry: /timeline/ }
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
@@ -143,6 +184,7 @@ sites:
   # Every public site, by taxon; its private view is the full site map.
   sites:
     indexed: false
+    search: entry
     views:
       public:  { workflow: site-directory }
       private: { workflow: site-directory, params: { page: map } }
@@ -156,6 +198,7 @@ sites:
     workflow: site-directory
     params: { taxon: docs, title: Documentation }
     indexed: false
+    search: all
     mounts: [ { host: docs.cathe.dev } ]
 
   ddm:
@@ -169,6 +212,8 @@ sites:
   # root, odoc's list of every package, as the collated OCaml docs page.
   ocaml:
     workflow: odoc-pool
+    search: all       # generated program docs: indexed, and open to assistants
+    assistants: true
     taxa: [docs]
     description: API documentation for every OCaml package, linked together
     mounts: [ { host: ocaml.cathe.dev } ]
@@ -177,6 +222,8 @@ sites:
     repo: thecathe/cloakaml
     branch: docs   # the branch its old docs Action deployed from
     workflow: odoc-pool
+    search: all
+    assistants: true
     taxa: [docs, project, tool]
     description: cloakaml API documentation
     # Lands on the package rather than odoc's package list.

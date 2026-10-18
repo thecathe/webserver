@@ -58,6 +58,12 @@
     with subtest("a public mount serves its current publish"):
         droplet.wait_until_succeeds(f"{curl} https://ddm.cathe.dev/ | grep -q ddm-home")
 
+    with subtest("every host serves its generated robots.txt"):
+        droplet.succeed(f"{curl} -D /tmp/h https://ddm.cathe.dev/robots.txt > /tmp/robots")
+        droplet.succeed("grep -qi 'content-type: text/plain' /tmp/h")
+        droplet.succeed("grep -q 'robots.txt for ddm.cathe.dev' /tmp/robots")
+        droplet.succeed("grep -A1 'User-agent: PanguBot' /tmp/robots | grep -q 'Disallow: /'")
+
     with subtest("plain http redirects to https"):
         droplet.succeed("curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' http://ddm.cathe.dev/ | grep -q '308 https://ddm.cathe.dev/'")
 

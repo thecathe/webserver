@@ -11,6 +11,7 @@ import (
 
 	"ddm/internal/bar"
 	"ddm/internal/publish"
+	"ddm/internal/robots"
 	"ddm/internal/spec"
 )
 
@@ -112,17 +113,19 @@ func Generate(s *spec.Spec, t Target) string {
 				w(1, "route {")
 				d = 2
 				private(w, d, t.AuthSocket)
+				// In case a private address leaks: never index it.
+				w(d, `header X-Robots-Tag "noindex, nofollow"`)
 			}
 		}
 		hosts := slices.Sorted(maps.Keys(bl.Hosts))
 		if len(hosts) == 1 && !strings.HasPrefix(bl.Address, "*.") {
-			mounts(w, d, bl.Hosts[hosts[0]], t.WWW, bl.Private)
+			mounts(w, d, hosts[0], bl.Hosts[hosts[0]], s.Robots, t.WWW, bl.Private)
 		} else {
 			for _, h := range hosts {
 				name := strings.NewReplacer(".", "_", "-", "_").Replace(h)
 				w(d, "@%s host %s", name, h)
 				w(d, "handle @%s {", name)
-				mounts(w, d+1, bl.Hosts[h], t.WWW, bl.Private)
+				mounts(w, d+1, h, bl.Hosts[h], s.Robots, t.WWW, bl.Private)
 				w(d, "}")
 			}
 			w(d, "handle {")
@@ -178,8 +181,20 @@ func private(w func(int, string, ...any), d int, socket string) {
 }
 
 // mounts writes the handlers for one host's mounts, longest path first,
-// after the toolbar's files (/_ddm/, see internal/bar).
-func mounts(w func(int, string, ...any), depth int, ms []mount, www string, private bool) {
+// after its robots.txt and the toolbar's files (/_ddm/, see internal/bar).
+func mounts(w func(int, string, ...any), depth int, host string, ms []mount, r spec.Robots, www string, private bool) {
+	sm := make([]spec.Mount, len(ms))
+	for i, m := range ms {
+		sm[i] = m.Mount
+	}
+	w(depth, "handle /robots.txt {")
+	w(depth+1, `header Content-Type "text/plain; charset=utf-8"`)
+	w(depth+1, "respond <<ROBOTS")
+	for _, l := range strings.Split(strings.TrimSuffix(robots.Text(host, r, sm, private), "\n"), "\n") {
+		w(depth+2, "%s", l)
+	}
+	w(depth+2, "ROBOTS 200")
+	w(depth, "}")
 	w(depth, "handle_path /_ddm/* {")
 	w(depth+1, "root * %s", bar.Dir(www, private))
 	w(depth+1, "file_server")
