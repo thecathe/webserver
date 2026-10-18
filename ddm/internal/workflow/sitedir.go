@@ -346,10 +346,17 @@ Generated from <code>sites.yaml</code> on every build, so anything newly deploye
 <script>
 // Back to this host's home page (its / forwards to its entry page), or, if
 // the host itself is unknown so / is missing too, to the site directory.
-const target = location.pathname === "/" ? document.getElementById("directory") : document.getElementById("home");
-if (location.pathname === "/") document.getElementById("home").replaceWith(document.createTextNode("the site directory"));
-document.getElementById("redirect").hidden = false;
-setTimeout(() => location.replace(target.href), 3000);
+// Not inside a frame, such as the directory's split view (D52): there the
+// redirect would put the directory inside itself, so the page stays, and
+// its links open in the whole window.
+if (window.top === window) {
+  const target = location.pathname === "/" ? document.getElementById("directory") : document.getElementById("home");
+  if (location.pathname === "/") document.getElementById("home").replaceWith(document.createTextNode("the site directory"));
+  document.getElementById("redirect").hidden = false;
+  setTimeout(() => location.replace(target.href), 3000);
+} else {
+  for (const a of document.links) a.target = "_top";
+}
 </script>
 </body></html>
 {{end}}

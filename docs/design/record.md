@@ -487,6 +487,9 @@ How it works, and why:
 - **Links that leave ddm's sites leave the pane**, into the whole window. GitHub, like most sites, refuses to be
   framed, so it would show only an error inside the pane. The toolbar in the pane does this, for any origin not in
   its `nav.json` (found by you, on a GitHub link in INDIMO's notes).
+- **The 404 page doesn't redirect inside a pane.** Its redirect would lead to the directory, nesting the directory
+  inside itself (you found this on `devlog`, before its first build). In a frame it stays put, and its links
+  open in the whole window.
 - **Ordinary links stay ordinary.** Ctrl-, middle- and shift-clicks open a tab as usual. Below 800px wide there's
   no split: a click navigates, and an `#open=` link goes straight to the page. Without JavaScript the links simply
   navigate.
