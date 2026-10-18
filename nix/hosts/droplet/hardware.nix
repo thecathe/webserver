@@ -22,12 +22,13 @@
     dns = ["67.207.67.2" "67.207.67.3"];
   };
 
-  # Builds (the OCaml pool peaks at about 600 MiB, D34) need headroom on a
-  # small droplet.
+  # Builds need headroom on a small droplet. The OCaml pool's first build
+  # compiles Rocq's standard library, which ran out of 2 GiB RAM + 2 GiB swap
+  # (2026-10-18); later builds reuse that switch (about 600 MiB, D34).
   swapDevices = [
     {
       device = "/var/swapfile";
-      size = 2048;
+      size = 4096;
     }
   ];
 

@@ -63,6 +63,12 @@
       # The OCaml pool's first build takes about 6 minutes (D34).
       TimeoutStartSec = "2h";
       Nice = 10;
+      # Builds can't starve Caddy, SSH or systemd: past this the kernel
+      # kills a build process (swap still counts as headroom). And a killed
+      # build fails only its own site: ddm records it and carries on, where
+      # systemd's default would stop the whole run.
+      MemoryMax = "75%";
+      OOMPolicy = "continue";
     };
   };
 in {
