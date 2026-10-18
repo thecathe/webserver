@@ -711,3 +711,15 @@ the fix) builds as usual, and only the same commit waits.
 
 **Open.**
 - Email notifications (failures, busy warnings): they need an SMTP account. Leaning towards a daily digest in M6.
+
+---
+
+## 2026-10-18 (later): the repo is `thecathe/webserver`
+
+You moved `cathe-org/dots` to `thecathe/webserver`. Updated every reference:
+- `sites.yaml`: `system.flake`, and the `ddm` site's repo;
+- `ddm-rebuild`'s flake (`services.ddm.flake`);
+- `mkdocs.yml`'s `repo_url`;
+- D1.
+
+The repo-name open question is closed. Claude pushed `main` to the new remote (you asked, this once).

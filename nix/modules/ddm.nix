@@ -127,7 +127,7 @@ in {
 
     flake = mkOption {
       type = types.str;
-      default = "github:cathe-org/dots#droplet";
+      default = "github:thecathe/webserver#droplet";
       description = "What ddm-rebuild.service switches the system to.";
     };
   };

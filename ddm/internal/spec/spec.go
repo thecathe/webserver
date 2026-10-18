@@ -35,7 +35,7 @@ type Spec struct {
 // System says where the server's own NixOS config comes from.
 type System struct {
 	// Flake is the flake ddm rebuilds the server from, e.g.
-	// "github:thecathe/server-dots". ddm always pins the sha it saw.
+	// "github:thecathe/webserver". ddm always pins the sha it saw.
 	Flake string `yaml:"flake"`
 	// Host selects nixosConfigurations.<host>.
 	Host string `yaml:"host"`

@@ -17,9 +17,9 @@ marked *superseded* and kept, so the reasoning trail survives. For the story of 
 
 ### D1. One server repo, separate from the NixOS-host dots (2026-10-16)
 This repo is the server's repo, separate from `thecathe/dots` (your machines). It holds the spec, the workflows, ddm,
-and the server's NixOS config. It moves from `cathe-org` back to your personal account (name TBD; `thecathe/dots` is
-taken, and `server-dots` is a placeholder), along with the other `cathe-org` repos. **Why:** it is the one project
-that needs GitHub secrets, and doing that once means no other project ever needs any.
+and the server's NixOS config. It moved from `cathe-org/dots` to your personal account as **`thecathe/webserver`**
+(2026-10-18), and the other `cathe-org` repos follow. **Why:** it is the one project that needs GitHub secrets, and
+doing that once means no other project ever needs any.
 
 ### D2. ddm rebuilds the server, including itself (2026-10-16)
 ddm pulls this repo and switches the droplet to `nixosConfigurations.<host>` at the exact sha it saw. **Why:** the
@@ -358,7 +358,7 @@ appears on a command line. **Rejected:** sops-nix, which is more capable but mor
 ### D47. Until the daemon: `ddm deploy` on a timer; Tailscale joined by hand (2026-10-18, M5)
 `ddm deploy` builds and publishes every site for production, and `ddm-deploy.timer` runs it 10 minutes after the
 previous run ends. It rebuilds everything each time, even unchanged commits; the daemon (M6) will poll and build only
-what changed. `ddm-rebuild.service` (`nixos-rebuild switch --refresh --flake github:cathe-org/dots#droplet`) exists,
+what changed. `ddm-rebuild.service` (`nixos-rebuild switch --refresh --flake github:thecathe/webserver#droplet`) exists,
 but nothing starts it yet. The droplet joins the tailnet once by hand (`tailscale up`, then log in), and the state
 persists. **Why:** an auth key would be one more secret to rotate, for a step done once per install.
 
