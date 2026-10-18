@@ -34,10 +34,20 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   If Caddy can't get certificates with an account token, make a user token instead (My Profile → API Tokens), with
   the same zones and permissions. It goes in `secrets/cloudflare.age` as `CLOUDFLARE_API_TOKEN=<token>`
   ([runbook](usage/operations.md#installing-once-per-wipe), step 1), never in plain text.
-- [ ] **At install: a GitHub token** for the droplet (added 2026-10-18). A fine-grained token with resource owner
-  `thecathe`, **All repositories**, and only **Contents: read-only**, with the longest expiry offered (note the
-  date). "All repositories" includes ones you create later, so it never needs widening. It goes in
-  `secrets/github-token.age`, and it's the only GitHub credential ddm needs.
+- [ ] **At install: a GitHub token** for the droplet (added 2026-10-18). **Fine-grained**, not classic: a classic
+  token's only scope for private repos is `repo`, which also grants write. "All repositories" includes ones you
+  create later, so it never needs widening. It's the only GitHub credential ddm needs.
+    1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token.
+    2. Name `droplet`; **Resource owner** `thecathe`; **Expiration**: the longest offered (note the date here).
+    3. **Repository access**: **All repositories**.
+    4. **Permissions** → Repository permissions (the "Add permissions" list in newer layouts) → **Contents** →
+       **Read-only**. GitHub adds **Metadata: read-only** by itself; leave everything else unset.
+    5. Generate, copy the token (`github_pat_…`), and encrypt it from `secrets/`:
+       `nix run github:ryantm/agenix -- -e github-token.age -i ~/.ssh/digitalocean_key`. Paste the token **alone**
+       on the first line (no `NAME=`: unlike the Cloudflare one, ddm reads this file as the bare token), save and
+       quit. Commit `secrets/github-token.age`.
+
+    It only reaches repos `thecathe` owns. A site repo moved to an organisation would need its own token.
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
