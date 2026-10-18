@@ -535,6 +535,19 @@ work login), set in a file rather than by deleting them, and the same rule for a
 - **The rules for writers** are in the devlog's `CLAUDE.md`, and pointed to from the global "Design write-ups"
   rule in `thecathe/dots`, so a session in another project follows them too.
 
+### D55. Watch the public address before closing more of it (2026-10-18)
+With the web ports Cloudflare-only (D53), the droplet's public address still answers SSH (22) and Tailscale.
+Further steps were weighed: SSH over the tailnet only, a Cloudflare tunnel (no inbound web ports at all), or a new
+droplet whose address is never published. You chose to measure first. `port-watch` (`nix/hosts/droplet/`) writes
+a daily report from the firewall's refusals (now logged) and sshd's log; see the runbook.
+- **How to read it.** Background scanning of port 22 and random ports is normal for any address, and is no reason
+  to act alone. Signals that are: any `OUTSIDE:` login (investigate at once); attempts aimed at you specifically
+  (usernames like `cathe` or `root` in volume, one address persisting for days); a steady stream of direct 80/443
+  attempts, which means the address is being used to find the sites (worth a tunnel or a new address).
+- **Counts** are connections (source address and port), not packets: the firewall logs each retried SYN.
+- **Rejected for now:** fail2ban or sshguard. With key-only SSH, a password guess can't succeed, so banning adds
+  little but log noise; closing 22 to the internet is the stronger step if the report says so.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

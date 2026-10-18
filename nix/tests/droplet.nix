@@ -52,7 +52,7 @@
         prefixLength = 20;
       }
     ];
-    environment.systemPackages = [pkgs.netcat];
+    environment.systemPackages = [pkgs.netcat pkgs.openssh];
   };
 
   testScript = ''
@@ -112,6 +112,20 @@
             for addr in ["192.168.1.1", "2001:db8:1::1"]:
                 outsider.fail(f"nc -z -w 5 {addr} {port}")
         outsider.succeed("nc -z -w 5 192.168.1.1 22")
+
+    with subtest("port-watch reports the refused knocks and the failed SSH login"):
+        outsider.fail("ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=5 nosuchuser@192.168.1.1 true")
+        droplet.wait_until_succeeds("journalctl -t sshd-session -t sshd-auth -t sshd -o cat | grep -q nosuchuser")
+        out = droplet.succeed("port-watch now")
+        print(out)
+        # The probes above: 80 and 443 over IPv4 and IPv6 were refused.
+        assert "80/443 directly (not through Cloudflare): 4 from 2 addresses" in out, out
+        assert "failed or abandoned attempts: 2 from 1 addresses" in out, out
+        assert "nosuchuser" in out, out
+        assert "from outside the tailnet: 0" in out, out
+        droplet.succeed("systemctl start port-watch")
+        droplet.succeed("ls /var/lib/port-watch/*.txt")
+        droplet.succeed("port-watch > /tmp/pw && grep -q 'port-watch: ' /tmp/pw")
 
     with subtest("a deploy unit builds and publishes a site, and records it"):
         # docs has no repo, so it builds offline. It replaces the fake publish above.
