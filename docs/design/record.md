@@ -230,6 +230,12 @@ references. **Found:** a pool needs **one version of every shared tool**. Rocq 9
 `dune < 3.24`, and membranes requires `dune >= 3.24` (its `(lang dune 3.24)`), so no switch can build both, even
 ignoring the lockfiles. membranes is out of the pool (commented out in `sites.yaml`) until one of them moves.
 Lowering membranes to `(lang dune 3.23)` is the likely fix, if it uses nothing from 3.24.
+**Measured on the droplet (2026-10-18):** the 600 MB estimate held for a warm rebuild, not for the first one. The
+first build (opam switch, Rocq, mebi_plugin's Rocq files) took the whole 2 GB droplet: the kernel OOM-killed it and,
+with it, the entire deploy run. Two changes: deploy units are capped at `MemoryMax=75%` with `OOMPolicy=continue`,
+so an out-of-memory build fails only its own site; and swap went from 2 GB to 4 GB. With both, the pool published in
+11m56s. Some `rocqworker` processes were still OOM-killed in that build, which nonetheless succeeded; why isn't
+established (mebi_plugin's test files were being compiled, which the docs may not need).
 
 ### D35. Addresses after the first preview (2026-10-17)
 - `indimo.cathe.dev`, `mebi.cathe.dev` and `projects.cathe.dev` are forest addresses. They land on the forest's

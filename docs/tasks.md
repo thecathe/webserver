@@ -17,9 +17,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **Read `port-watch` after a week or two** (added 2026-10-18), on the droplet (runbook, "Who knocks on the
   public address"). Then decide on SSH over the tailnet only, a tunnel, or a new address (D55 says what to look
   for). It starts counting after the next rebuild.
-- [ ] **Push `main` and rebuild the droplet** (added 2026-10-18): `systemctl start ddm-rebuild`. It brings the
-  firewall that lets only Cloudflare reach the web ports (D53) and the devlog site (D54). Afterwards,
-  `curl -m 5 http://<droplet address>/` from outside should time out, while the sites still load.
 - [ ] **Reset other clones of this repo** (added 2026-10-18), e.g. on the laptops: the history was rewritten, so
   `git fetch && git reset --hard origin/main` (after checking they hold nothing unpushed). Optionally, ask GitHub
   Support to purge cached views of the old commits; nothing links to them any more.
@@ -55,6 +52,9 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Done
 
+- [x] **Push `main` and rebuild the droplet** (added 2026-10-18; done the same evening, at `8445848`): `systemctl start ddm-rebuild`. It brings the
+  firewall that lets only Cloudflare reach the web ports (D53) and the devlog site (D54). Afterwards,
+  `curl -m 5 http://<droplet address>/` from outside should time out, while the sites still load.
 - [x] The May 2026 Cloudflare user token (`cfut_…`, from the old Caddyfile) deleted from My Profile; nothing used
   it any more. The server uses only the account token in `secrets/cloudflare.age` (you, 2026-10-18).
 - [x] Old deploy secrets: none left in this repo or `demos`; `cloakaml`'s four and its `SITE` variable deleted,
