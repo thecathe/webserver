@@ -77,7 +77,11 @@ move it to the [decision record](record.md) and note it in the [development log]
 - **Poll interval:** 10m? Per-site overrides?
 - **Notifications:** these replace the dead `email_notifications` field. Email, ntfy, or a status page? The lean is
   a status page first, most naturally the private site map (`the.cathe.dev/sites/`, D29), extended with each
-  mount's live commit and last build once the daemon keeps state (M6).
+  mount's live commit and last build from `state.json` (D48).
+  - **Email** (you asked, 2026-10-18), for at least: a build failing, the server building more than half the day
+    (D48 already measures this), and a failed system rebuild. It needs an SMTP account (e.g. a Fastmail or Gmail
+    app password, or a sending service), stored with agenix. On NixOS that's `msmtp`, triggered by systemd
+    `OnFailure=` and by ddm itself. The lean is to add it in M6, with one digest a day rather than a mail per event.
 - **Health check:** for rollback, what does "the new generation is healthy" mean? `caddy validate`, ddm answering on
   its socket, and a fetch of each mount's entry?
 - **Retention:** how many builds to keep per site?

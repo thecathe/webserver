@@ -195,3 +195,37 @@ func TestReportsEveryProblem(t *testing.T) {
 		}
 	}
 }
+
+func TestParseDuration(t *testing.T) {
+	for in, want := range map[string]time.Duration{
+		"0": 0, "90s": 90 * time.Second, "1h30m": 90 * time.Minute, "1d": 24 * time.Hour, "2w": 14 * 24 * time.Hour,
+	} {
+		if got, err := ParseDuration(in); err != nil || got != want {
+			t.Errorf("%q: got %v, %v; want %v", in, got, err, want)
+		}
+	}
+	for _, bad := range []string{"d", "1.5d", "-1w", "soon"} {
+		if _, err := ParseDuration(bad); err == nil {
+			t.Errorf("%q: want an error", bad)
+		}
+	}
+}
+
+func TestCooldown(t *testing.T) {
+	d := func(v time.Duration) *Duration { x := Duration(v); return &x }
+	s := &Spec{
+		System:    System{Cooldown: Duration(time.Hour)},
+		Workflows: map[string]Workflow{"w": {}, "p": {Pool: true}},
+		Sites: map[string]Site{
+			"plain": {Views: map[string]View{"public": {Workflow: "w"}}},
+			"slow":  {Cooldown: d(7 * 24 * time.Hour), Views: map[string]View{"public": {Workflow: "w"}}},
+			"a":     {Cooldown: d(24 * time.Hour), Views: map[string]View{"public": {Workflow: "p"}}},
+			"b":     {Cooldown: d(0), Views: map[string]View{"public": {Workflow: "p"}}},
+		},
+	}
+	for site, want := range map[string]time.Duration{"plain": time.Hour, "slow": 7 * 24 * time.Hour, "a": 0, "b": 0} {
+		if got := s.Cooldown(site, "public"); got != want {
+			t.Errorf("%s: got %v, want %v", site, got, want)
+		}
+	}
+}

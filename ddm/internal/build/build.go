@@ -130,3 +130,32 @@ func keep(built, work, served, view, commit string) (string, error) {
 	}
 	return dest, nil
 }
+
+// Head returns what building r now would build, without checking anything
+// out: the branch's commit, "none" for a site without a repo, or a pool's id.
+// Src and Branch overrides are ignored: it is for the server.
+func Head(r Request) (string, error) {
+	site, ok := r.Spec.Sites[r.Site]
+	if !ok {
+		return "", fmt.Errorf("no site %q", r.Site)
+	}
+	if wf := r.Spec.PoolOf(r.Site, r.View); wf != "" {
+		var members []Member
+		for _, name := range r.Spec.PoolMembers(wf, r.View) {
+			m := Member{Site: name}
+			if repo := r.Spec.Sites[name].Repo; repo != "" {
+				commit, err := gitsync.RemoteHead(gitsync.CloneURL(repo), r.Spec.Sites[name].Branch)
+				if err != nil {
+					return "", fmt.Errorf("%s: %w", name, err)
+				}
+				m.Commit = commit
+			}
+			members = append(members, m)
+		}
+		return poolID(members), nil
+	}
+	if site.Repo == "" {
+		return "none", nil
+	}
+	return gitsync.RemoteHead(gitsync.CloneURL(site.Repo), site.Branch)
+}
