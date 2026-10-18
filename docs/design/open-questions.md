@@ -30,7 +30,7 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 - **Answered (M2):** forester and mkdocs (strict mode) both emit `site://cloakaml/…` verbatim, so the scheme stays.
 - **Still open:** odoc docstring links (`{{:site://…}text}`) are untested. Test when a project first needs one.
-- **Answered (M3a):** forest redirect trees work. `\meta{redirect}{[text](site://name/)}` resolves in both the
+- **Answered (M3a):** forest redirect trees work. `\meta{redirect}{[text](site://<name>/)}` resolves in both the
   `redirect` and `external` configs. The bare form only works with `redirect`; see
   [links between sites](../usage/spec.md#links-between-sites).
 

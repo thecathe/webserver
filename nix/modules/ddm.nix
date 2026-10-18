@@ -32,16 +32,20 @@
     '';
 
   # git and nix see the GitHub token (private repos) through their own
-  # config, so it never appears on a command line.
+  # config, so it never appears on a command line. The server has no SSH, so
+  # GitHub SSH URLs (e.g. in a repo's .gitmodules) are fetched over https.
   deploy = pkgs.writeShellScript "ddm-deploy" ''
     set -eu
+    export GIT_CONFIG_COUNT=1
+    export GIT_CONFIG_KEY_0=url.https://github.com/.insteadOf
+    export GIT_CONFIG_VALUE_0=git@github.com:
     if [ -e "''${CREDENTIALS_DIRECTORY:-}/github-token" ]; then
       token=$(cat "$CREDENTIALS_DIRECTORY/github-token")
       export NIX_CONFIG="access-tokens = github.com=$token"
-      export GIT_CONFIG_COUNT=1
+      export GIT_CONFIG_COUNT=2
       printf 'https://x-access-token:%s@github.com\n' "$token" > "$RUNTIME_DIRECTORY/git-credentials"
-      export GIT_CONFIG_KEY_0=credential.https://github.com.helper
-      export GIT_CONFIG_VALUE_0="store --file=$RUNTIME_DIRECTORY/git-credentials"
+      export GIT_CONFIG_KEY_1=credential.https://github.com.helper
+      export GIT_CONFIG_VALUE_1="store --file=$RUNTIME_DIRECTORY/git-credentials"
     fi
     exec ddm deploy --spec ${cfg.spec} --work ${state}/work --www ${www} "$@"
   '';
