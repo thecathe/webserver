@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Open questions
@@ -85,10 +85,12 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 ## Infrastructure
 
-- **Droplet:** reinstalled in place (D21). Open: nixos-anywhere (kexec into an installer, partition with disko,
-  fully declarative) or DigitalOcean rebuild + nixos-infect (simpler, less declarative disk layout). The lean is
-  nixos-anywhere. Also: is the current droplet size enough for forester and odoc builds?
-- **Secrets:** agenix or sops-nix. The lean is agenix, which is simpler; the droplet's host key decrypts.
+- **Droplet:** reinstalled in place (D21) with nixos-anywhere (D44). Still open: is the current droplet size enough
+  for forester and odoc builds? nixos-anywhere's kexec step also needs about 1 GiB of RAM.
+- **A trial install first?** Installing on the real droplet *is* the cutover (M7). A throwaway droplet for an hour
+  would prove the install, DHCP, certificates and the tailnet gate for a few cents. The lean is yes, once the
+  secrets exist.
+- **Secrets:** agenix (D46).
 - **Repo name** after the transfer (`server-dots` is a placeholder).
 - **DNS:** a wildcard `*.cathe.dev`, `cathe.dev` and `jpears.me` to the public IP, plus `the.cathe.dev` and
   `*.the.cathe.dev` to the tailnet IP (D29). Wildcard certificates for both come from the same Cloudflare token.

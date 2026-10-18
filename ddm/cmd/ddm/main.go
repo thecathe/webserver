@@ -8,6 +8,7 @@
 //	ddm publish [flags] <site>  build one view of a site and publish it
 //	ddm caddyfile [flags]       print the Caddyfile generated from the mounts
 //	ddm preview [flags] [site…] build and publish sites locally, then serve them
+//	ddm deploy [flags] [site…]  build and publish sites for production (the server)
 //
 // spec defaults to sites.yaml in the current directory.
 package main
@@ -40,6 +41,9 @@ commands:
   preview [flags] [site ...]
                         build and publish sites into .ddm/www, then serve
                         them all on http://<host>.localhost:8080
+  deploy [flags] [site ...]
+                        build and publish sites for production (on the
+                        server: ddm-deploy.service runs this)
 
 <command> -h lists a command's flags.
 
@@ -84,6 +88,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdCaddyfile(rest, stdout, stderr)
 	case "preview":
 		return cmdPreview(rest, stdout, stderr)
+	case "deploy":
+		return cmdDeploy(rest, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "ddm: unknown command %q\n\n%s", cmd, usage)
 		return 2

@@ -4,16 +4,17 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # ddm: the deployment manager
 
-!!! info "Status (2026-10-17): everything runs locally; the server is next"
+!!! info "Status (2026-10-18): the server's config is built; installing it is next"
     `ddm` validates the [site spec](usage/spec.md), builds and publishes every site, generates the Caddyfile, and
     serves the whole set locally with a shared toolbar (`bin/ddm preview`; see [operations](usage/operations.md)).
-    Nothing is live yet: the NixOS server (M5), the daemon (M6) and the reinstall of the droplet (M7) come next. The
-    old droplet still runs the previous hand-made setup, which will be wiped.
+    The droplet's NixOS config (M5) exists and passes a VM test. Nothing is live yet: installing it needs your
+    secrets ([to-dos](tasks.md)), then the daemon (M6) and the reinstall of the droplet (M7). The old droplet still
+    runs the previous hand-made setup, which will be wiped.
 
 ## What it is for
 

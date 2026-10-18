@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Operations
@@ -106,6 +106,72 @@ nix develop -c sh -c 'bin/ddm caddyfile | caddy adapt --adapter caddyfile --conf
 
 The devShell's Caddy includes the Cloudflare DNS plugin that the config needs, the same build the server will
 run. [Architecture](../design/architecture.md#caddy) explains what each part does.
+
+## The server
+
+The droplet runs `nixosConfigurations.droplet` from this repo's flake (D44–D47):
+
+| Path | What |
+|---|---|
+| `nix/package.nix` | ddm, built from `ddm/` |
+| `nix/modules/ddm.nix` | `services.ddm`: Caddy, `ddm-deploy`, `ddm-rebuild`, Tailscale's auth helper |
+| `nix/hosts/droplet/` | the host: SSH, Tailscale, secrets (`default.nix`); disk and boot (`hardware.nix`) |
+| `nix/tests/droplet.nix` | the VM test |
+| `secrets/` | agenix: `secrets.nix` says who can decrypt; `*.age` are the encrypted files |
+
+On the droplet:
+
+| Unit | Does |
+|---|---|
+| `caddy.service` | serves `/var/www` on the Caddyfile generated at build time (D45) |
+| `ddm-deploy.timer` / `.service` | `ddm deploy`: build and publish every site, 10 min after the last run ends |
+| `ddm-rebuild.service` | `nixos-rebuild switch` to the latest `main` on GitHub; started by hand for now |
+| `tailscaled`, `tailscale-nginx-auth` | the tailnet, and the "who is this?" socket the private gate asks |
+
+```sh
+journalctl -u ddm-deploy -f          # watch a deploy
+systemctl start ddm-deploy           # deploy now
+systemctl start ddm-rebuild          # pick up a pushed change to this repo (sites.yaml included)
+nixos-rebuild switch --rollback      # undo the last system change
+```
+
+Before relying on a change to `nix/`, run the VM test (about a minute, needs KVM):
+
+```sh
+nix build .#checks.x86_64-linux.droplet -L
+```
+
+It boots the droplet's config offline and checks that Caddy runs the generated config, that a public mount serves
+its `current` publish, that http redirects to https, the shared 404 page, Caddy's access to the auth socket, and that
+a private host refuses a client outside the tailnet. Certificates, the tailnet itself and real builds need the
+internet, so only the droplet can check those.
+
+### Installing (once per wipe)
+
+1. **Secrets.** Generate the droplet's host key, so secrets can be encrypted to it before it exists:
+
+    ```sh
+    mkdir -p ~/droplet-keys/etc/ssh
+    ssh-keygen -t ed25519 -N "" -C droplet -f ~/droplet-keys/etc/ssh/ssh_host_ed25519_key
+    cp ~/droplet-keys/etc/ssh/ssh_host_ed25519_key.pub secrets/keys/droplet.pub
+    cd secrets
+    nix run github:ryantm/agenix -- -e cloudflare.age   -i ~/.ssh/digitalocean_key   # CLOUDFLARE_API_TOKEN=...
+    nix run github:ryantm/agenix -- -e github-token.age -i ~/.ssh/digitalocean_key   # the token alone
+    ```
+
+    Commit `secrets/keys/droplet.pub` and the `.age` files, and push `main`: the droplet builds sites, and
+    rebuilds itself, from GitHub. Keep `~/droplet-keys` private until the install, then delete it.
+2. **Install.** This **wipes** the machine at that address:
+
+    ```sh
+    nix run github:nix-community/nixos-anywhere -- --flake .#droplet \
+      --extra-files ~/droplet-keys root@<droplet IP>
+    ```
+
+3. **Join the tailnet.** `ssh root@<droplet IP> tailscale up`, open the link it prints, and log in. Then, in the
+   Tailscale admin console, **disable key expiry** for `droplet`, or it drops off the tailnet in 180 days.
+4. **Check.** `systemctl status caddy ddm-deploy`, then `journalctl -u ddm-deploy -f` until the first deploy
+   finishes. Certificates arrive once DNS points at the droplet (M7).
 
 ## Planned (once ddm runs, roadmap M6)
 

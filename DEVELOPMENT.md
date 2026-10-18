@@ -635,3 +635,46 @@ Branch `docs/styling-session`. **Design** + **Docs**.
   and a toolbar that scrolls away.
 - **Implementation is M3b's first item.** Still to work out: making each generator honour the toggle's explicit
   choice, and giving the forest a dark mode.
+
+---
+
+## 2026-10-18: M5, the droplet's NixOS config
+
+Branch `feat/nixos-host`. **Feature** + **Design**.
+
+**Built.**
+- **`ddm deploy`**: publishes every site for production. The preview's loop became `publishAll`, shared by both.
+- **`nix/`**:
+  - `package.nix`: ddm;
+  - `modules/ddm.nix`: `services.ddm`;
+  - `hosts/droplet/`: the host;
+  - `tests/droplet.nix`: the VM test.
+- **The flake** gains `disko` and `agenix`, plus `packages.ddm`, `nixosModules.ddm`, `nixosConfigurations.droplet`
+  and `checks.droplet`.
+- The droplet's system builds, and the VM test passes (7 subtests).
+
+**Decisions.**
+- **D44:** nixos-anywhere with disko; root SSH by key only.
+- **D45:** the Caddyfile is generated and validated at build time, not written by ddm.
+- **D46:** agenix, with the host key generated before the install; a secret is wired in only once its file exists.
+- **D47:** `ddm deploy` on a timer until M6; Tailscale joined by hand.
+
+**Found along the way.**
+- `caddy validate` rejects an obviously fake Cloudflare token. The build uses 40 `x`s, which pass its format check.
+- Caddy's `abort` shows up in curl as exit 92 over HTTP/2 (stream reset) and exit 52 over HTTP/1.1 (empty reply).
+  The test forces HTTP/1.1 so a TLS failure can't pass for the gate working.
+- `nix develop /nix/store/…-source#mkdocs` works. So workflows find `{{system}}` in the flake's store copy, and
+  the server needs no checkout of this repo. Verified with a real `ddm deploy docs sites` from that copy.
+- GitHub's `cathe-org/dots` `main` is still at `8ae185a`, so building the `ddm` site from GitHub fails until you push.
+
+**Rejected.**
+- ddm writing the Caddyfile at runtime and reloading (D4's plan). See D45.
+- An auth key for Tailscale. See D47.
+- nixos-infect. See D44.
+
+**Open.**
+- Whether DigitalOcean's DHCP gives the droplet its address (checked at install).
+- The droplet's size.
+- A trial droplet before M7.
+
+**Commits** (this repo): `62517b5` (ddm deploy), `2813c56` (NixOS config), plus this docs commit.

@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Your to-dos
@@ -30,10 +30,22 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **For M7: DNS for the private domain** (added 2026-10-17). `the.cathe.dev` and `*.the.cathe.dev` point at
   the droplet's **tailnet** IP (100.x). Decide whether these go in public Cloudflare DNS or only in Tailscale split
   DNS (see open questions, "Infrastructure"). Nothing to do until the droplet runs NixOS.
-- [ ] **For M5: your Tailscale login name** (added 2026-10-17), e.g. `you@github`, as shown in the Tailscale admin
-  console. It becomes `TAILNET_OWNER`, the one identity the private sites let in.
+- [ ] **For M5: tell Claude your Tailscale login name** (added 2026-10-17), e.g. `you@github`, as the admin
+  console's **Users** page shows it. It becomes `services.ddm.tailnetOwner` in `nix/hosts/droplet/default.nix`, the
+  one identity the private sites let in. It isn't secret.
 - [ ] **For M5: a Cloudflare API token** with `Zone:DNS:Edit` on `cathe.dev` and `jpears.me` (added 2026-10-17),
-  for the wildcard certificates. It is stored encrypted in this repo (agenix), never in plain text.
+  for the wildcard certificates. Cloudflare → My Profile → API Tokens → Create Token → "Edit zone DNS", both
+  zones. It goes in `secrets/cloudflare.age` as `CLOUDFLARE_API_TOKEN=<token>`
+  ([runbook](usage/operations.md#installing-once-per-wipe), step 1), never in plain text.
+- [ ] **For M5: a GitHub token** that can read the private site repos (added 2026-10-18). A fine-grained token
+  (GitHub → Settings → Developer settings → Fine-grained tokens) for `thecathe/forest`, `demos`, `INDIMO` and
+  `membranes`, with **Contents: read-only** only. It goes in `secrets/github-token.age`.
+- [ ] **For M5: the droplet's size** (added 2026-10-18): RAM and disk, from the DigitalOcean console. Builds and
+  nixos-anywhere's installer each want about 1 GiB of RAM.
+- [ ] **For M5: a trial droplet, or straight to M7?** (added 2026-10-18). Installing on the real droplet wipes the
+  live sites. A throwaway droplet for an hour proves the install first, for a few cents (open questions).
+- [ ] **Push `main`** when you're happy with it (added 2026-10-18). GitHub's `cathe-org/dots` is still at
+  `8ae185a`, so the droplet (and `ddm deploy`'s `ddm` site) would see the old repo.
 
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from

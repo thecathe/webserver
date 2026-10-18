@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"time"
 
 	"ddm/internal/bar"
@@ -188,30 +189,8 @@ flags:
 
 	var failed []string
 	if !*serveOnly {
-		done := map[string]bool{} // a pool is built once, whichever member comes first
-		for _, name := range sites {
-			for _, view := range builtViews(s.Sites[name]) {
-				if key := s.Served(name, view) + "/" + view; done[key] {
-					continue
-				} else {
-					done[key] = true
-				}
-				start := time.Now()
-				src, branch, _ := strings.Cut(srcs[name], "@")
-				_, err := buildAndPublish(ctx, build.Request{
-					Spec: s, Site: name, View: view, System: system, Work: *work, Log: stdout,
-					Src: src, Branch: branch,
-				}, t)
-				if err != nil {
-					if ctx.Err() != nil {
-						return 1
-					}
-					fmt.Fprintf(stderr, "ddm: %s (%s) failed: %v\n", name, view, err)
-					failed = append(failed, name+" ("+view+")")
-					continue
-				}
-				fmt.Fprintf(stdout, "    %s (%s) published in %s\n", name, view, time.Since(start).Round(time.Second))
-			}
+		if failed = publishAll(ctx, s, sites, system, *work, srcs, t, stdout, stderr); ctx.Err() != nil {
+			return 1
 		}
 	}
 
@@ -254,6 +233,108 @@ flags:
 		if !errors.As(err, &ee) {
 			fmt.Fprintf(stderr, "ddm: running caddy (is it on PATH? use nix develop): %v\n", err)
 		}
+		return 1
+	}
+	return 0
+}
+
+// publishAll builds and publishes every built view of sites for t, and
+// returns the ones that failed ("site (view)"). A failure doesn't stop the
+// rest; an interrupt does (check ctx.Err()).
+func publishAll(ctx context.Context, s *spec.Spec, sites []string, system, work string, srcs setFlags, t target, stdout, stderr io.Writer) []string {
+	var failed []string
+	done := map[string]bool{} // a pool is built once, whichever member comes first
+	for _, name := range sites {
+		for _, view := range builtViews(s.Sites[name]) {
+			if key := s.Served(name, view) + "/" + view; done[key] {
+				continue
+			} else {
+				done[key] = true
+			}
+			start := time.Now()
+			src, branch, _ := strings.Cut(srcs[name], "@")
+			_, err := buildAndPublish(ctx, build.Request{
+				Spec: s, Site: name, View: view, System: system, Work: work, Log: stdout,
+				Src: src, Branch: branch,
+			}, t)
+			if err != nil {
+				if ctx.Err() != nil {
+					return failed
+				}
+				fmt.Fprintf(stderr, "ddm: %s (%s) failed: %v\n", name, view, err)
+				failed = append(failed, name+" ("+view+")")
+				continue
+			}
+			fmt.Fprintf(stdout, "    %s (%s) published in %s\n", name, view, time.Since(start).Round(time.Second))
+		}
+	}
+	return failed
+}
+
+// cmdDeploy publishes every site (or those named) for production: the
+// server's stand-in for the daemon (M6), run by ddm-deploy.service.
+func cmdDeploy(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("deploy", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	specPath := fs.String("spec", "sites.yaml", "path to the site spec")
+	work := fs.String("work", "", "working directory for checkouts and builds (default: the spec's paths.work)")
+	www := fs.String("www", "", "publish root (default: the spec's paths.www)")
+	fs.Usage = func() {
+		fmt.Fprint(stderr, `usage: ddm deploy [flags] [site ...]
+
+Builds and publishes every view of the given sites (default: all) for
+production: links resolve to https://<host>, an unresolved site:// link
+fails its site, and the publish root is the spec's paths.www. A site that
+fails is reported and skipped; the exit status is 1 if any did.
+
+flags:
+`)
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	s, ok := load(*specPath, stderr)
+	if !ok {
+		return 1
+	}
+	if *work == "" {
+		*work = s.Paths.Work
+	}
+	system, err := filepath.Abs(filepath.Dir(*specPath))
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 1
+	}
+	sites := fs.Args()
+	if len(sites) == 0 {
+		sites = s.SiteNames()
+	}
+	for _, name := range sites {
+		if _, ok := s.Sites[name]; !ok {
+			fmt.Fprintf(stderr, "ddm: no site %q (sites: %s)\n", name, strings.Join(s.SiteNames(), ", "))
+			return 2
+		}
+	}
+	tf := &targetFlags{name: ptr("prod"), port: ptr(0), www: www, strict: ptr(true)}
+	t, err := tf.resolve(s, *work)
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 2
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	failed := publishAll(ctx, s, sites, system, *work, nil, t, stdout, stderr)
+	if ctx.Err() != nil {
+		return 1
+	}
+	if err := bar.Write(t.caddy.WWW, s, t.base, false); err != nil {
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 1
+	}
+	if len(failed) > 0 {
+		fmt.Fprintf(stdout, "\nFailed: %s\n", strings.Join(failed, ", "))
 		return 1
 	}
 	return 0
