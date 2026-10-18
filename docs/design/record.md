@@ -494,6 +494,18 @@ Tested in headless Chromium against a local preview: opening, following the pane
 minimizing, closing, Back, reload, the refusal of a foreign `#open=`, Ctrl-click and narrow screens.
 **Open:** whether hosts should also refuse to be framed by anyone but ddm (open questions, "Split view").
 
+### D53. Only Cloudflare reaches the web ports (2026-10-18)
+The public hosts stay proxied, and the droplet's firewall now lets only **Cloudflare's published addresses**
+reach ports 80 and 443 (`services.ddm.webSources`, set from `nix/hosts/droplet/cloudflare-ips.nix`). **Why:** the
+droplet's address is public (it is in `hardware.nix`, and DNS history has it), so without this anyone could skip
+the proxy, and its bot blocking, by connecting to the address directly. The tailnet still reaches every site,
+since `tailscale0` is trusted; SSH is unaffected. Certificates don't need inbound traffic (DNS-01).
+- **Cost:** if Cloudflare adds a range, visitors routed through it fail until the file is updated. The ranges
+  rarely change; the file records where they came from and when.
+- **Rejected:** DigitalOcean's cloud firewall, which does the same outside the repo, by hand.
+- **Checked by** the VM test: a client inside a Cloudflare range connects to 80 and 443; the same client from
+  another address (IPv4 and IPv6) is refused, and still reaches SSH.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
