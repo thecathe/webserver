@@ -45,6 +45,26 @@
     fi
     exec ddm deploy --spec ${cfg.spec} --work ${state}/work --www ${www} "$@"
   '';
+  # A deploy unit. One runs at a time: they share checkouts and state.json.
+  unit = description: args: {
+    inherit description;
+    after = ["network-online.target"];
+    wants = ["network-online.target"];
+    path = [cfg.package config.nix.package pkgs.git pkgs.bash pkgs.coreutils pkgs.util-linux];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "ddm";
+      Group = "ddm";
+      ExecStart = "${pkgs.util-linux}/bin/flock ${state}/deploy.lock ${deploy} ${args}";
+      StateDirectory = "ddm";
+      RuntimeDirectory = "%N";
+      RuntimeDirectoryMode = "0700";
+      LoadCredential = lib.optional (cfg.githubTokenFile != null) "github-token:${cfg.githubTokenFile}";
+      # The OCaml pool's first build takes about 6 minutes (D34).
+      TimeoutStartSec = "2h";
+      Nice = 10;
+    };
+  };
 in {
   options.services.ddm = {
     enable = mkEnableOption "ddm, the deployment manager, with Caddy in front of it";
@@ -125,25 +145,9 @@ in {
     # Every workflow runs in `nix develop`.
     nix.settings.experimental-features = ["nix-command" "flakes"];
 
-    systemd.services.ddm-deploy = {
-      description = "ddm: build and publish every site";
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-      path = [cfg.package config.nix.package pkgs.git pkgs.bash pkgs.coreutils];
-      serviceConfig = {
-        Type = "oneshot";
-        User = "ddm";
-        Group = "ddm";
-        ExecStart = deploy;
-        StateDirectory = "ddm";
-        RuntimeDirectory = "ddm";
-        RuntimeDirectoryMode = "0700";
-        LoadCredential = lib.optional (cfg.githubTokenFile != null) "github-token:${cfg.githubTokenFile}";
-        # The OCaml pool's first build takes about 6 minutes (D34).
-        TimeoutStartSec = "2h";
-        Nice = 10;
-      };
-    };
+    systemd.services.ddm-deploy = unit "ddm: build and publish every site that needs it" "";
+    # systemctl start ddm-force@forest: rebuild one site now, whatever its state.
+    systemd.services."ddm-force@" = unit "ddm: rebuild %i now" "--force %i";
 
     systemd.timers.ddm-deploy = {
       wantedBy = ["timers.target"];

@@ -62,5 +62,13 @@
     with subtest("a private mount refuses a client outside the tailnet"):
         # Caddy aborts the connection: curl's "empty reply" (52), not a TLS error.
         droplet.succeed(f"code=0; {curl} --http1.1 https://the.cathe.dev/ || code=$?; test $code -eq 52")
+
+    with subtest("a deploy unit builds and publishes a site, and records it"):
+        # docs has no repo, so it builds offline. It replaces the fake publish above.
+        droplet.succeed("systemctl start ddm-force@docs")
+        droplet.succeed("grep -q '\"public/docs\"' /var/lib/ddm/work/state.json")
+        droplet.succeed(f"{curl} -o /tmp/body -w '%{{http_code}}' https://nosuch.cathe.dev/ | grep -q 404")
+        droplet.fail("grep -q not-found-page /tmp/body")
+        droplet.succeed("grep -q '/_ddm/bar.js' /tmp/body")
   '';
 }

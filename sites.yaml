@@ -8,6 +8,9 @@ system:
   flake: github:cathe-org/dots   # becomes the personal-account repo after the transfer
   host: droplet                  # nixosConfigurations.droplet, written in M5
   poll: 10m
+  # The least time between two builds of a site for new commits; a site's own
+  # `cooldown:` overrides it. A busy repo is built at most this often.
+  cooldown: 1h
 
 domains: [cathe.dev, jpears.me]
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,8 @@ type System struct {
 	Host string `yaml:"host"`
 	// Poll is how often this repo and every site repo are checked.
 	Poll Duration `yaml:"poll"`
+	// Cooldown is the default for every site's cooldown.
+	Cooldown Duration `yaml:"cooldown"`
 }
 
 // Paths are where ddm keeps things on the machine it runs on.
@@ -135,6 +138,10 @@ type Site struct {
 	Description string   `yaml:"description"`
 	// Indexed lists the site in the docs.cathe.dev directory. Default true.
 	Indexed *bool `yaml:"indexed"`
+	// Cooldown is the least time between two builds of the site for new
+	// commits: a busy repo is built at most this often, from its latest
+	// commit. Default: system.cooldown.
+	Cooldown *Duration `yaml:"cooldown"`
 }
 
 // IsIndexed reports whether the site appears in the site directory.
@@ -176,7 +183,8 @@ var Builtins = map[string]bool{
 	"md-ssg":         true,
 }
 
-// Duration is a time.Duration written as "10m", "1h30m" etc.
+// Duration is a time.Duration written as "10m", "1h30m" etc., or a whole
+// number of days or weeks: "1d", "2w". "0" is none.
 type Duration time.Duration
 
 func (d *Duration) UnmarshalYAML(n *yaml.Node) error {
@@ -184,12 +192,49 @@ func (d *Duration) UnmarshalYAML(n *yaml.Node) error {
 	if err := n.Decode(&s); err != nil {
 		return err
 	}
-	v, err := time.ParseDuration(s)
+	v, err := ParseDuration(s)
 	if err != nil {
 		return fmt.Errorf("line %d: %w", n.Line, err)
 	}
 	*d = Duration(v)
 	return nil
+}
+
+// ParseDuration is time.ParseDuration, plus whole days ("1d") and weeks ("2w").
+func ParseDuration(s string) (time.Duration, error) {
+	units := map[byte]time.Duration{'d': 24 * time.Hour, 'w': 7 * 24 * time.Hour}
+	if len(s) > 1 {
+		if unit, ok := units[s[len(s)-1]]; ok {
+			n, err := strconv.Atoi(s[:len(s)-1])
+			if err != nil || n < 0 {
+				return 0, fmt.Errorf("invalid duration %q", s)
+			}
+			return time.Duration(n) * unit, nil
+		}
+	}
+	return time.ParseDuration(s)
+}
+
+// Cooldown is the least time between builds of a site's view for new
+// commits. A pool's is the shortest of its members'.
+func (s *Spec) Cooldown(site, view string) time.Duration {
+	of := func(name string) time.Duration {
+		if c := s.Sites[name].Cooldown; c != nil {
+			return time.Duration(*c)
+		}
+		return time.Duration(s.System.Cooldown)
+	}
+	wf := s.PoolOf(site, view)
+	if wf == "" {
+		return of(site)
+	}
+	least := time.Duration(-1)
+	for _, m := range s.PoolMembers(wf, view) {
+		if c := of(m); least < 0 || c < least {
+			least = c
+		}
+	}
+	return max(least, 0)
 }
 
 func (d Duration) String() string { return time.Duration(d).String() }

@@ -678,3 +678,36 @@ Branch `feat/nixos-host`. **Feature** + **Design**.
 - A trial droplet before M7.
 
 **Commits** (this repo): `62517b5` (ddm deploy), `2813c56` (NixOS config), plus this docs commit.
+
+---
+
+## 2026-10-18 (later): build only what changed, with cooldowns
+
+Branch `feat/deploy-skip`. **Feature** + **Design**.
+
+**Why.** You asked whether `ddm deploy` skipped unchanged sites. It didn't: every run rebuilt everything, which on
+a 1-vCPU droplet means building almost all the time.
+
+**Built (D48).**
+- `ddm deploy` asks each branch for its commit (`build.Head`, `git ls-remote` only), and builds a view only when:
+  - its commit changed, after the site's `cooldown`; or
+  - the stamp changed: the spec, this repo's flake and scripts, or the ddm binary.
+- `<work>/state.json` (`internal/state`) records each view's commit, stamp, time and error, plus a week of build
+  runs. Every deploy reports the share of the last 24 hours spent building, and warns above 50%.
+- **Spec:**
+  - `system.cooldown` (`1h` here) and a per-site `cooldown`;
+  - durations accept `1d` and `2w`.
+- **NixOS:**
+  - `ddm-force@<site>` rebuilds one site at once;
+  - deploys take a lock, so a forced deploy and the timer don't collide.
+- **VM test:** a new subtest runs `ddm-force@docs` offline and checks that Caddy serves the result.
+- Two deploys in a row locally: the second built nothing.
+
+**Your two-schedule idea.** One schedule with two knobs does the same job: `poll` sets latency, `cooldown` sets
+cost. A separate "pull" sweep would download commits that the next build might skip.
+
+**Changed my mind mid-way.** At first a failure blocked new commits for an hour as well. Now a new commit (likely
+the fix) builds as usual, and only the same commit waits.
+
+**Open.**
+- Email notifications (failures, busy warnings): they need an SMTP account. Leaning towards a daily digest in M6.

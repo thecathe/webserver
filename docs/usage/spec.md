@@ -49,7 +49,8 @@ This is the repo's real `sites.yaml`, included verbatim:
 |---|---|---|
 | `flake` | none | The flake ddm rebuilds the server from. ddm always pins the exact commit it saw, never a branch. |
 | `host` | none (required if `flake` is set) | Which `nixosConfigurations.<host>` to switch to. |
-| `poll` | `10m` | How often to check this repo and every site repo for new commits. Go duration syntax: `90s`, `10m`, `1h`. |
+| `poll` | `10m` | How often to check this repo and every site repo for new commits. Durations: `90s`, `10m`, `1h30m`, or whole days and weeks, `1d`, `2w`. |
+| `cooldown` | `0` (none) | The default for every site's `cooldown`. |
 
 ### `paths`
 
@@ -122,6 +123,7 @@ letters, digits and `-`, because it also becomes a directory name.
 | `access` | `public` | The default `access` for every mount of this site: `public` or `private`. A mount can override it. |
 | `taxa` | | Classification, from the declared `taxa`. |
 | `description` | | One line for the directory. |
+| `cooldown` | `system.cooldown` | The least time between two builds for new commits, e.g. `0`, `1h`, `1d`, `1w`. A commit pushed during the cooldown waits; when it ends, the branch's latest commit is built, so a busy repo costs one build per cooldown. A pool uses its members' shortest. A change to the spec, this repo's tools or ddm rebuilds at once (D48). |
 | `indexed` | `true` | `false` hides the site from the generated directories (`sites.cathe.dev`, `docs.cathe.dev`). |
 
 ### `mounts[]`

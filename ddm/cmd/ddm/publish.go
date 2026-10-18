@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -21,6 +23,7 @@ import (
 	"ddm/internal/links"
 	"ddm/internal/publish"
 	"ddm/internal/spec"
+	"ddm/internal/state"
 )
 
 // target is where publishing and the Caddyfile point: the server (prod) or
@@ -279,13 +282,21 @@ func cmdDeploy(args []string, stdout, stderr io.Writer) int {
 	specPath := fs.String("spec", "sites.yaml", "path to the site spec")
 	work := fs.String("work", "", "working directory for checkouts and builds (default: the spec's paths.work)")
 	www := fs.String("www", "", "publish root (default: the spec's paths.www)")
+	force := fs.Bool("force", false, "build every view, even those up to date or cooling down")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, `usage: ddm deploy [flags] [site ...]
 
-Builds and publishes every view of the given sites (default: all) for
-production: links resolve to https://<host>, an unresolved site:// link
-fails its site, and the publish root is the spec's paths.www. A site that
-fails is reported and skipped; the exit status is 1 if any did.
+Builds and publishes every view of the given sites (default: all) that
+needs it, for production: links resolve to https://<host>, an unresolved
+site:// link fails its site, and the publish root is the spec's paths.www.
+
+A view is skipped when it was last built from its branch's current commit
+and nothing else that goes into it (the spec, this repo's tools, ddm) has
+changed. A new commit waits out the site's cooldown. A build that failed
+is retried at the same commit after an hour, or the cooldown if longer.
+<work>/state.json keeps what was built when.
+
+A site that fails is reported and skipped; the exit status is 1 if any did.
 
 flags:
 `)
@@ -325,9 +336,75 @@ flags:
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	failed := publishAll(ctx, s, sites, system, *work, nil, t, stdout, stderr)
-	if ctx.Err() != nil {
+	st, err := state.Load(*work)
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: reading the state: %v\n", err)
 		return 1
+	}
+	stamp, err := stampOf(*specPath, system)
+	if err != nil {
+		fmt.Fprintf(stderr, "ddm: %v\n", err)
+		return 1
+	}
+
+	var failed []string
+	done := map[string]bool{} // a pool is built once, whichever member comes first
+	for _, name := range sites {
+		for _, view := range builtViews(s.Sites[name]) {
+			served := s.Served(name, view)
+			key := state.Key(view, served)
+			if done[key] {
+				continue
+			}
+			done[key] = true
+			req := build.Request{Spec: s, Site: name, View: view, System: system, Work: *work, Log: stdout}
+
+			head, err := build.Head(req)
+			if err != nil {
+				fmt.Fprintf(stderr, "ddm: %s (%s): checking for new commits: %v\n", name, view, err)
+				failed = append(failed, name+" ("+view+")")
+				continue
+			}
+			_, perr := os.Stat(publish.Current(t.caddy.WWW, view, served))
+			run, why := st.Builds[key].Why(head, stamp, perr == nil, s.Cooldown(name, view), time.Now())
+			if !run && !*force {
+				fmt.Fprintf(stdout, "    %s (%s): %s\n", served, view, why)
+				continue
+			}
+			if *force {
+				why = "forced"
+			}
+			fmt.Fprintf(stdout, "==> %s (%s): building: %s\n", served, view, why)
+
+			start := time.Now()
+			_, err = buildAndPublish(ctx, req, t)
+			if ctx.Err() != nil {
+				return 1
+			}
+			end := time.Now()
+			b := state.Build{Commit: head, Stamp: stamp, At: end}
+			if err != nil {
+				fmt.Fprintf(stderr, "ddm: %s (%s) failed: %v\n", name, view, err)
+				failed = append(failed, name+" ("+view+")")
+				b.Error = err.Error()
+			} else {
+				fmt.Fprintf(stdout, "    %s (%s) published in %s\n", served, view, end.Sub(start).Round(time.Second))
+			}
+			st.Builds[key] = b
+			st.Runs = append(st.Runs, state.Run{Start: start, End: end})
+			if err := st.Save(*work, end); err != nil {
+				fmt.Fprintf(stderr, "ddm: saving the state: %v\n", err)
+				return 1
+			}
+		}
+	}
+
+	// A server that is nearly always building needs a longer cooldown, or
+	// more CPU. Notifications will carry this (open questions).
+	if busy := st.Busy(time.Now(), 24*time.Hour); busy >= busyWarning {
+		fmt.Fprintf(stderr, "ddm: warning: building %.0f%% of the last 24 hours\n", 100*busy)
+	} else {
+		fmt.Fprintf(stdout, "\nbuilding %.0f%% of the last 24 hours\n", 100*busy)
 	}
 	if err := bar.Write(t.caddy.WWW, s, t.base, false); err != nil {
 		fmt.Fprintf(stderr, "ddm: %v\n", err)
@@ -338,6 +415,40 @@ flags:
 		return 1
 	}
 	return 0
+}
+
+// busyWarning is the share of a day spent building that deploy warns about.
+const busyWarning = 0.5
+
+// stampOf fingerprints what goes into every build besides a site's own
+// commit: the spec, this repo's flake and scripts (workflow environments and
+// steps), and the ddm binary (publishing, the toolbar). A change to any of
+// them rebuilds everything once.
+func stampOf(specPath, system string) (string, error) {
+	h := sha256.New()
+	add := func(path string) error {
+		data, err := os.ReadFile(path)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		fmt.Fprintf(h, "%s %d\n", path, len(data))
+		h.Write(data)
+		return nil
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	paths := []string{specPath, exe, filepath.Join(system, "flake.nix"), filepath.Join(system, "flake.lock")}
+	scripts, _ := filepath.Glob(filepath.Join(system, "scripts", "*"))
+	for _, p := range append(paths, scripts...) {
+		if err := add(p); err != nil {
+			return "", fmt.Errorf("fingerprinting %s: %w", p, err)
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))[:16], nil
 }
 
 // builtViews are the views of a site worth building in a preview: those a

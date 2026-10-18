@@ -30,18 +30,18 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **For M7: DNS for the private domain** (added 2026-10-17). `the.cathe.dev` and `*.the.cathe.dev` point at
   the droplet's **tailnet** IP (100.x). Decide whether these go in public Cloudflare DNS or only in Tailscale split
   DNS (see open questions, "Infrastructure"). Nothing to do until the droplet runs NixOS.
-- [ ] **For M5: tell Claude your Tailscale login name** (added 2026-10-17), e.g. `you@github`, as the admin
-  console's **Users** page shows it. It becomes `services.ddm.tailnetOwner` in `nix/hosts/droplet/default.nix`, the
-  one identity the private sites let in. It isn't secret.
-- [ ] **For M5: a Cloudflare API token** with `Zone:DNS:Edit` on `cathe.dev` and `jpears.me` (added 2026-10-17),
-  for the wildcard certificates. Cloudflare → My Profile → API Tokens → Create Token → "Edit zone DNS", both
-  zones. It goes in `secrets/cloudflare.age` as `CLOUDFLARE_API_TOKEN=<token>`
+- [ ] **For M5: a Cloudflare API token** (added 2026-10-17), for the wildcard certificates. Manage account →
+  Account API tokens → Create token → "Edit zone DNS":
+    - resources (the "specified domains"): `cathe.dev` and `jpears.me`, nothing else;
+    - permissions: **DNS: Edit** and **Zone: Read**. Not Zero Trust's "Zone Access", which is unrelated.
+
+  If Caddy can't get certificates with an account token, make a user token instead (My Profile → API Tokens), with
+  the same zones and permissions. It goes in `secrets/cloudflare.age` as `CLOUDFLARE_API_TOKEN=<token>`
   ([runbook](usage/operations.md#installing-once-per-wipe), step 1), never in plain text.
-- [ ] **For M5: a GitHub token** that can read the private site repos (added 2026-10-18). A fine-grained token
-  (GitHub → Settings → Developer settings → Fine-grained tokens) for `thecathe/forest`, `demos`, `INDIMO` and
-  `membranes`, with **Contents: read-only** only. It goes in `secrets/github-token.age`.
-- [ ] **For M5: the droplet's size** (added 2026-10-18): RAM and disk, from the DigitalOcean console. Builds and
-  nixos-anywhere's installer each want about 1 GiB of RAM.
+- [ ] **At install: a GitHub token** for the droplet (added 2026-10-18). A fine-grained token with resource owner
+  `thecathe`, **All repositories**, and only **Contents: read-only**, with the longest expiry offered (note the
+  date). "All repositories" includes ones you create later, so it never needs widening. It goes in
+  `secrets/github-token.age`, and it's the only GitHub credential ddm needs.
 - [ ] **For M5: a trial droplet, or straight to M7?** (added 2026-10-18). Installing on the real droplet wipes the
   live sites. A throwaway droplet for an hour proves the install first, for a few cents (open questions).
 - [ ] **Push `main`** when you're happy with it (added 2026-10-18). GitHub's `cathe-org/dots` is still at
@@ -56,6 +56,9 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `\taxon{Summary}` commented out, so I left it; indimo and mebi are now Projects.
 
 ## Done
+
+- [x] Tailscale login `thecathe@github` (you, 2026-10-18), now `services.ddm.tailnetOwner`.
+- [x] Droplet size (you, 2026-10-18): Basic, 1 GB RAM, 25 GB disk, 1 vCPU.
 
 - [x] Project taxons on `indimo` and `mebi` (Claude, 2026-10-17).
 - [x] People private by default: unpublished taxa in the fork (Claude, 2026-10-17).

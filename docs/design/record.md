@@ -362,6 +362,29 @@ what changed. `ddm-rebuild.service` (`nixos-rebuild switch --refresh --flake git
 but nothing starts it yet. The droplet joins the tailnet once by hand (`tailscale up`, then log in), and the state
 persists. **Why:** an auth key would be one more secret to rotate, for a step done once per install.
 
+### D48. One schedule: check cheaply, build only what changed, at most once per cooldown (2026-10-18)
+*Refines* D47. `ddm deploy` (and later the daemon) builds a view only if something that goes into it changed:
+- its branch's commit, checked with `git ls-remote` (no download), or
+- the **stamp**: a hash of `sites.yaml`, this repo's `flake.nix`, `flake.lock` and `scripts/`, and the ddm binary.
+
+A new commit waits out the site's **`cooldown`** (`system.cooldown`, default `1h` in this spec), counted from the
+last build. When the cooldown ends, the branch's latest commit is built, so a repo with ten pushes an hour still costs
+one build an hour. A stamp change rebuilds at once, since links and the toolbar must stay consistent. A failed build
+is retried at the same commit after an hour (or the cooldown, if longer); a new commit is built as usual.
+`<work>/state.json` records what was built, when, and how long building took. Every run reports the share of the
+last 24 hours spent building, and warns above 50%.
+
+**Why one schedule, not two:** you asked whether a "keep the repos up to date" sweep and a separate "rebuild" sweep
+were needed. Checking a branch costs one small request, and a checkout is only worth having just before a build. A
+separate pull schedule would download commits that the next build might skip anyway. One schedule with two knobs
+gives the same control:
+- **`poll`** sets how *soon* a change is noticed (latency);
+- **`cooldown`** sets how *often* a site can be rebuilt (cost).
+
+A quiet repo's first push builds within `poll`; a hot repo's pushes are batched by `cooldown`. **Rejected:** a
+per-site poll interval. Polling is nearly free, so it would only add latency. **Not yet:** emailing when the server
+is too busy, which needs an SMTP account and its secret (open questions, Operations).
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

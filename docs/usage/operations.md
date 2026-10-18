@@ -124,13 +124,16 @@ On the droplet:
 | Unit | Does |
 |---|---|
 | `caddy.service` | serves `/var/www` on the Caddyfile generated at build time (D45) |
-| `ddm-deploy.timer` / `.service` | `ddm deploy`: build and publish every site, 10 min after the last run ends |
+| `ddm-deploy.timer` / `.service` | `ddm deploy`, 10 min after the last run ends: builds each site whose commit, or whose spec or tools, changed, once its cooldown allows (D48) |
+| `ddm-force@<site>.service` | `ddm deploy --force <site>`: one site, now |
 | `ddm-rebuild.service` | `nixos-rebuild switch` to the latest `main` on GitHub; started by hand for now |
 | `tailscaled`, `tailscale-nginx-auth` | the tailnet, and the "who is this?" socket the private gate asks |
 
 ```sh
 journalctl -u ddm-deploy -f          # watch a deploy
-systemctl start ddm-deploy           # deploy now
+systemctl start ddm-deploy           # deploy now (whatever needs it)
+systemctl start ddm-force@<site>     # rebuild one site now, ignoring its state and cooldown
+cat /var/lib/ddm/work/state.json     # what was built, when, and any error
 systemctl start ddm-rebuild          # pick up a pushed change to this repo (sites.yaml included)
 nixos-rebuild switch --rollback      # undo the last system change
 ```
