@@ -271,7 +271,7 @@ th { font-weight: 600; color: var(--muted); }
 #ddm-split .controls > *:hover { color: var(--link); border-color: var(--link); }
 #ddm-split .controls > *:active { transform: translateY(1px); box-shadow: none; }
 /* A knurled grip, like a tool handle's: cross-hatching over a fine grit, bevelled edges. */
-#ddm-split .grip { flex: 1; width: .85rem; margin-top: .35rem; cursor: col-resize; touch-action: none;
+#ddm-split .grip { flex: 1; width: 1.4rem; margin-top: .35rem; cursor: col-resize; touch-action: none;
   border: 1px solid var(--grip-lo); border-radius: 3px;
   background:
     repeating-linear-gradient(45deg, var(--grip-lo) 0 1px, transparent 1px 4px),
