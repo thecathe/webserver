@@ -555,7 +555,7 @@ Branches: `feat/forest-public` in the **forest** repo, and `feat/forest-public-v
 
 **Verified** (preview, forest built with `--src` from the branch):
 - public has 135 pages and private 151;
-- `/@lbocchi/` is a 404 publicly but a page privately, while `@jpears` is in both;
+- another person's page is a 404 publicly but a page privately, while `@jpears` is in both;
 - INDIMO's public page links people to their own sites and lists only you in "Related", while the private page
   lists everyone (screenshots);
 - forest pages are now plain HTML, and Chromium shows no XSLT banner;
@@ -585,7 +585,7 @@ All merged locally; nothing pushed. **Feature** + **Design**.
 - **Public pages** get a `private` button only in a local preview; production can't produce it.
 - **Status line:** public pages show the repo only for repos GitHub serves publicly (checked anonymously, failing
   closed), so `thecathe/forest` no longer appears on `indimo.cathe.dev`.
-- Checked in Chromium screenshots: greyed on `the.cathe.dev/@lbocchi/`, active on `the.cathe.dev/indimo/`, preview
+- Checked in Chromium screenshots: greyed on a person's page, active on `the.cathe.dev/indimo/`, preview
   button and no repo on `forest.cathe.dev/indimo/`.
 
 **People private by default (D42).**
