@@ -13,6 +13,8 @@
     lib.optionalAttrs (builtins.pathExists file) {${name}.file = file;};
   has = name: config.age.secrets ? ${name};
 in {
+  imports = [./port-watch.nix];
+
   networking.hostName = "droplet";
   system.stateVersion = "26.05";
   time.timeZone = "UTC";
