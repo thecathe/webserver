@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Architecture
@@ -88,6 +88,8 @@ hand-written file (deleted, D19) and its per-request filesystem probing (`@has_o
 - **Mounts:** each becomes a `handle` (path `/`) or `handle_path` (a prefix), rooted at that view's `current`.
   Longer paths come first. `entry:` is a `redir` on exactly `/`, which spike S2 confirmed is all the forest needs.
 - **404s:** every host shows the `docs` site's `404.html`. An unknown subdomain is a 404, not an empty page.
+- **On the server:** generated at build time by the NixOS module and validated with `caddy validate` (D45), so a
+  spec change goes live with the system rebuild that carries it.
 - **Plugin:** the Cloudflare DNS module isn't in stock Caddy. This repo's flake builds `caddy.withPlugins` (exposed
   as `packages.caddy`), the devShell uses it, and so will the server, so `caddy validate` on a laptop checks the
   config the server will run.

@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Site spec (v2)
@@ -57,7 +57,7 @@ This is the repo's real `sites.yaml`, included verbatim:
 |---|---|---|
 | `work` | `/var/lib/ddm/work` | Site checkouts and scratch build output. |
 | `www` | `/var/www` | Publish root: `<www>/<view>/<site>/<sha>/` plus a `current` symlink. |
-| `caddyfile` | `/var/lib/ddm/Caddyfile` | Where the generated Caddy config is written. |
+| `caddyfile` | `/var/lib/ddm/Caddyfile` | Unused since D45: the server's Caddyfile is built with the system. |
 
 ### `domains`, `private_domain`, `taxa`
 

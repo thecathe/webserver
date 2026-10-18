@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Decision record
@@ -33,6 +33,7 @@ the system config needs a system config to own, and home-manager on Ubuntu can't
 build a new droplet, validate it, cut DNS over, retire the old one. Never convert the live box in place.
 
 ### D4. Caddy runs separately from ddm (2026-10-16)
+*The "ddm writes the Caddyfile" part is superseded by D45* (generated at build time).
 nixpkgs `services.caddy` built with `caddy.withPlugins` (caddy-dns/cloudflare). ddm writes the Caddyfile and reloads.
 *Supersedes* embedding Caddy in the Go binary. **Why:** restarting or updating ddm must never take the sites down.
 
@@ -326,6 +327,40 @@ links, backlinks, transclusion and config parsing.
 **Why:** Gruvbox was already on two of the three surfaces. Source's serif headings with a sans body read well across
 long notes and dense API docs. Linking from `/_ddm/` costs nothing now that every host serves it. **Implementation:**
 M3b's first item.
+
+### D44. The droplet: nixos-anywhere, disko, one root login (2026-10-18, M5)
+*Answers* the infrastructure question left open by D21. `nixosConfigurations.droplet` is installed with
+**nixos-anywhere** (kexec into an installer over SSH, then partition with **disko**). The disk is GPT with a BIOS boot
+partition and an ESP, so GRUB boots whichever mode the droplet starts in, plus ext4 root and a 2 GiB swap file.
+SSH is root-only, by key (your `digitalocean_key`), no passwords. **Why:** fully declarative from a bare Ubuntu box,
+with no hand-run steps between wipe and first boot. A single-purpose server gains nothing from a separate admin
+user. **Rejected:** DigitalOcean rebuild + nixos-infect, which leaves an imperative disk layout. **To verify at
+install:** that the droplet gets its public address by DHCP (`networking.useDHCP`); if not, the static address goes
+in `nix/hosts/droplet/hardware.nix`.
+
+### D45. The Caddyfile is generated at build time (2026-10-18, M5)
+*Supersedes* D4's "ddm writes the Caddyfile and reloads". The NixOS module runs `ddm caddyfile` on the spec inside
+a derivation and runs `caddy validate` on the result (`services.ddm.caddyfile`). Caddy runs that store file.
+**Why:** `sites.yaml` lives in this repo, the same flake the server is built from. A spec change therefore reaches
+the server only through a system rebuild anyway, and a config built and validated in the store can't be
+half-written and is rolled back with the system. Publishing never needs a reload, because `current` is a symlink.
+The spec's `paths.caddyfile` is now unused.
+
+### D46. Secrets: agenix, wired in once they exist (2026-10-18, M5)
+*Answers* the agenix-or-sops question: **agenix**. `secrets/secrets.nix` encrypts each secret to your key and the
+droplet's host key. The host key is generated on your machine before the install and handed over with
+nixos-anywhere's `--extra-files`, so secrets can be encrypted before the droplet exists. The host config only
+references a secret once its `.age` file is in the repo, so the system builds (and the VM test runs) without any.
+Two secrets: `cloudflare.age` (Caddy's environment file) and `github-token.age`. The token reaches git as a
+credential-store file in ddm's private runtime directory, and nix as `NIX_CONFIG` `access-tokens`. It never
+appears on a command line. **Rejected:** sops-nix, which is more capable but more to learn for two secrets.
+
+### D47. Until the daemon: `ddm deploy` on a timer; Tailscale joined by hand (2026-10-18, M5)
+`ddm deploy` builds and publishes every site for production, and `ddm-deploy.timer` runs it 10 minutes after the
+previous run ends. It rebuilds everything each time, even unchanged commits; the daemon (M6) will poll and build only
+what changed. `ddm-rebuild.service` (`nixos-rebuild switch --refresh --flake github:cathe-org/dots#droplet`) exists,
+but nothing starts it yet. The droplet joins the tailnet once by hand (`tailscale up`, then log in), and the state
+persists. **Why:** an auth key would be one more secret to rotate, for a step done once per install.
 
 ## AI-generated content marking
 

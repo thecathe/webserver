@@ -4,7 +4,7 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Roadmap
@@ -21,7 +21,7 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | — | Shared-styling design session (D27), looking at the M3a preview | **done** 2026-10-17 (D43) |
 | M3b | The remaining sites, and styling adapters per generator | |
 | M4 | Forest side: `forest-public.toml`, views, the notes filter in the fork | |
-| M5 | NixOS host config | |
+| M5 | NixOS host config | **built** 2026-10-18; VM test passes; real install waits on your secrets |
 | M6 | ddm daemon | |
 | M7 | Cutover | |
 
@@ -127,7 +127,11 @@ Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds si
   "copy link" matters.
 
 ## M5: NixOS host
-`nixosConfigurations.droplet` in this repo's flake, with:
+**Built 2026-10-18** (D44–D47): `nix/` holds the package, `services.ddm`, the host and the VM test
+(`checks.droplet`), which passes offline. What's left needs you: the secrets and your Tailscale login, then an
+install ([runbook](../usage/operations.md#the-server)), on a trial droplet first if you agree.
+
+The plan was `nixosConfigurations.droplet` in this repo's flake, with:
 - Caddy (with plugins), `services.tailscale`, `services.tailscaleAuth`;
 - agenix, firewall;
 - the `ddm` package and service, and `ddm-rebuild.service`.
