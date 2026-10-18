@@ -149,6 +149,21 @@ its `current` publish, that http redirects to https, the shared 404 page, Caddy'
 a private host refuses a client outside the tailnet. Certificates, the tailnet itself and real builds need the
 internet, so only the droplet can check those.
 
+### Who knocks on the public address (port-watch)
+
+Each night `port-watch.service` summarises the previous day from the logs: connections the firewall refused (by
+port and address, and in particular 80/443 that didn't come through Cloudflare), and SSH attempts on port 22
+(addresses, usernames tried, and any login from outside the tailnet). Reports are kept 90 days in
+`/var/lib/port-watch/`. On the droplet:
+
+```sh
+port-watch        # the last 7 daily reports
+port-watch 30     # the last 30
+port-watch now    # the last 24 hours, from the logs directly
+```
+
+It only reads logs; it changes nothing. What the numbers mean for the next steps is in D55.
+
 ### Installing (once per wipe)
 
 1. **Secrets.** Generate the droplet's host key, so secrets can be encrypted to it before it exists:
