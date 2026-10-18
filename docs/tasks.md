@@ -52,9 +52,15 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `*.cathe.dev` wildcard. Add one record: `A test.the.cathe.dev → 100.109.198.17` (the droplet's tailnet address),
   **DNS only (grey cloud)**. A specific record overrides the wildcard.
 - [ ] **At go-live: DNS for `cv.jpears.me`** (added 2026-10-18), like `jpears.me`'s record.
-- [ ] **Before going live: review what the forest makes public** (added 2026-10-18). Claude can build the public
-  view locally and list every page in it, with the trees that are hidden, for you to check against your `private`
-  tags. Nothing is published until you go live (D49).
+- [ ] **Push the forester fork and vscode-forester** (added 2026-10-18): `ocaml-forester` (`redirect-meta`,
+  `8fb8b374`) and `vscode-forester` (`main`, `6c1d160`), which add the publish-by-tag rule (D51). Then Claude
+  bumps the forest's `flake.lock` and merges its `feat/public-by-tag` branch. **Push the forest only after that**:
+  its new config relies on the new forester. (ddm's check would stop a public build that leaked `private` trees,
+  but nothing else would.)
+- [ ] **Tag the rest of the forest `public`** (added 2026-10-18), deliberately, tree by tree or with
+  `trees/public/` (D51). Today only `index`, `cv`, `@jpears` and `@cathe` are public, so the entry pages ddm
+  serves for `indimo`, `mebi` and projects are empty or missing until their trees are tagged. The survey of what
+  *was* public under the old rule is in `.ddm/forest-survey.md` (local only).
 - [ ] **Before going live: a bot policy** (added 2026-10-18): what search engines, AI-training crawlers and
   AI assistants may fetch (open questions, "Bots").
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0

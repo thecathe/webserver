@@ -39,13 +39,17 @@ workflows:
   # A forest built with the forester fork, in the forest repo's own devShell.
   # build-forest (from vscode-forester) runs forest_gen.py, forester build,
   # copies assets and post-processes SVGs. --strict-private fails the build if
-  # a visible tree links to a hidden one, so a non-private view fails closed.
+  # a visible tree links to one hidden by a tag. Only trees tagged `public`
+  # are published (the forest's own [forest.publish] rule); the check after
+  # it fails any non-private build that still contains a `private` tree (D51).
   forester:
     root_only: true   # links are root-absolute (base-url="/"): mount at / only
     env: { flake: "{{repo}}" }
     params: { config: forest.toml }
     steps:
       - run: build-forest {{config}} --strict-private
+        unless: { view: private }
+      - run: sh {{system}}/scripts/forest-check-public.sh output
         unless: { view: private }
       - run: build-forest {{config}}
         when: { view: private }
