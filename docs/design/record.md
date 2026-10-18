@@ -399,6 +399,34 @@ certificates, the tailnet gate and a deploy with nothing at stake. **Rejected:**
 switching the timer off. One manual `ddm-deploy` would then publish everything, and Caddy would serve every host
 anyway.
 
+### D50. Bot policy (2026-10-18; not built yet)
+Your policy for crawlers, before going live:
+- **AI training: blocked everywhere.** Every known training crawler (GPTBot, ClaudeBot, Google-Extended, CCBot,
+  Applebot-Extended, Meta-ExternalAgent, Bytespider, …) gets `Disallow: /`, and every host's robots.txt carries
+  `Content-Signal: ai-train=no`.
+- **AI assistants fetching for a user** (ChatGPT-User, Claude-User, Perplexity-User, …): **allowed on generated
+  program documentation only**: `cloakaml.cathe.dev` and `ocaml.cathe.dev` (mebi's API docs, and the rest of the
+  pool). Refused elsewhere, including `ddm.cathe.dev` (design logs, not program docs) and `demos.cathe.dev` (a
+  future curated post, once refined).
+- **Search engines: only the entry pages**, for now: the profiles (`cathe.dev/@cathe/`, `jpears.me/@jpears/`), the
+  CV at its own canonical host **`cv.jpears.me`** (a new forest mount, entry `/cv/`, from `cv.tree`), each page the
+  toolbar links to, at its entry path (e.g. `projects.cathe.dev`'s `/taxon-project/`), and the program docs.
+  Each host's robots.txt allows those paths, plus the assets they need to render, and disallows the rest.
+  Individual notes are not indexed.
+- **"Program docs"** means the odoc pool: `ocaml.cathe.dev` ("OCaml Package Documentation" and every package under
+  it, mebi's included) and `cloakaml.cathe.dev` (the same build, landing on cloakaml). Nothing else is generated
+  program documentation today.
+- **Later, `indexme`:** you tag curated trees `indexme`, likely all of `trees/indexed/` through a directory-tag rule
+  in `forest.toml`. After each forest build, ddm reads the build's own `forest.json`, which lists every visible tree
+  with its tags and route, and adds those routes to the allowed paths. That costs one small JSON read per build, and
+  hidden trees are never in that file. Until then, only the pages above are allowed.
+- **Private sites: never**, for anything. They are tailnet-only anyway. They also send `X-Robots-Tag: noindex` in
+  case a link leaks.
+
+**Why:** much more is going public than before, and you want a say in what is scraped. **Limits:** robots.txt is
+honoured voluntarily. Real blocking is future work (Cloudflare's proxy). Open details are in open questions,
+"Bots".
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

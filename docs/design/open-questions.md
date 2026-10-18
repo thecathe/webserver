@@ -78,11 +78,19 @@ move it to the [decision record](record.md) and note it in the [development log]
   host needs a `robots.txt`. Separate groups can cover search engines, AI-training crawlers (GPTBot, ClaudeBot,
   Google-Extended, CCBot, …) and assistants fetching a page for a user (ChatGPT-User, Claude-User, …). Cloudflare's
   Content Signals (`Content-Signal: search=yes, ai-train=no`) state the same policy in one line.
-- **Lean:** one policy for every public host, kept in the spec (a `robots:` section) and served by Caddy at
-  `/robots.txt`, so no site repo has to carry one. A site can override it later if one needs to. Private hosts send
-  `Disallow: /` and `X-Robots-Tag: noindex`, though only the tailnet can reach them anyway.
-- **Limits:** robots.txt is a request, not enforcement. Enforcement would mean proxying through Cloudflare (orange
-  cloud) and its AI-bot blocking. That changes how certificates and the tailnet gate work, so it's a separate decision.
+- **Policy decided (D50).** Mechanism, as leaned: kept in the spec, generated per host, served by Caddy at
+  `/robots.txt`, so no site repo carries one.
+- **Answered (2026-10-18):** search engines get only the entry pages, for now. "Documentation" means generated
+  program docs (`cloakaml`, `ocaml`); not `ddm` or `demos`. The CV is `cv.tree`, at `/cv/` (all in D50).
+- **Answered (2026-10-18):** the CV's canonical host is `cv.jpears.me`. Search engines may index the program docs.
+  `indexme` comes from `forest.json` after each build (D50).
+- **Still open:** your DNS is **proxied** through Cloudflare today (orange cloud: `*.cathe.dev` and `jpears.me`
+  resolve to Cloudflare addresses, which forward to Caddy). It works: the droplet answered through it on
+  2026-10-18. That is already most of the future proxy setup (roadmap, "Later"). Decide at go-live whether the public
+  hosts stay proxied. The private domain must not be proxied: `test.the.cathe.dev` currently resolves through
+  Cloudflare to the public address, where Caddy refuses it, which is safe but unusable.
+- **Limits:** robots.txt is a request, not enforcement. Enforcement through Cloudflare's proxy is future work
+  (roadmap, "Later").
 - **Stake:** must be in place before going live (D49).
 
 ## ddm runtime details
