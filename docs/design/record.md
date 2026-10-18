@@ -392,8 +392,7 @@ Until you say it goes live, the droplet runs **`sites.staging.yaml`**: one dummy
 `staging/` pages, at `test.cathe.dev` (public) and `test.the.cathe.dev` (private). The Caddyfile is generated from
 the spec, so the forest and the other sites aren't configured on the server at all, let alone built. The new
 `services.ddm.autoDeploy` option (default **off**) gates the deploy timer. Off, no timer exists, and a build happens
-only when someone runs `systemctl start ddm-deploy` (or `ddm-force@<site>`). The VM test checks this. **Going
-live** is one commit: delete the `staging` module in `flake.nix` and set `autoDeploy = true` on the droplet (runbook,
+only when someone runs `systemctl start ddm-deploy` (or `ddm-force@<site>`). The VM test checks this. **Went live 2026-10-18**, in one commit: the `staging` module removed from `flake.nix`, and `autoDeploy = true` set on the droplet (runbook,
 "Going live"). **Why:** you asked for nothing to go online without your explicit say-so: not before you have
 checked what the forest's public view exposes, and not before bots get a policy. The dummy site exercises
 certificates, the tailnet gate and a deploy with nothing at stake. **Rejected:** keeping the full spec and only
