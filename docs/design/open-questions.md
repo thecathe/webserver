@@ -80,13 +80,13 @@ move it to the [decision record](record.md) and note it in the [development log]
   Content Signals (`Content-Signal: search=yes, ai-train=no`) state the same policy in one line.
 - **Policy decided (D50).** Mechanism, as leaned: kept in the spec, generated per host, served by Caddy at
   `/robots.txt`, so no site repo carries one.
+- **Answered (2026-10-18):** search engines get only the entry pages, for now. "Documentation" means generated
+  program docs (`cloakaml`, `ocaml`); not `ddm` or `demos`. The CV is `cv.tree`, at `/cv/` (all in D50).
 - **Still open:**
-    - On a host that serves the whole forest (`forest.cathe.dev`), may search engines index every public note, or
-      only the entry pages (profile, CV, the toolbar's pages)? robots.txt works per host and path, so "only the
-      entry pages" means listing their paths.
-    - Which hosts count as documentation for AI assistants: `cloakaml.cathe.dev` and `ocaml.cathe.dev` (where
-      mebi's API docs live) surely; `ddm.cathe.dev`, `demos.cathe.dev`?
-    - Where the CV lives, so its path can be allowed.
+    - Which host is the CV's canonical one: `cathe.dev/cv/`, `jpears.me/cv/`, or both? Every forest host serves
+      the whole forest, so robots.txt decides which address search engines see.
+    - May search engines index the program docs too, or only AI assistants (as now)?
+    - The `indexme` tag: its name, and how ddm learns which trees carry it.
 - **Limits:** robots.txt is a request, not enforcement. Enforcement through Cloudflare's proxy is future work
   (roadmap, "Later").
 - **Stake:** must be in place before going live (D49).

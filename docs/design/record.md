@@ -404,10 +404,15 @@ Your policy for crawlers, before going live:
 - **AI training: blocked everywhere.** Every known training crawler (GPTBot, ClaudeBot, Google-Extended, CCBot,
   Applebot-Extended, Meta-ExternalAgent, Bytespider, …) gets `Disallow: /`, and every host's robots.txt carries
   `Content-Signal: ai-train=no`.
-- **AI assistants fetching for a user** (ChatGPT-User, Claude-User, Perplexity-User, …): **allowed on the
-  documentation** (`cloakaml`, mebi's API docs), refused elsewhere.
-- **Search engines: allowed on the root sites**: your profile (`cathe.dev`, `jpears.me`), your CV, and the pages
-  the toolbar links to.
+- **AI assistants fetching for a user** (ChatGPT-User, Claude-User, Perplexity-User, …): **allowed on generated
+  program documentation only**: `cloakaml.cathe.dev` and `ocaml.cathe.dev` (mebi's API docs, and the rest of the
+  pool). Refused elsewhere, including `ddm.cathe.dev` (design logs, not program docs) and `demos.cathe.dev` (a
+  future curated post, once refined).
+- **Search engines: only the entry pages**, for now: the profiles (`cathe.dev/@cathe/`, `jpears.me/@jpears/`), the
+  CV (`cv.tree`, at `/cv/`), and each page the toolbar links to, at its entry path (e.g. `projects.cathe.dev`'s
+  `/taxon-project/`). Each host's robots.txt allows those paths, plus the assets they need to render, and disallows
+  the rest. Individual notes are not indexed. **Later:** a forest tag (likely `indexme`) marks curated posts as
+  indexable, and ddm adds them to the allowed paths at publish, the way it already lists the public build's pages.
 - **Private sites: never**, for anything. They are tailnet-only anyway. They also send `X-Robots-Tag: noindex` in
   case a link leaks.
 
