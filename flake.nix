@@ -31,8 +31,8 @@
     # generated Caddyfile asks for (acme_dns cloudflare). The server (M5) uses
     # the same package, so `caddy validate` here checks what will run there.
     caddy = pkgs.caddy.withPlugins {
-      plugins = ["github.com/caddy-dns/cloudflare@v0.2.1"];
-      hash = "sha256-jNV5COlQTKSJJk8gUZ3KEs8SGC8Z7Aiy5fk7/DvkXIo=";
+      plugins = ["github.com/caddy-dns/cloudflare@v0.2.4"];
+      hash = "sha256-dQvk6ezY6TQ1J7PjhCXnThF/SqVgPwBO8/RXzHCY+js=";
     };
 
     # services.ddm, with this repo's ddm, Caddy and spec. The spec sits in
