@@ -418,15 +418,40 @@ Your policy for crawlers, before going live:
   it, mebi's included) and `cloakaml.cathe.dev` (the same build, landing on cloakaml). Nothing else is generated
   program documentation today.
 - **Later, `indexme`:** you tag curated trees `indexme`, likely all of `trees/indexed/` through a directory-tag rule
-  in `forest.toml`. After each forest build, ddm reads the build's own `forest.json`, which lists every visible tree
-  with its tags and route, and adds those routes to the allowed paths. That costs one small JSON read per build, and
-  hidden trees are never in that file. Until then, only the pages above are allowed.
+  in `forest.toml`. After each forest build, ddm reads the build's own `forest.json`, which lists every published
+  tree with its tags and route, and adds those routes to the allowed paths. That costs one small JSON read per
+  build, and unpublished trees are never in that file, so `indexme` only counts on `public` trees (D51). Until
+  then, only the pages above are allowed.
 - **Private sites: never**, for anything. They are tailnet-only anyway. They also send `X-Robots-Tag: noindex` in
   case a link leaks.
 
 **Why:** much more is going public than before, and you want a say in what is scraped. **Limits:** robots.txt is
 honoured voluntarily. Real blocking is future work (Cloudflare's proxy). Open details are in open questions,
 "Bots".
+
+### D51. The public forest: public only by tag, with a check in ddm (2026-10-18)
+*Replaces* "hide what's tagged `private`" (D25's public view). You chose to mark what is public, not what is
+private, so every public page is deliberate. In the public config (`forest-public.toml`):
+- **`[forest.publish] tags = ["public"]`** (new in the forester fork): only trees tagged `public` are built,
+  whether by `\tag{public}` or by `trees/public/`. The generated list pages (timeline, tag and taxon pages) are
+  published too; they list only published trees. Generated stubs are not.
+- **Every other tree is unpublished**, the treatment people pages already had: no page, left out of lists and
+  backlinks, links to it are **plain text**, and a `\meta{redirect}` still redirects (so a person with one links
+  to their own page). You chose plain text over failing the build.
+- **A `public` tag beats an unpublished taxon**, which is how `@jpears` and `@cathe` are published while other
+  people aren't.
+- **`display = false`** (also new) keeps the bookkeeping tags `public` and `indexme` out of page headers.
+  `forest.json` still lists them, which is where ddm reads `indexme` (D50).
+
+The private config (`forest.toml`) no longer hides `private` trees: **the private site shows every tree.**
+The first public set is `index` and `cv` (moved to `trees/public/`), `@jpears` and `@cathe`. You tag the rest.
+
+**The check.** While building this, a test build published all 147 trees, `private` ones included, because one
+block was missing from the config. It never left this machine, but it showed that everything rests on that rule.
+So every non-private `forester` build now runs `scripts/forest-check-public.sh`, which fails the build if
+`forest.json` lists a tree tagged `private`, or is missing. A failed build publishes nothing.
+**Rejected:** relying on the rule alone; keeping `private` as a hide tag in the public config (it would fail the
+build on every link to a private tree, which you didn't want).
 
 ## AI-generated content marking
 
