@@ -21,8 +21,10 @@ wiped and reinstalled with NixOS, so nothing on it needs preserving.
 
 ## Keeping the docs current
 Periodically, and always before closing a session that changed or designed anything:
-- Append a dated entry to `DEVELOPMENT.md` (the design and development log; it is also rendered as a page of the
-  docs site). Record what was designed or built, decisions and why, alternatives rejected, open questions, commits.
+- Record design work in the shared devlog, folder `webserver/` (`~/Documents/git/thecathe/devlog/webserver/`,
+  index at `webserver/index.md`), per the global "Design write-ups" rule: update the mini-project's entry (or start
+  one) and its `index.md` line in the same devlog commit. `DEVELOPMENT.md` is the log up to 2026-10-18, migrated
+  there; don't append to it.
 - Update `docs/design/record.md` (living decisions; mark superseded ones rather than deleting) and
   `docs/design/open-questions.md`. Update `docs/design/roadmap.md` when milestones move.
 - Bump `edited` in the `generated` front matter of every page touched.

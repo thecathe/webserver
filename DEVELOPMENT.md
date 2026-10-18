@@ -4,10 +4,15 @@ generated:
   model: Opus 5.5
   effort: medium
   date: 2026-10-16
-  edited: 2026-10-17
+  edited: 2026-10-18
 ---
 
 # Development log
+
+!!! note "Moved to the devlog (2026-10-18)"
+    This log ends on 2026-10-18. From then on the design and development story is kept in the shared, private
+    `devlog` repo, folder `webserver/`, one entry per mini-project. Those entries were written from this page, which
+    stays here as the record of the first sessions.
 
 A running record of how this project has been designed and built, so the interesting parts don't get lost:
 trade-offs weighed, ideas tried and dropped, and what each session left behind. Entries are chronological, oldest
