@@ -25,6 +25,9 @@ in {
     githubTokenFile = lib.mkIf (has "github-token") config.age.secrets.github-token.path;
     # Live since 2026-10-18 (D49): deploy every site that needs it, on a timer.
     autoDeploy = true;
+    # The public DNS is proxied, so the web is only ever Cloudflare: nobody
+    # can skip its bot blocking by using the droplet's address directly.
+    webSources = import ./cloudflare-ips.nix;
   };
 
   age.secrets = secret "cloudflare" // secret "github-token";

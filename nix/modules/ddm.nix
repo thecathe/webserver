@@ -122,6 +122,17 @@ in {
       description = "A GitHub token that can read the private site repos. Without it only public repos build.";
     };
 
+    webSources = mkOption {
+      type = types.nullOr (types.listOf types.str);
+      default = null;
+      example = ["173.245.48.0/20" "2400:cb00::/32"];
+      description = ''
+        The addresses (CIDR, IPv4 or IPv6) let through the firewall to Caddy's
+        ports 80 and 443, e.g. only Cloudflare's proxy. null lets anyone in.
+        The tailnet reaches Caddy either way, if its interface is trusted.
+      '';
+    };
+
     autoDeploy = mkOption {
       type = types.bool;
       default = false;
@@ -192,9 +203,20 @@ in {
       package = cfg.caddyPackage;
       configFile = lib.mkDefault cfg.caddyfile;
       environmentFile = cfg.cloudflareEnvironmentFile;
-      openFirewall = true;
+      openFirewall = cfg.webSources == null;
     };
     systemd.services.caddy.environment.TAILNET_OWNER = cfg.tailnetOwner;
+
+    # Otherwise only webSources reach 80 and 443. The rules join the stock
+    # iptables chain before its final refuse.
+    networking.firewall.extraCommands = mkIf (cfg.webSources != null) (lib.concatMapStrings (src: ''
+        ${
+          if lib.hasInfix ":" src
+          then "ip6tables"
+          else "iptables"
+        } -A nixos-fw -p tcp -m multiport --dports 80,443 -s ${src} -j nixos-fw-accept
+      '')
+      cfg.webSources);
 
     # Private mounts ask services.tailscaleAuth who a client is, over the
     # socket the generated config names (caddygen.DefaultAuthSocket).
@@ -205,6 +227,10 @@ in {
       {
         assertion = config.services.tailscaleAuth.socketPath == "/run/tailscale-nginx-auth/tailscale-nginx-auth.sock";
         message = "services.ddm: the generated Caddyfile expects tailscaleAuth's default socket path";
+      }
+      {
+        assertion = cfg.webSources == null || !config.networking.nftables.enable;
+        message = "services.ddm: webSources writes iptables rules; it does not support the nftables firewall";
       }
     ];
   };
