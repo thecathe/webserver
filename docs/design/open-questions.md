@@ -91,9 +91,8 @@ move it to the [decision record](record.md) and note it in the [development log]
 
 - **Droplet:** reinstalled in place (D21) with nixos-anywhere (D44). Still open: is the current droplet size enough
   for forester and odoc builds? nixos-anywhere's kexec step also needs about 1 GiB of RAM.
-- **A trial install first?** Installing on the real droplet *is* the cutover (M7). A throwaway droplet for an hour
-  would prove the install, DHCP, certificates and the tailnet gate for a few cents. The lean is yes, once the
-  secrets exist.
+- **A trial install first?** No: you chose to install in place on the existing droplet (2026-10-18), resized to
+  2 GB RAM for the install (CPU and RAM only, so it can be resized back).
 - **Secrets:** agenix (D46).
 - **DNS:** a wildcard `*.cathe.dev`, `cathe.dev` and `jpears.me` to the public IP, plus `the.cathe.dev` and
   `*.the.cathe.dev` to the tailnet IP (D29). Wildcard certificates for both come from the same Cloudflare token.

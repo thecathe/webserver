@@ -21,7 +21,7 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 | — | Shared-styling design session (D27), looking at the M3a preview | **done** 2026-10-17 (D43) |
 | M3b | The remaining sites, and styling adapters per generator | |
 | M4 | Forest side: `forest-public.toml`, views, the notes filter in the fork | |
-| M5 | NixOS host config | **built** 2026-10-18; VM test passes; real install waits on your secrets |
+| M5 | NixOS host config | **built** 2026-10-18; VM test passes; install next (needs the GitHub token) |
 | M6 | ddm daemon | |
 | M7 | Cutover | |
 
@@ -128,8 +128,8 @@ Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds si
 
 ## M5: NixOS host
 **Built 2026-10-18** (D44–D47): `nix/` holds the package, `services.ddm`, the host and the VM test
-(`checks.droplet`), which passes offline. What's left needs you: the secrets and your Tailscale login, then an
-install ([runbook](../usage/operations.md#the-server)), on a trial droplet first if you agree.
+(`checks.droplet`), which passes offline. Your Tailscale login and the Cloudflare token are in. What's left is the GitHub
+token, then the install, in place on the existing droplet ([runbook](../usage/operations.md#the-server)).
 
 The plan was `nixosConfigurations.droplet` in this repo's flake, with:
 - Caddy (with plugins), `services.tailscale`, `services.tailscaleAuth`;

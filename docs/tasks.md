@@ -30,10 +30,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **For M7: DNS for the private domain** (added 2026-10-17). `the.cathe.dev` and `*.the.cathe.dev` point at
   the droplet's **tailnet** IP (100.x). Decide whether these go in public Cloudflare DNS or only in Tailscale split
   DNS (see open questions, "Infrastructure"). Nothing to do until the droplet runs NixOS.
-- [ ] **For M5: a Cloudflare API token** (added 2026-10-17), for the wildcard certificates. Manage account →
-  Account API tokens → Create token → "Edit zone DNS":
-    - resources (the "specified domains"): `cathe.dev` and `jpears.me`, nothing else;
-    - permissions: **DNS: Edit** and **Zone: Read**. Not Zero Trust's "Zone Access", which is unrelated.
 
   If Caddy can't get certificates with an account token, make a user token instead (My Profile → API Tokens), with
   the same zones and permissions. It goes in `secrets/cloudflare.age` as `CLOUDFLARE_API_TOKEN=<token>`
@@ -42,8 +38,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `thecathe`, **All repositories**, and only **Contents: read-only**, with the longest expiry offered (note the
   date). "All repositories" includes ones you create later, so it never needs widening. It goes in
   `secrets/github-token.age`, and it's the only GitHub credential ddm needs.
-- [ ] **For M5: a trial droplet, or straight to M7?** (added 2026-10-18). Installing on the real droplet wipes the
-  live sites. A throwaway droplet for an hour proves the install first, for a few cents (open questions).
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
@@ -53,6 +47,11 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `\taxon{Summary}` commented out, so I left it; indimo and mebi are now Projects.
 
 ## Done
+
+- [x] Cloudflare token, encrypted as `secrets/cloudflare.age` (you, 2026-10-18).
+- [x] Install in place on the existing droplet, no trial droplet (you, 2026-10-18), resizing it to 2 GB first (CPU and RAM only).
+- [x] Moved the checkout to `~/Documents/git/thecathe/webserver` (you, 2026-10-18).
+- [x] Tailscale in `dots`, and the machines rebuilt (you, 2026-10-18).
 
 - [x] Moved `cathe-org/dots` to `thecathe/webserver` (you, 2026-10-18); Claude pushed `main` there.
 

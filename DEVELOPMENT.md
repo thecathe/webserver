@@ -723,3 +723,20 @@ You moved `cathe-org/dots` to `thecathe/webserver`. Updated every reference:
 - D1.
 
 The repo-name open question is closed. Claude pushed `main` to the new remote (you asked, this once).
+
+---
+
+## 2026-10-18 (end): ready to install
+
+- You:
+  - encrypted the Cloudflare token (`secrets/cloudflare.age`);
+  - cloned the repo fresh at `~/Documents/git/thecathe/webserver`;
+  - rebuilt your machines with Tailscale;
+  - chose to install in place on the existing droplet, resized to 2 GB RAM for the install (CPU and RAM only).
+- Claude generated the droplet's host key ahead of the install (`~/droplet-keys`, private half outside the repo)
+  and checked an agenix round trip with a dummy secret. The droplet config now wires `cloudflare.age` in.
+- `thecathe/webserver` has no GitHub Actions. Pushing never touches the droplet. Only the install does, and later
+  `ddm-rebuild`.
+
+**Next session** (in the new checkout): the install (runbook steps 1–4), with the GitHub token made at step 1.
+Then check DHCP, certificates once DNS moves (M7), and the private gate from the tailnet.
