@@ -189,9 +189,10 @@ privacy to one domain makes DNS simple (one record plus a wildcard to the tailne
 error instead of an exposure.
 
 ### D30. The private gate checks the source address, not a bind (2026-10-17, M3a)
-*Refines* D9. Private blocks abort non-Tailscale client addresses, strip any client-sent `Tailscale-Login`, ask
+*Refines* D9. Private blocks abort non-Tailscale client addresses, strip any client-sent identity header, ask
 `services.tailscaleAuth` via `forward_auth`, and return 403 unless the login equals `$TAILNET_OWNER` (unset: fail
-closed). **Why:** binding those blocks to the tailnet address can't coexist with the public blocks on `:443` under
+closed). The login is the helper's `Tailscale-User` (`you@github`); comparing its `Tailscale-Login` (only `you`)
+refused everyone on the droplet, fixed 2026-10-18. **Why:** binding those blocks to the tailnet address can't coexist with the public blocks on `:443` under
 Linux socket rules (tested), so Caddy wouldn't start. **Rejected:** binding every public block to the public IP
 (the config then depends on the machine's addresses); a second Caddy instance just for the tailnet.
 

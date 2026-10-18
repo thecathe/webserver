@@ -123,8 +123,10 @@ Why B: stock Caddy (plus the DNS plugin), your own hostname and certificate, and
 
 **How the gate works (as generated, D30).** Every block on the private domain runs, in order:
 1. `abort` unless the client address is a Tailscale one (`100.64.0.0/10`, `fd7a:115c:a1e0::/48`);
-2. drop any client-sent `Tailscale-Login` header;
-3. `forward_auth` to the auth helper's socket, copying back the `Tailscale-Login` it reports;
+2. drop any client-sent `Tailscale-User` header;
+3. `forward_auth` to the auth helper's socket, copying back the `Tailscale-User` it reports: your full login,
+   `thecathe@github`. (Its `Tailscale-Login` is only `thecathe`, the part before the `@`. The first install
+   compared that one, and refused you too: fixed 2026-10-18.)
 4. 403 unless that login equals `TAILNET_OWNER`, an environment variable the NixOS module sets. If it is unset,
    nobody gets in: the gate fails closed.
 

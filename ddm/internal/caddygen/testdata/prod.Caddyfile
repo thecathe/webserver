@@ -77,15 +77,15 @@
 	route {
 		@outside not remote_ip 100.64.0.0/10 fd7a:115c:a1e0::/48
 		abort @outside
-		request_header -Tailscale-Login
+		request_header -Tailscale-User
 		forward_auth unix//run/tailscale-nginx-auth/tailscale-nginx-auth.sock {
 			uri /auth
 			header_up Remote-Addr {remote_host}
 			header_up Remote-Port {remote_port}
 			header_up Original-URI {uri}
-			copy_headers Tailscale-Login
+			copy_headers Tailscale-User
 		}
-		@notowner expression `{http.request.header.Tailscale-Login} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`
+		@notowner expression `{http.request.header.Tailscale-User} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`
 		error @notowner 403
 		@secret_the_cathe_dev host secret.the.cathe.dev
 		handle @secret_the_cathe_dev {
@@ -134,15 +134,15 @@ the.cathe.dev {
 	route {
 		@outside not remote_ip 100.64.0.0/10 fd7a:115c:a1e0::/48
 		abort @outside
-		request_header -Tailscale-Login
+		request_header -Tailscale-User
 		forward_auth unix//run/tailscale-nginx-auth/tailscale-nginx-auth.sock {
 			uri /auth
 			header_up Remote-Addr {remote_host}
 			header_up Remote-Port {remote_port}
 			header_up Original-URI {uri}
-			copy_headers Tailscale-Login
+			copy_headers Tailscale-User
 		}
-		@notowner expression `{http.request.header.Tailscale-Login} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`
+		@notowner expression `{http.request.header.Tailscale-User} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`
 		error @notowner 403
 		handle_path /_ddm/* {
 			root * /var/www/_ddm/private
