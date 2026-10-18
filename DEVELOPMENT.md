@@ -38,12 +38,12 @@ Reconstructed from git history and the curriculum files that sessions 1–3 left
 - **2026-05-12/13: Tooling.** A first `Caddyfile` for `cathe.dev`, `cathe.work` and `jpears.me`, with wildcard
   subdomains that probe the filesystem per request for odoc output (`_html/`), mkdocs output (`site/`) or plain
   files. Certificates via Cloudflare DNS-01. The `deploy-dots` Action SSHes to the droplet and runs `git pull`.
-  `e9c3688` "fixing exposed token -- oops" removed a token committed by accident, an early sign that secrets
+  `e453330` "fixing exposed token -- oops" removed a token committed by accident, an early sign that secrets
   belong in exactly one place.
 - **2026-08-04/07: Design.** The README sketches the idea: one repo with CI that tells the web server which repos to
   pull and how to build each. The goal is that hosting a new site never again means per-repo Actions and secrets,
   or moving a repo into a GitHub org. It also sketched the first `deploy.yaml`.
-- **2026-09-06: Feature (partial)** (`8ae185a` "WIP: nix, yaml"). A Go module `webserver/` that embeds Caddy, with
+- **2026-09-06: Feature (partial)** (`e7a62b7` "WIP: nix, yaml"). A Go module `webserver/` that embeds Caddy, with
   a `deploy` subcommand. Clone-or-reset sync, publishing to `/var/www/<domain>/subdomains/<name>` and Caddy reload
   all work. All four build methods (`md`, `mkdocs`, `odoc`, `ocaml`) are stubs. It came with a dev-shell flake and
   three real GitHub Actions workflows collected in `_example_yamls/` as the pipelines to replace.
@@ -136,17 +136,17 @@ schema. Their intent, recorded here:
 A patch was saved to the session scratchpad only, which is not durable.
 
 **Built this session.**
-- `b6cf86c`: **Tooling.** mkdocs and mkdocs-material in the devShell.
-- `fa45e4a`: **Docs.** Project `CLAUDE.md`: integration method, working mode, update-the-docs-before-closing, and
+- `f724aa1`: **Tooling.** mkdocs and mkdocs-material in the devShell.
+- `c0afb68`: **Docs.** Project `CLAUDE.md`: integration method, working mode, update-the-docs-before-closing, and
   the AI marking convention.
-- `cd247e5`, `9c41127`: **Docs.** This site: the overview, usage (the v2 spec, adding a site, workflows, operations), and design (the
+- `65e6889`, `6d93a3f`: **Docs.** This site: the overview, usage (the v2 spec, adding a site, workflows, operations), and design (the
   decision record, architecture, open questions, roadmap). `initial-curriculum.md`, `porting-guide.md` and the
   untracked session-3 curriculum are folded into it and removed.
-- `7cda625`: **Feature (docs site).** The AI-generated page marker, as a trial. Pages with `generated` front matter turn pale
+- `735f667`: **Feature (docs site).** The AI-generated page marker, as a trial. Pages with `generated` front matter turn pale
   yellow, with the generating model, effort and dates drawn large and faded behind the text.
-- `5bb8115`: **Docs.** This log.
+- `40de9b5`: **Docs.** This log.
 - In `thecathe/dots`: `47640eb` (merged as `441d40d`), global Claude rules for design write-ups and AI-content
-  marking. This branch merged here as `956c8e5`.
+  marking. This branch merged here as `a8ebc24`.
 
 **Open questions raised:** see `docs/design/open-questions.md`. Its headings are spec naming, S1–S4, the notes
 view, `site.yaml` scope, workflow envs, ddm runtime, infrastructure, team project sites, AI marking beyond this
@@ -159,13 +159,13 @@ site, the `cathe.work` sunset, and this site's host.
 Branch `feat/ddm-spec-v2`. **Feature** + **Docs**.
 
 **What was built.**
-- `d57e689`: **Feature.** `sites.yaml` at the repo root, the first real v2 spec. It has the two domains, the taxa,
+- `bd5b1db`: **Feature.** `sites.yaml` at the repo root, the first real v2 spec. It has the two domains, the taxa,
   six workflows (`forester`, `mkdocs`, `odoc`, `ocaml-notebook`, `static`, `site-directory`) and five sites:
   - `forest`, with three views on four hosts;
   - `docs`, the generated directory;
   - `ddm`, this site;
   - `cloakaml` and `indimo`, carried over from the old `deploy.yaml`.
-- `e130850`: **Feature.** A new `ddm/` Go module.
+- `3dce40d`: **Feature.** A new `ddm/` Go module.
   - `internal/spec` parses the spec with unknown keys rejected, fills defaults, and reports **every** problem in one
     go, each with an exact location (`sites.ddm.mounts[0]: host "ddm.cathe.work" is not under any declared domain`).
   - The `ddm check` / `ddm sites` CLI.
@@ -215,18 +215,18 @@ Caddy can be separate services (D4).
 
 ## 2026-10-16 (later still): M2, workflow runner
 
-Branch `feat/ddm-workflows`. **Feature** + **Tooling** + **Docs**. Also, merged just before: `d00acf0`, a
+Branch `feat/ddm-workflows`. **Feature** + **Tooling** + **Docs**. Also, merged just before: `367a22e`, a
 **Docs** page of tasks only you can do (`docs/tasks.md`), starting with deleting the old deploy secrets.
 
 **What was built.**
-- `45de3f5`: **Tooling.** Workflow devShells in `flake.nix`: `#mkdocs` and `#ocaml-docs`.
-- `b41dd7b`: **Refactor.** The spec drops the `lint-hidden` built-in and accepts absolute repo paths.
-- `b83ad24`: **Feature.** `internal/gitsync`: the exact-commit checkout.
-- `7f8d993`: **Feature.** `internal/workflow`: the up-front resolver and the runner. `mkdocs-config` is the first real
+- `b500bf2`: **Tooling.** Workflow devShells in `flake.nix`: `#mkdocs` and `#ocaml-docs`.
+- `88e80dd`: **Refactor.** The spec drops the `lint-hidden` built-in and accepts absolute repo paths.
+- `044219a`: **Feature.** `internal/gitsync`: the exact-commit checkout.
+- `35c0d4d`: **Feature.** `internal/workflow`: the up-front resolver and the runner. `mkdocs-config` is the first real
   built-in.
-- `fa8c105`: **Feature.** `ddm build` (`--view`, `--src`, `--branch`, `--set`, `--dry-run`), plus the `bin/ddm`
+- `f72b413`: **Feature.** `ddm build` (`--view`, `--src`, `--branch`, `--set`, `--dry-run`), plus the `bin/ddm`
   wrapper.
-- `55fd51b`: **Feature.** The workflows in `sites.yaml` now match the tools that exist. `generate_docs.py` moved to
+- `9736379`: **Feature.** The workflows in `sites.yaml` now match the tools that exist. `generate_docs.py` moved to
   `scripts/`.
 - **Docs.** The workflows page was rewritten as a reference (step semantics, param precedence, envs, what each
   workflow was verified on). Spec, operations, adding-a-site, roadmap and open questions were updated, and the
@@ -333,22 +333,22 @@ side, hold the styling session against that, then do the rest (M3b). Three reque
   `[text](site://…)`; see below.
 
 **Built** (one commit each unless noted):
-- `c18d3dc` **spec**:
+- `b097fe8` **spec**:
   - `access: public | private` (was `tailnet-owner`), and a site-level `access` default;
   - `private_domain: the.cathe.dev`: private mounts must be on it, public ones off it;
   - `root_only` workflows (D33), and the `demos` site.
-- `beba278` **links**: `site://` resolved at publish time (D28). Same view first, first mount canonical, always
+- `2542afe` **links**: `site://` resolved at publish time (D28). Same view first, first mount canonical, always
   absolute, never public → private.
-- `b3a993f` **publish**: `<www>/<view>/<site>/<time>-<sha>/`, `current` swapped by an atomic rename, keep 3.
-- `9251aa2` **site-directory**: the public directory and the private **site map** (`the.cathe.dev/sites/`), both
+- `0ced59f` **publish**: `<www>/<view>/<site>/<time>-<sha>/`, `current` swapped by an atomic rename, keep 3.
+- `ccef4c8` **site-directory**: the public directory and the private **site map** (`the.cathe.dev/sites/`), both
   with the shared 404 page. Generated pages link with a new `mount://host/path` form.
-- `4a56a08` **caddygen**:
+- `05bf41e` **caddygen**:
   - the Caddyfile from mounts, with one wildcard certificate per domain via Cloudflare DNS-01;
   - entry redirects, 404s, and the private gate (D30);
   - golden tests that real `caddy adapt` must accept;
   - the devShell's Caddy now has the Cloudflare plugin (`packages.caddy`).
-- `dde9cc2` **cli**: `ddm publish`, `ddm caddyfile`, `ddm preview`.
-- Fixes and docs: `42a8ccd`, `b33617e`, `bedd992`, `e8e0446`, `7f3040c`.
+- `8f02c58` **cli**: `ddm publish`, `ddm caddyfile`, `ddm preview`.
+- Fixes and docs: `3cb67be`, `d5b64e0`, `fc7075b`, `8eee8e7`, `b1914e4`.
 
 **Verified.**
 - All tests pass.
@@ -505,7 +505,7 @@ You asked for three things after browsing the preview; none needed anything from
 - **`docs.cathe.dev` → `sites.cathe.dev`**, and a new `docs.cathe.dev` lists the `docs` taxon (D37).
   `site-directory` gained `taxon` and `title` params.
 
-**Commits:** `cedaa24` (taxon pages), `769ad8e` (toolbar, pool host redirects), `9bf2baa` (sites.yaml), `a280f68`
+**Commits:** `41b2085` (taxon pages), `a55b818` (toolbar, pool host redirects), `5e27172` (sites.yaml), `dbf159d`
 (toolbar fixes), plus docs.
 
 **Verified.**
@@ -549,9 +549,9 @@ Branches: `feat/forest-public` in the **forest** repo, and `feat/forest-public-v
 
   Merged into the forest's local `main`, not pushed.
 - **Here:**
-  - `9f6db44`: the public view uses `forest-public.toml`; the notes view is removed; `notes.cathe.dev` → `/tag-notes/`
+  - `3a0c8bd`: the public view uses `forest-public.toml`; the notes view is removed; `notes.cathe.dev` → `/tag-notes/`
     and `recents.cathe.dev` → `/timeline/`, both added to the toolbar;
-  - `8cfec6f`: the `forest-html` step (`xsltproc` in a new `#xslt` devShell).
+  - `71dfad0`: the `forest-html` step (`xsltproc` in a new `#xslt` devShell).
 
 **Verified** (preview, forest built with `--src` from the branch):
 - public has 135 pages and private 151;
@@ -670,7 +670,7 @@ Branch `feat/nixos-host`. **Feature** + **Design**.
   The test forces HTTP/1.1 so a TLS failure can't pass for the gate working.
 - `nix develop /nix/store/…-source#mkdocs` works. So workflows find `{{system}}` in the flake's store copy, and
   the server needs no checkout of this repo. Verified with a real `ddm deploy docs sites` from that copy.
-- GitHub's `cathe-org/dots` `main` is still at `8ae185a`, so building the `ddm` site from GitHub fails until you push.
+- GitHub's `cathe-org/dots` `main` is still at `e7a62b7`, so building the `ddm` site from GitHub fails until you push.
 
 **Rejected.**
 - ddm writing the Caddyfile at runtime and reloading (D4's plan). See D45.
@@ -682,7 +682,7 @@ Branch `feat/nixos-host`. **Feature** + **Design**.
 - The droplet's size.
 - A trial droplet before M7.
 
-**Commits** (this repo): `62517b5` (ddm deploy), `2813c56` (NixOS config), plus this docs commit.
+**Commits** (this repo): `4c4d101` (ddm deploy), `dddb68e` (NixOS config), plus this docs commit.
 
 ---
 
