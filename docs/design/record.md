@@ -506,6 +506,29 @@ since `tailscale0` is trusted; SSH is unaffected. Certificates don't need inboun
 - **Checked by** the VM test: a client inside a Cloudflare range connects to 80 and 443; the same client from
   another address (IPv4 and IPv6) is refused, and still reaches SSH.
 
+### D54. The devlog: a private repo, a redacted public view (2026-10-18)
+The shared devlog (`thecathe/devlog`) is published as a site, `devlog.cathe.dev`, with its full private view at
+`the.cathe.dev/devlog/`. You wanted some details kept out of the public site (other people's names and setups, a
+work login), set in a file rather than by deleting them, and the same rule for anyone writing into the devlog.
+- **The repo is the private copy.** It stays private and holds everything; only build output is published, never
+  the repo or its history. So nothing needs a second copy, and a detail removed later needs no history rewrite.
+- **`publish.yaml` lives in the devlog repo,** read from ddm's checkout at build time, so the names it lists are
+  never public. It has three lists: `publish` (globs; a page is private until one matches), `pseudonyms`
+  (literal replacements) and `deny` (strings or regexes).
+- **In a page,** `<!-- private -->…<!-- /private -->` is dropped from the public view, and a following
+  `<!-- public: … -->` stand-in takes its place. Both are comments elsewhere, so the private view shows the
+  passage and hides the stand-in, and GitHub's own rendering is unaffected.
+- **The `devlog` workflow** (`scripts/devlog-build.py`, in `#mkdocs`): the public view keeps the opted-in pages,
+  redacts them, turns links to private pages into plain text, then mkdocs builds it. Then **every denied term is
+  searched for in the built site** (pages, search index, sitemap; not the theme's scripts). One match fails the
+  build, and nothing is published, as with the forest's check (D51). The script also adds a visible AI-generated
+  note to each page from its `generated:` front matter.
+- **Rejected:** a diff-based pass that re-applies earlier removals to new text. Markers make the redaction
+  deterministic on every build, so there is nothing to carry over. Also rejected: deleting the details outright,
+  which loses them (the downstream-flake analysis that later work needs, for instance).
+- **The rules for writers** are in the devlog's `CLAUDE.md`, and pointed to from the global "Design write-ups"
+  rule in `thecathe/dots`, so a session in another project follows them too.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

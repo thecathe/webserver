@@ -101,6 +101,7 @@ later builds reuse it.
 | `odoc` | `dune build @doc` → `_build/default/_doc/_html` | `cloakaml` (`docs` branch), before the pool; kept for a project built on its own |
 | `odoc-pool` | pooled: `opam-pool-switch.sh` → `dune build @doc --profile release` in one opam switch → `_build/default/_doc/_html` | `ocaml` (index), `cloakaml`, `mebi-plugin` (membranes waits on a dune version clash, D34) |
 | `ocaml-notebook` | `generate_docs.py` over `{{ml_dir}}/**/*.ml` → `docs/` (plus a default `index.md`) → `use: mkdocs` | `demos` (`ml_dir: ocaml`) |
+| `devlog` | `devlog-build.py build {{view}}` (the public view redacted by the repo's `publish.yaml`) → `use: mkdocs` → `devlog-build.py check` on the result, public only (D54) | `devlog`, both views |
 | `static` | `output: {{input_dir}}` | none yet |
 | `site-directory` | `builtin: site-directory` (`page: directory` or `map`) | `docs`, both views |
 

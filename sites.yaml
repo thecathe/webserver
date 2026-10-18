@@ -140,6 +140,21 @@ workflows:
           { [ -f docs/index.md ] || echo "# {{site}}" > docs/index.md; }
       - use: mkdocs
 
+  # A development log (thecathe/devlog): markdown, rendered with mkdocs. The
+  # repo is private and holds the whole record; its own publish.yaml, read
+  # from the checkout and never published, lists the files the public view
+  # shows, the names it replaces and the terms it must never contain (D54).
+  # The public view drops <!-- private --> passages, and fails the build if a
+  # denied term survives anywhere in the result. The private view shows all.
+  devlog:
+    env: { flake: "{{system}}#mkdocs" }
+    params: { input_dir: _site, site_name: Development logs }
+    steps:
+      - run: python3 -P {{system}}/scripts/devlog-build.py build {{view}} . _site
+      - use: mkdocs
+      - run: python3 -P {{system}}/scripts/devlog-build.py check . {{out}}
+        unless: { view: private }
+
   # A repo that already is a static site.
   static:
     params: { input_dir: ./ }
@@ -192,6 +207,19 @@ sites:
       - { host: sites.cathe.dev }
       # The full site map: every site, host and mount, public and private.
       - { host: the.cathe.dev, path: sites, view: private, access: private }
+
+  # How the sites (and other projects) were built, with Claude: the stories
+  # behind the decision records. Public pages only by publish.yaml (D54).
+  devlog:
+    repo: thecathe/devlog
+    taxa: [blog, project]
+    description: Development logs, written with Claude, of how these projects were designed and built
+    views:
+      public:  { workflow: devlog }
+      private: { workflow: devlog }
+    mounts:
+      - { host: devlog.cathe.dev }
+      - { host: the.cathe.dev, path: devlog, view: private, access: private }
 
   # The documentation sites (taxon docs).
   docs:
