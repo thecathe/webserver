@@ -463,6 +463,37 @@ So every non-private `forester` build now runs `scripts/forest-check-public.sh`,
 **Rejected:** relying on the rule alone; keeping `private` as a hide tag in the public config (it would fail the
 build on every link to a private tree, which you didn't want).
 
+### D52. Directory pages open sites in a split view (2026-10-18)
+Your design. On the generated directory pages (`sites.cathe.dev`, `docs.cathe.dev`, the private site map), a plain
+click on a site keeps the directory on the left, at a third of the width, and opens the site in a pane filling the
+right. Between them sits a divider with:
+- **a grip** to drag (knurled, like a tool handle). It is a real separator control, so you can also focus it and
+  use the arrow keys (Shift for bigger steps; Home and End for the limits). Double-click resets it to a third.
+  The width you choose is remembered in your browser.
+- **✕** closes the pane; **↗** opens the pane's current page in a tab of its own; **◀** minimizes the directory
+  to just the divider (**▶** brings it back).
+
+How it works, and why:
+- **An `<iframe>`, scripted by the directory page** (`ddm/internal/workflow/split.js`, inlined by
+  `site-directory` into the pages that list sites; their links carry `data-split`). No site changes.
+- **The toolbar reports the pane's address.** A page can't see where a frame from another subdomain has
+  navigated to. But every ddm page loads the toolbar (D36), so when the directory says hello, the toolbar answers
+  with its address and title, and again whenever they change. The directory keeps the open page in its own
+  address (`#open=<url>`) and the ↗ link pointing at it, so reload, Back and a shared link all reopen the split.
+  The toolbar answers only origins in its `nav.json`, so a private page never tells anyone else its address. In
+  the pane, it hides the pillar links, which the directory's bar already shows.
+- **Only ddm's own pages open in the pane**: the origins the page links to, plus those in `nav.json`. A crafted
+  `#open=` link can't put someone else's page inside the directory.
+- **Ordinary links stay ordinary.** Ctrl-, middle- and shift-clicks open a tab as usual. Below 800px wide there's
+  no split: a click navigates, and an `#open=` link goes straight to the page. Without JavaScript the links simply
+  navigate.
+- **Closing swaps in a fresh frame** instead of emptying the old one. Emptying it is a navigation, and so a
+  history entry that Back would return to (found by the browser test).
+
+Tested in headless Chromium against a local preview: opening, following the pane, dragging, the keyboard,
+minimizing, closing, Back, reload, the refusal of a foreign `#open=`, Ctrl-click and narrow screens.
+**Open:** whether hosts should also refuse to be framed by anyone but ddm (open questions, "Split view").
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:
