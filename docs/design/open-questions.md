@@ -72,6 +72,19 @@ move it to the [decision record](record.md) and note it in the [development log]
   migration path. nixpkgs pins MkDocs 1.6, so nothing breaks yet, but the `mkdocs` workflow and this site's
   `overrides/` are exposed. Options: stay pinned, or move to a successor (e.g. Zensical) or the planned `md-ssg`.
 
+## Bots: `robots.txt` and friends
+
+- **Question (2026-10-18):** what may crawlers do with the public sites, now that far more is hosted? Each public
+  host needs a `robots.txt`. Separate groups can cover search engines, AI-training crawlers (GPTBot, ClaudeBot,
+  Google-Extended, CCBot, …) and assistants fetching a page for a user (ChatGPT-User, Claude-User, …). Cloudflare's
+  Content Signals (`Content-Signal: search=yes, ai-train=no`) state the same policy in one line.
+- **Lean:** one policy for every public host, kept in the spec (a `robots:` section) and served by Caddy at
+  `/robots.txt`, so no site repo has to carry one. A site can override it later if one needs to. Private hosts send
+  `Disallow: /` and `X-Robots-Tag: noindex`, though only the tailnet can reach them anyway.
+- **Limits:** robots.txt is a request, not enforcement. Enforcement would mean proxying through Cloudflare (orange
+  cloud) and its AI-bot blocking. That changes how certificates and the tailnet gate work, so it's a separate decision.
+- **Stake:** must be in place before going live (D49).
+
 ## ddm runtime details
 
 - **Poll interval:** 10m? Per-site overrides?

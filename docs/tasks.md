@@ -48,6 +48,14 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
        quit. Commit `secrets/github-token.age`.
 
     It only reaches repos `thecathe` owns. A site repo moved to an organisation would need its own token.
+- [ ] **After the install: DNS for the test site** (added 2026-10-18). `test.cathe.dev` → the droplet's public
+  address (`64.227.40.69`), and `test.the.cathe.dev` → its tailnet address (`100.x`, from `tailscale ip -4` on
+  the droplet once it has joined). Both DNS only (grey cloud) in Cloudflare.
+- [ ] **Before going live: review what the forest makes public** (added 2026-10-18). Claude can build the public
+  view locally and list every page in it, with the trees that are hidden, for you to check against your `private`
+  tags. Nothing is published until you go live (D49).
+- [ ] **Before going live: a bot policy** (added 2026-10-18): what search engines, AI-training crawlers and
+  AI assistants may fetch (open questions, "Bots").
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
