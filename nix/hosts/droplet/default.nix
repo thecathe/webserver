@@ -20,7 +20,7 @@ in {
   services.ddm = {
     enable = true;
     # Your Tailscale login, as the admin console shows it (docs: Your to-dos).
-    tailnetOwner = "";
+    tailnetOwner = "thecathe@github";
     cloudflareEnvironmentFile = lib.mkIf (has "cloudflare") config.age.secrets.cloudflare.path;
     githubTokenFile = lib.mkIf (has "github-token") config.age.secrets.github-token.path;
   };
