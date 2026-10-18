@@ -28,6 +28,15 @@
       if (!nav || !nav.mounts.some((m) => m.origin === e.origin)) return;
       framed = true;
       document.getElementById("ddm-bar")?.setAttribute("data-framed", "");
+      // A link that leaves ddm's sites leaves the pane too, into the whole
+      // window: most sites (GitHub among them) refuse to be framed, and the
+      // pane would show only an error.
+      const ours = new Set(nav.mounts.map((m) => m.origin));
+      document.addEventListener("click", (c) => {
+        const a = c.target.closest?.("a[href]");
+        if (!a || a.target || !/^https?:$/.test(a.protocol) || ours.has(a.origin)) return;
+        a.target = "_top";
+      }, true);
       const say = () => e.source.postMessage({ ddm: "here", href: location.href, title: document.title }, e.origin);
       addEventListener("hashchange", say);
       addEventListener("popstate", say);
