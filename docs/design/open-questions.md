@@ -106,6 +106,15 @@ move it to the [decision record](record.md) and note it in the [development log]
   its socket, and a fetch of each mount's entry?
 - **Retention:** how many builds to keep per site?
 - **Rebuild hygiene:** cleaning stale `/var/www` roots left by sites removed from the spec.
+- **The OCaml pool holds up everything else** (seen 2026-10-18). Any change to `sites.yaml` or to ddm rebuilds the
+  pool ("the spec or ddm changed"): 12 to 30 minutes. The pool builds first (`@odoc-pool` sorts first), so every
+  other site in that run waits, which is why `devlog` took so long to appear. And a system rebuild during a deploy
+  restarts `ddm-deploy` and kills the run, so the pool starts over. Candidate fixes, smallest first:
+  - don't restart a running deploy on a system switch (`restartIfChanged = false` on `ddm-deploy`); the next run
+    uses the new ddm anyway;
+  - build pools last, after the quick sites;
+  - narrow the pool's trigger to its own part of the spec (its members, workflow and scripts), not the whole file;
+  - find out why mebi_plugin's test files are compiled for its docs, and skip them if they aren't needed.
 
 ## Infrastructure
 
