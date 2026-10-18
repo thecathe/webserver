@@ -334,9 +334,10 @@ M3b's first item.
 partition and an ESP, so GRUB boots whichever mode the droplet starts in, plus ext4 root and a 2 GiB swap file.
 SSH is root-only, by key (your `digitalocean_key`), no passwords. **Why:** fully declarative from a bare Ubuntu box,
 with no hand-run steps between wipe and first boot. A single-purpose server gains nothing from a separate admin
-user. **Rejected:** DigitalOcean rebuild + nixos-infect, which leaves an imperative disk layout. **To verify at
-install:** that the droplet gets its public address by DHCP (`networking.useDHCP`); if not, the static address goes
-in `nix/hosts/droplet/hardware.nix`.
+user. **Rejected:** DigitalOcean rebuild + nixos-infect, which leaves an imperative disk layout. **Checked before
+install (2026-10-18):** the droplet's addresses are static, not DHCP, so `nix/hosts/droplet/hardware.nix` sets
+them with systemd-networkd, matched by the interface's MAC. Root login needs your key in `/root/.ssh` on the old
+Ubuntu once, since it disables root SSH (runbook, step 2).
 
 ### D45. The Caddyfile is generated at build time (2026-10-18, M5)
 *Supersedes* D4's "ddm writes the Caddyfile and reloads". The NixOS module runs `ddm caddyfile` on the spec inside

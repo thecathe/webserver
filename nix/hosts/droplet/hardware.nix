@@ -9,9 +9,18 @@
     efiInstallAsRemovable = true;
   };
 
-  # DigitalOcean hands out the public address by DHCP; checked against the
-  # droplet's current network settings before the install (M7).
-  networking.useDHCP = true;
+  # DigitalOcean gives this droplet static addresses (its cloud-init config,
+  # read 2026-10-18), not DHCP. The interface is matched by MAC, which is fixed
+  # for the droplet's life; a new droplet needs these values re-read.
+  networking.useDHCP = false;
+  networking.useNetworkd = true;
+  systemd.network.networks."10-public" = {
+    matchConfig.MACAddress = "ee:45:72:ed:fe:bd";
+    # The public address, and the anchor address a reserved IP would use.
+    address = ["64.227.40.69/20" "10.16.0.5/16"];
+    gateway = ["64.227.32.1"];
+    dns = ["67.207.67.2" "67.207.67.3"];
+  };
 
   # Builds (the OCaml pool peaks at about 600 MiB, D34) need headroom on a
   # small droplet.
