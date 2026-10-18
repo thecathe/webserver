@@ -160,18 +160,20 @@ func targetName(t Target) string {
 func private(w func(int, string, ...any), d int, socket string) {
 	w(d, "@outside not remote_ip %s", tailnetRanges)
 	w(d, "abort @outside")
-	// Never trust a client-sent identity header.
-	w(d, "request_header -Tailscale-Login")
+	// Never trust a client-sent identity header. The helper reports the full
+	// login (you@github) as Tailscale-User; its Tailscale-Login is only the
+	// part before the @, which other providers could share.
+	w(d, "request_header -Tailscale-User")
 	w(d, "forward_auth unix/%s {", socket)
 	w(d+1, "uri /auth")
 	w(d+1, "header_up Remote-Addr {remote_host}")
 	w(d+1, "header_up Remote-Port {remote_port}")
 	w(d+1, "header_up Original-URI {uri}")
-	w(d+1, "copy_headers Tailscale-Login")
+	w(d+1, "copy_headers Tailscale-User")
 	w(d, "}")
 	// TAILNET_OWNER is your Tailscale login, set by the NixOS module. Unset,
 	// nobody is the owner: the gate fails closed.
-	w(d, "@notowner expression `{http.request.header.Tailscale-Login} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`")
+	w(d, "@notowner expression `{http.request.header.Tailscale-User} != {env.TAILNET_OWNER} || {env.TAILNET_OWNER} == ''`")
 	w(d, "error @notowner 403")
 }
 
