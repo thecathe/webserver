@@ -400,7 +400,7 @@ certificates, the tailnet gate and a deploy with nothing at stake. **Rejected:**
 switching the timer off. One manual `ddm-deploy` would then publish everything, and Caddy would serve every host
 anyway.
 
-### D50. Bot policy (2026-10-18; not built yet)
+### D50. Bot policy (2026-10-18; built the same day)
 Your policy for crawlers, before going live:
 - **AI training: blocked everywhere.** Every known training crawler (GPTBot, ClaudeBot, Google-Extended, CCBot,
   Applebot-Extended, Meta-ExternalAgent, Bytespider, …) gets `Disallow: /`, and every host's robots.txt carries
@@ -425,6 +425,17 @@ Your policy for crawlers, before going live:
 - **Private sites: never**, for anything. They are tailnet-only anyway. They also send `X-Robots-Tag: noindex` in
   case a link leaks.
 
+**Built:** a `robots:` section in `sites.yaml` lists the training and assistant crawlers. Sites and mounts say
+`search: none | entry | all` (default `none`, so a new site is never indexed by accident) and `assistants: true`.
+Caddy serves each host's generated robots.txt from the Caddyfile itself (`ddm/internal/robots`), so no file is
+written at publish. In `sites.yaml`:
+- the forest is `search: entry`, except `indimo.` and `mebi.`;
+- `sites.` is `entry`;
+- `docs.`, `ocaml.` and `cloakaml.` are `all`;
+- `ocaml.` and `cloakaml.` also have `assistants: true`;
+- everything else is `none`.
+
+`indexme` (later) will need build output, so its routes will be added at publish rather than in the Caddyfile.
 **Why:** much more is going public than before, and you want a say in what is scraped. **Limits:** robots.txt is
 honoured voluntarily. Real blocking is future work (Cloudflare's proxy). Open details are in open questions,
 "Bots".

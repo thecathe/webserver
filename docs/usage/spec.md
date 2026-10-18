@@ -76,6 +76,21 @@ accident.
 `taxa` declares the vocabulary that sites may classify themselves with. It drives the `sites.cathe.dev` directory, and `docs.cathe.dev` lists the `docs` taxon.
 If `taxa` is omitted, any taxon is accepted.
 
+### `robots`
+
+Every host serves a `robots.txt` that ddm generates from the spec (D50). Crawlers read it and, if they are
+well behaved, follow it; it doesn't enforce anything.
+
+| Field | Meaning |
+|---|---|
+| `training` | User agents of AI-training crawlers (`GPTBot`, `CCBot`, …). Refused everywhere. |
+| `assistants` | User agents of AI assistants fetching a page because someone asked (`ChatGPT-User`, `Claude-User`, …). Refused except on sites with `assistants: true`. |
+
+Every other crawler, search engines included, follows each mount's `search` (below). Each file also carries a
+[Content Signals](https://contentsignals.org/) line (`search=…, ai-input=…, ai-train=no`) saying the same.
+Private hosts refuse every crawler and send `X-Robots-Tag: noindex, nofollow`. See one with
+`curl https://<host>/robots.txt`, or `bin/ddm caddyfile` for all of them.
+
 ### `nav`
 
 The toolbar's links, shown at the top of every published page, in order:
@@ -124,7 +139,9 @@ letters, digits and `-`, because it also becomes a directory name.
 | `taxa` | | Classification, from the declared `taxa`. |
 | `description` | | One line for the directory. |
 | `cooldown` | `system.cooldown` | The least time between two builds for new commits, e.g. `0`, `1h`, `1d`, `1w`. A commit pushed during the cooldown waits; when it ends, the branch's latest commit is built, so a busy repo costs one build per cooldown. A pool uses its members' shortest. A change to the spec, this repo's tools or ddm rebuilds at once (D48). |
-| `indexed` | `true` | `false` hides the site from the generated directories (`sites.cathe.dev`, `docs.cathe.dev`). |
+| `indexed` | `true` | `false` hides the site from the generated directories (`sites.cathe.dev`, `docs.cathe.dev`). Not about search engines: that's `search`. |
+| `search` | `none` | What search engines may index on each public mount: `none`; `entry` (the mount's root and its `entry` page, plus the CSS, scripts and fonts they need); or `all`. A mount can override it. Private mounts are never indexed. |
+| `assistants` | `false` | `true` lets the `robots.assistants` fetch every public mount of the site (D50: generated program docs only). |
 
 ### `mounts[]`
 
@@ -135,6 +152,7 @@ letters, digits and `-`, because it also becomes a directory name.
 | `view` | `public` | Which of the site's views to serve. |
 | `entry` | none | Where `/` redirects to, e.g. `/@jpears/`. Must start with `/`. |
 | `access` | the site's `access` | `public`, or `private`: served only on the tailnet, and only to your Tailscale identity (see [architecture](../design/architecture.md#private-access)). Must match the host: private mounts on `private_domain`, public ones off it. |
+| `search` | the site's `search` | `none`, `entry` or `all` for this mount (see above). Always `none` on a private mount. |
 
 Each `host` + `path` may be mounted only once across the whole spec, whatever the view.
 
