@@ -1,0 +1,39 @@
+# The droplet's spec until it goes live: one dummy site, so the install can be
+# tested (certificates, the tailnet gate, a deploy) with nothing real online.
+# Going live means pointing the droplet at sites.yaml instead (flake.nix,
+# `staging`); docs: Operations, "Going live".
+
+system:
+  flake: github:thecathe/webserver
+  host: droplet
+  poll: 10m
+  cooldown: 1h
+
+domains: [cathe.dev]
+private_domain: the.cathe.dev
+
+taxa: [demo]
+
+nav:
+  - { title: test, link: "mount://test.cathe.dev/" }
+  - { title: private, link: "mount://test.the.cathe.dev/" }
+
+workflows:
+  static:
+    params: { input_dir: ./ }
+    steps:
+      - output: "{{input_dir}}"
+
+sites:
+  # Two pages from this repo (staging/), one per view, so it's obvious which
+  # one a host is serving.
+  test:
+    repo: thecathe/webserver
+    taxa: [demo]
+    description: A dummy site for testing the server
+    views:
+      public:  { workflow: static, params: { input_dir: staging/public } }
+      private: { workflow: static, params: { input_dir: staging/private } }
+    mounts:
+      - { host: test.cathe.dev }
+      - { host: test.the.cathe.dev, view: private, access: private }

@@ -112,6 +112,16 @@ in {
       description = "A GitHub token that can read the private site repos. Without it only public repos build.";
     };
 
+    autoDeploy = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Run ddm-deploy on a timer (2 minutes after boot, then deployInterval
+        after each run ends). Off, nothing builds or publishes until someone
+        starts ddm-deploy or ddm-force@<site> by hand.
+      '';
+    };
+
     deployInterval = mkOption {
       type = types.str;
       default = "10min";
@@ -149,7 +159,7 @@ in {
     # systemctl start ddm-force@forest: rebuild one site now, whatever its state.
     systemd.services."ddm-force@" = unit "ddm: rebuild %i now" "--force %i";
 
-    systemd.timers.ddm-deploy = {
+    systemd.timers.ddm-deploy = mkIf cfg.autoDeploy {
       wantedBy = ["timers.target"];
       timerConfig = {
         OnBootSec = "2min";

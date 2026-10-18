@@ -184,8 +184,27 @@ internet, so only the droplet can check those.
 
 3. **Join the tailnet.** `ssh root@<droplet IP> tailscale up`, open the link it prints, and log in. Then, in the
    Tailscale admin console, **disable key expiry** for `droplet`, or it drops off the tailnet in 180 days.
-4. **Check.** `systemctl status caddy ddm-deploy`, then `journalctl -u ddm-deploy -f` until the first deploy
-   finishes. Certificates arrive once DNS points at the droplet (M7).
+4. **Check.** The droplet is in **staging** (D49): it serves only the dummy site `test`, and builds nothing
+   until told to. `systemctl status caddy`, then deploy the dummy site by hand and watch it:
+
+    ```sh
+    systemctl start ddm-deploy && journalctl -u ddm-deploy -e
+    ```
+
+    Then check `https://test.cathe.dev/` from anywhere, and `https://test.the.cathe.dev/` from a machine on your
+    tailnet (and that it refuses one that isn't). Certificates arrive once Caddy's DNS challenge succeeds, which
+    doesn't need the records to point anywhere. Visiting the hosts does, though (Your to-dos).
+
+### Going live
+
+Only when you decide to. Before it: the forest's public view reviewed, and a bot policy (Your to-dos). Then, in one
+commit:
+
+1. In `flake.nix`, delete the `staging` module and its use in `nixosConfigurations.droplet`. The droplet then
+   serves `sites.yaml`.
+2. In `nix/hosts/droplet/default.nix`, set `services.ddm.autoDeploy = true;`.
+
+Push `main`, then `ssh root@<droplet IP> systemctl start ddm-rebuild`. The first deploy starts 2 minutes later.
 
 ## Planned (once ddm runs, roadmap M6)
 
