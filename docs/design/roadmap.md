@@ -153,9 +153,9 @@ Things M3a and after settled that M5 must provide:
 - Both loops, the state file, self-update, health check and rollback, and the socket CLI.
 - Tested in a NixOS VM test before any real droplet exists.
 
-## M7: cutover
-Installed in staging first (D49): only a dummy site, and no automatic deploys. Before going live, the forest's
-public view is reviewed and the bot policy (D50) is built.
+## M7: cutover (live 2026-10-18)
+Installed in staging first (D49): only a dummy site, and no automatic deploys. Then the forest was made public only
+by tag (D51) and the bot policy built (D50), and the droplet went live on 2026-10-18.
 
 Reinstall the existing droplet in place (D21): wipe it, install NixOS from this flake, let ddm build every site. DNS
 keeps pointing at the same IP. Downtime lasts from the wipe until the first deploy, kept short by proving M5/M6 in a

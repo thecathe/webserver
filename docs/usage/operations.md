@@ -184,8 +184,8 @@ internet, so only the droplet can check those.
 
 3. **Join the tailnet.** `ssh root@<droplet IP> tailscale up`, open the link it prints, and log in. Then, in the
    Tailscale admin console, **disable key expiry** for `droplet`, or it drops off the tailnet in 180 days.
-4. **Check.** The droplet is in **staging** (D49): it serves only the dummy site `test`, and builds nothing
-   until told to. `systemctl status caddy`, then deploy the dummy site by hand and watch it:
+4. **Check.** (For the first install, the droplet ran in **staging** (D49): only the dummy site `test`, and
+   nothing built until told to. Since going live it deploys every site; see "Going live".) `systemctl status caddy`, then deploy the dummy site by hand and watch it:
 
     ```sh
     systemctl start ddm-deploy && journalctl -u ddm-deploy -e
@@ -195,16 +195,18 @@ internet, so only the droplet can check those.
     tailnet (and that it refuses one that isn't). Certificates arrive once Caddy's DNS challenge succeeds, which
     doesn't need the records to point anywhere. Visiting the hosts does, though (Your to-dos).
 
-### Going live
+### Going live (done 2026-10-18)
 
-Only when you decide to. Before it: the forest's public view reviewed, and a bot policy (Your to-dos). Then, in one
-commit:
+The droplet went live on 2026-10-18 (D49), in one commit:
+- the `staging` module was removed from `flake.nix`, so the droplet serves `sites.yaml`;
+- `services.ddm.autoDeploy = true` was set in `nix/hosts/droplet/default.nix`.
 
-1. In `flake.nix`, delete the `staging` module and its use in `nixosConfigurations.droplet`. The droplet then
-   serves `sites.yaml`.
-2. In `nix/hosts/droplet/default.nix`, set `services.ddm.autoDeploy = true;`.
+After a push, `ssh root@<droplet IP> systemctl start ddm-rebuild`. The first deploy starts 2 minutes later.
+Watch it with `journalctl -u ddm-deploy -f`.
 
-Push `main`, then `ssh root@<droplet IP> systemctl start ddm-rebuild`. The first deploy starts 2 minutes later.
+**Testing the server again** without touching the real sites (after a reinstall, say): point `services.ddm.spec`
+at `sites.staging.yaml` and set `autoDeploy = false`, as the removed module did (it's in git history before the
+go-live commit).
 
 ## Planned (once ddm runs, roadmap M6)
 
