@@ -17,9 +17,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **Push `main` and rebuild the droplet** (added 2026-10-18): `systemctl start ddm-rebuild`. It brings the
   firewall that lets only Cloudflare reach the web ports (D53) and the devlog site (D54). Afterwards,
   `curl -m 5 http://<droplet address>/` from outside should time out, while the sites still load.
-- [ ] **Check that the May 2026 Cloudflare token is revoked** (added 2026-10-18). It was a *user* token
-  (`cfut_…`, My Profile → API Tokens), committed in the first Caddyfile; the token rolled on 2026-10-18 was the
-  account token. The history no longer contains it, but it was public for months.
 - [ ] **Reset other clones of this repo** (added 2026-10-18), e.g. on the laptops: the history was rewritten, so
   `git fetch && git reset --hard origin/main` (after checking they hold nothing unpushed). Optionally, ask GitHub
   Support to purge cached views of the old commits; nothing links to them any more.
@@ -55,6 +52,8 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Done
 
+- [x] The May 2026 Cloudflare user token (`cfut_…`, from the old Caddyfile) deleted from My Profile; nothing used
+  it any more. The server uses only the account token in `secrets/cloudflare.age` (you, 2026-10-18).
 - [x] Old deploy secrets: none left in this repo or `demos`; `cloakaml`'s four and its `SITE` variable deleted,
   and its docs Action removed from `docs` and `main` (Claude, at your request, 2026-10-18).
 - [x] The leaked Cloudflare token scrubbed from this repo's history, force-pushed, and every quoted commit hash
