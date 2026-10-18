@@ -292,7 +292,16 @@ Generated from <code>sites.yaml</code> on every build, so anything newly deploye
 <title>Not found</title>{{template "style"}}</head><body>
 <h1>Not found</h1>
 <p>There is nothing at this address.</p>
-<p><a href="site://sites/">Browse every site</a></p>
+<p id="redirect" hidden>Taking you to <a id="home" href="/">this site's home page</a> in 3 seconds.</p>
+<p><a id="directory" href="site://sites/">Browse every site</a></p>
+<script>
+// Back to this host's home page (its / forwards to its entry page), or, if
+// the host itself is unknown so / is missing too, to the site directory.
+const target = location.pathname === "/" ? document.getElementById("directory") : document.getElementById("home");
+if (location.pathname === "/") document.getElementById("home").replaceWith(document.createTextNode("the site directory"));
+document.getElementById("redirect").hidden = false;
+setTimeout(() => location.replace(target.href), 3000);
+</script>
 </body></html>
 {{end}}
 `))
