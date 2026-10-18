@@ -5,3 +5,7 @@ site/
 
 # ddm build working directory (checkouts, scratch, results)
 .ddm/
+
+# nix build output links
+result
+result-*
