@@ -1,7 +1,7 @@
-# The droplet's spec until it goes live: one dummy site, so the install can be
-# tested (certificates, the tailnet gate, a deploy) with nothing real online.
-# Going live means pointing the droplet at sites.yaml instead (flake.nix,
-# `staging`); docs: Operations, "Going live".
+# A test spec: one dummy site, for checking the server (certificates, the
+# tailnet gate, a deploy) with nothing real online. The droplet ran it until
+# it went live on 2026-10-18 (D49). To use it again, point
+# services.ddm.spec at it and turn autoDeploy off.
 
 system:
   flake: github:thecathe/webserver

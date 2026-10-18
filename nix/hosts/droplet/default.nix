@@ -23,6 +23,8 @@ in {
     tailnetOwner = "thecathe@github";
     cloudflareEnvironmentFile = lib.mkIf (has "cloudflare") config.age.secrets.cloudflare.path;
     githubTokenFile = lib.mkIf (has "github-token") config.age.secrets.github-token.path;
+    # Live since 2026-10-18 (D49): deploy every site that needs it, on a timer.
+    autoDeploy = true;
   };
 
   age.secrets = secret "cloudflare" // secret "github-token";

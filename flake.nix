@@ -48,15 +48,6 @@
 
     # The server, less its disk and boot loader (shared with the VM test).
     droplet = [ddmModule agenix.nixosModules.default ./nix/hosts/droplet];
-
-    # Until the droplet goes live: only the dummy site, and no deploy unless
-    # started by hand. Going live (docs: Operations) deletes this module.
-    staging = {
-      services.ddm = {
-        spec = nixpkgs.lib.mkForce "${self}/sites.staging.yaml";
-        autoDeploy = false;
-      };
-    };
   in {
     packages.x86_64-linux = {
       inherit caddy ddm;
@@ -68,7 +59,7 @@
     # Installed with nixos-anywhere, then updated by ddm-rebuild.service.
     nixosConfigurations.droplet = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      modules = droplet ++ [disko.nixosModules.disko ./nix/hosts/droplet/hardware.nix staging];
+      modules = droplet ++ [disko.nixosModules.disko ./nix/hosts/droplet/hardware.nix];
     };
 
     # nix build .#checks.x86_64-linux.droplet -L
