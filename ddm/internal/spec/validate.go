@@ -178,6 +178,9 @@ func (s *Spec) validateSites(p *problems) {
 		if !validAccess(site.Access) {
 			p.add("%s: access %q must be %q or %q", where, site.Access, AccessPublic, AccessPrivate)
 		}
+		if site.Search != "" && !validSearch(site.Search) {
+			p.add("%s: search %q must be %q, %q or %q", where, site.Search, SearchNone, SearchEntry, SearchAll)
+		}
 		for _, t := range site.Taxa {
 			if len(s.Taxa) > 0 && !slices.Contains(s.Taxa, t) {
 				p.add("%s: taxon %q is not declared in taxa", where, t)
@@ -198,6 +201,9 @@ func (s *Spec) validateSites(p *problems) {
 			}
 			if m.Entry != "" && !strings.HasPrefix(m.Entry, "/") {
 				p.add("%s: entry %q must start with /", at, m.Entry)
+			}
+			if !validSearch(m.Search) {
+				p.add("%s: search %q must be %q, %q or %q", at, m.Search, SearchNone, SearchEntry, SearchAll)
 			}
 			if !validAccess(m.Access) {
 				p.add("%s: access %q must be %q or %q", at, m.Access, AccessPublic, AccessPrivate)
@@ -266,6 +272,8 @@ func (s *Spec) isMounted(host string) bool {
 }
 
 func validAccess(a string) bool { return a == AccessPublic || a == AccessPrivate }
+
+func validSearch(v string) bool { return v == SearchNone || v == SearchEntry || v == SearchAll }
 
 // validateAccessHost keeps private mounts on the private domain and public
 // mounts off it, so a typo can't publish something meant to stay private.

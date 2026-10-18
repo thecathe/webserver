@@ -27,10 +27,29 @@ type Spec struct {
 	PrivateDomain string   `yaml:"private_domain"`
 	Taxa          []string `yaml:"taxa"`
 	// Nav is the toolbar's links, shown on every site, in order.
-	Nav       []NavLink           `yaml:"nav"`
+	Nav []NavLink `yaml:"nav"`
+	// Robots names the crawlers that robots.txt treats specially (D50).
+	Robots    Robots              `yaml:"robots"`
 	Workflows map[string]Workflow `yaml:"workflows"`
 	Sites     map[string]Site     `yaml:"sites"`
 }
+
+// Robots lists crawlers by user agent. Every other crawler, search engines
+// included, follows the `User-agent: *` rules, set per mount by Search.
+type Robots struct {
+	// Training crawlers (GPTBot, CCBot, …) are refused everywhere.
+	Training []string `yaml:"training"`
+	// Assistants fetch a page for a user (ChatGPT-User, Claude-User, …):
+	// allowed only on mounts whose site sets assistants: true.
+	Assistants []string `yaml:"assistants"`
+}
+
+// What search engines may index on a mount.
+const (
+	SearchNone  = "none"  // nothing (the default)
+	SearchEntry = "entry" // the mount's root and its entry page, and the assets they need
+	SearchAll   = "all"   // everything
+)
 
 // System says where the server's own NixOS config comes from.
 type System struct {
@@ -142,6 +161,11 @@ type Site struct {
 	// commits: a busy repo is built at most this often, from its latest
 	// commit. Default: system.cooldown.
 	Cooldown *Duration `yaml:"cooldown"`
+	// Search is the default for every public mount: none (default), entry
+	// or all. Private mounts are never indexed.
+	Search string `yaml:"search"`
+	// Assistants lets robots.Assistants fetch every public mount.
+	Assistants bool `yaml:"assistants"`
 }
 
 // IsIndexed reports whether the site appears in the site directory.
@@ -165,6 +189,11 @@ type Mount struct {
 	// Access is "public" or "private" (served only on the tailnet, and only
 	// to the owner's Tailscale identity). Defaults to the site's access.
 	Access string `yaml:"access"`
+	// Search overrides the site's search for this mount. Always none for a
+	// private mount.
+	Search string `yaml:"search"`
+	// Assistants is the site's assistants (set when the spec is parsed).
+	Assistants bool `yaml:"-"`
 }
 
 const (
@@ -304,6 +333,13 @@ func (s *Spec) normalise() {
 				m.Access = site.Access
 			}
 			m.Path = normalisePath(m.Path)
+			if m.Search == "" {
+				m.Search = site.Search
+			}
+			if m.Search == "" || m.Access == AccessPrivate {
+				m.Search = SearchNone
+			}
+			m.Assistants = site.Assistants && m.Access == AccessPublic
 		}
 		s.Sites[name] = site
 	}

@@ -15,18 +15,21 @@ var update = flag.Bool("update", false, "rewrite the golden files")
 const specSrc = `
 domains: [cathe.dev, jpears.me]
 private_domain: the.cathe.dev
+robots: { training: [GPTBot], assistants: [Claude-User] }
 workflows:
   w: { steps: [ { run: x } ] }
   dir: { steps: [ { builtin: site-directory } ] }
   pooled: { pool: true, steps: [ { run: x } ] }
 sites:
   forest:
+    search: entry
     views: { public: { workflow: w }, private: { workflow: w } }
     mounts:
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: jpears.me, entry: /@jpears/ }
       - { host: the.cathe.dev, view: private, entry: /index/, access: private }
   docs:
+    search: all
     views: { public: { workflow: dir }, private: { workflow: dir } }
     mounts:
       - { host: docs.cathe.dev }
@@ -36,6 +39,7 @@ sites:
     mounts: [ { host: docs.cathe.dev, path: guide, entry: /intro/ } ]
   ocaml:
     workflow: pooled
+    assistants: true
     mounts: [ { host: ocaml.cathe.dev } ]
   lib:
     repo: me/lib

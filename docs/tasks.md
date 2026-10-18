@@ -34,35 +34,13 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   If Caddy can't get certificates with an account token, make a user token instead (My Profile → API Tokens), with
   the same zones and permissions. It goes in `secrets/cloudflare.age` as `CLOUDFLARE_API_TOKEN=<token>`
   ([runbook](usage/operations.md#installing-once-per-wipe), step 1), never in plain text.
-- [ ] **At install: a GitHub token** for the droplet (added 2026-10-18). **Fine-grained**, not classic: a classic
-  token's only scope for private repos is `repo`, which also grants write. "All repositories" includes ones you
-  create later, so it never needs widening. It's the only GitHub credential ddm needs.
-    1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token.
-    2. Name `droplet`; **Resource owner** `thecathe`; **Expiration**: the longest offered (note the date here).
-    3. **Repository access**: **All repositories**.
-    4. **Permissions** → Repository permissions (the "Add permissions" list in newer layouts) → **Contents** →
-       **Read-only**. GitHub adds **Metadata: read-only** by itself; leave everything else unset.
-    5. Generate, copy the token (`github_pat_…`), and encrypt it from `secrets/`:
-       `nix run github:ryantm/agenix -- -e github-token.age -i ~/.ssh/digitalocean_key`. Paste the token **alone**
-       on the first line (no `NAME=`: unlike the Cloudflare one, ddm reads this file as the bare token), save and
-       quit. Commit `secrets/github-token.age`.
-
-    It only reaches repos `thecathe` owns. A site repo moved to an organisation would need its own token.
-- [ ] **DNS for the test site** (added 2026-10-18). `test.cathe.dev` already works, through the proxied
-  `*.cathe.dev` wildcard. Add one record: `A test.the.cathe.dev → 100.109.198.17` (the droplet's tailnet address),
-  **DNS only (grey cloud)**. A specific record overrides the wildcard.
-- [ ] **At go-live: DNS for `cv.jpears.me`** (added 2026-10-18), like `jpears.me`'s record.
-- [ ] **Push the forester fork and vscode-forester** (added 2026-10-18): `ocaml-forester` (`redirect-meta`,
-  `8fb8b374`) and `vscode-forester` (`main`, `6c1d160`), which add the publish-by-tag rule (D51). Then Claude
-  bumps the forest's `flake.lock` and merges its `feat/public-by-tag` branch. **Push the forest only after that**:
-  its new config relies on the new forester. (ddm's check would stop a public build that leaked `private` trees,
-  but nothing else would.)
 - [ ] **Tag the rest of the forest `public`** (added 2026-10-18), deliberately, tree by tree or with
   `trees/public/` (D51). Today only `index`, `cv`, `@jpears` and `@cathe` are public, so the entry pages ddm
   serves for `indimo`, `mebi` and projects are empty or missing until their trees are tagged. The survey of what
   *was* public under the old rule is in `.ddm/forest-survey.md` (local only).
-- [ ] **Before going live: a bot policy** (added 2026-10-18): what search engines, AI-training crawlers and
-  AI assistants may fetch (open questions, "Bots").
+- [ ] **Before going live: read the generated robots.txt files** (added 2026-10-18):
+  `nix develop -c bin/ddm caddyfile` shows every host's, or `curl https://<host>/robots.txt` once live. The
+  crawler lists are in `sites.yaml` under `robots:` (D50).
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
@@ -73,6 +51,11 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Done
 
+- [x] DNS: `test.the.cathe.dev` → the tailnet address, and a proxied `*.jpears.me` wildcard, which covers
+  `cv.jpears.me` (you, 2026-10-18).
+- [x] Pushed `ocaml-forester`, `vscode-forester` and the forest for the publish-by-tag rule (you, 2026-10-18).
+- [x] GitHub token, encrypted as `secrets/github-token.age`; droplet resized to 2 GB (you, 2026-10-18).
+- [x] NixOS installed on the droplet, joined to the tailnet (you and Claude, 2026-10-18).
 - [x] Cloudflare token, encrypted as `secrets/cloudflare.age` (you, 2026-10-18).
 - [x] Install in place on the existing droplet, no trial droplet (you, 2026-10-18), resizing it to 2 GB first (CPU and RAM only).
 - [x] Moved the checkout to `~/Documents/git/thecathe/webserver` (you, 2026-10-18).

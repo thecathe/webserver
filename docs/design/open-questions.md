@@ -78,8 +78,8 @@ move it to the [decision record](record.md) and note it in the [development log]
   host needs a `robots.txt`. Separate groups can cover search engines, AI-training crawlers (GPTBot, ClaudeBot,
   Google-Extended, CCBot, …) and assistants fetching a page for a user (ChatGPT-User, Claude-User, …). Cloudflare's
   Content Signals (`Content-Signal: search=yes, ai-train=no`) state the same policy in one line.
-- **Policy decided (D50).** Mechanism, as leaned: kept in the spec, generated per host, served by Caddy at
-  `/robots.txt`, so no site repo carries one.
+- **Policy decided and built (D50).** Kept in the spec, generated per host, served by Caddy at `/robots.txt`, so
+  no site repo carries one. Left: `indexme` routes, which need the forest's build output (written at publish).
 - **Answered (2026-10-18):** search engines get only the entry pages, for now. "Documentation" means generated
   program docs (`cloakaml`, `ocaml`); not `ddm` or `demos`. The CV is `cv.tree`, at `/cv/` (all in D50).
 - **Answered (2026-10-18):** the CV's canonical host is `cv.jpears.me`. Search engines may index the program docs.
