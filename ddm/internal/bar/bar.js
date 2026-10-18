@@ -12,7 +12,30 @@
       return null;
     }
   };
-  const nav = await get("nav.json");
+  const navP = get("nav.json");
+
+  // In ddm's split view, a directory page shows this page in a pane and says
+  // hello. Answer with this page's address and title (again whenever they
+  // change), so the directory can keep its own address and its "open in its
+  // own tab" link current; and drop the pillar links, which the directory's
+  // bar already shows. Only to a ddm origin from nav.json: a private page
+  // tells no one else where it is.
+  let framed = false;
+  if (window.parent !== window) {
+    addEventListener("message", async (e) => {
+      if (framed || e.source !== window.parent || e.data?.ddm !== "hello") return;
+      const nav = await navP;
+      if (!nav || !nav.mounts.some((m) => m.origin === e.origin)) return;
+      framed = true;
+      document.getElementById("ddm-bar")?.setAttribute("data-framed", "");
+      const say = () => e.source.postMessage({ ddm: "here", href: location.href, title: document.title }, e.origin);
+      addEventListener("hashchange", say);
+      addEventListener("popstate", say);
+      say();
+    });
+  }
+
+  const nav = await navP;
   if (!nav || document.getElementById("ddm-bar")) return;
 
   // Which mount is this page under? The longest path prefix on this origin.
@@ -97,6 +120,7 @@
   }
 
   const host = el("div", { id: "ddm-bar", style: "display:block" });
+  if (framed) host.setAttribute("data-framed", "");
   const root = host.attachShadow({ mode: "open" });
   root.append(
     el("style", {}, `
@@ -111,6 +135,7 @@
       a { color: var(--link); text-decoration: none; } a:hover { text-decoration: underline; }
       .links { display: flex; flex-wrap: wrap; gap: .9rem; font-weight: 600; }
       .links a.current { color: var(--fg); }
+      :host([data-framed]) .links { display: none; }
       .views { display: flex; gap: .5rem; align-items: center; }
       .views:not(:empty)::before { content: "view"; color: var(--muted); }
       .views b, .views a, .views span { padding: 0 .45rem; border: 1px solid currentColor; border-radius: 1rem; }
