@@ -37,6 +37,14 @@ var rewritable = map[string]bool{
 	".js": true, ".json": true, ".svg": true,
 }
 
+// isTextIndex reports whether path is a full-text search index (mkdocs'
+// search/search_index.json): page text with its quotes kept, where a
+// documented example such as link: "mount://host/" looks like a link.
+// Its pages' real links are rewritten in the pages themselves.
+func isTextIndex(path string) bool {
+	return filepath.Base(path) == "search_index.json" && filepath.Base(filepath.Dir(path)) == "search"
+}
+
 // Resolver turns a link found in one site's view into a URL.
 type Resolver struct {
 	Spec *spec.Spec
@@ -126,7 +134,7 @@ func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 	var problems []string
 	seen := map[string]bool{}
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || !d.Type().IsRegular() || !rewritable[strings.ToLower(filepath.Ext(path))] {
+		if err != nil || !d.Type().IsRegular() || !rewritable[strings.ToLower(filepath.Ext(path))] || isTextIndex(path) {
 			return err
 		}
 		data, err := os.ReadFile(path)
