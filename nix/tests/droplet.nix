@@ -63,6 +63,7 @@
         droplet.succeed("grep -qi 'content-type: text/plain' /tmp/h")
         droplet.succeed("grep -q 'robots.txt for ddm.cathe.dev' /tmp/robots")
         droplet.succeed("grep -A1 'User-agent: PanguBot' /tmp/robots | grep -q 'Disallow: /'")
+        droplet.succeed("test \"$(tail -c1 /tmp/robots | od -An -c | tr -d ' ')\" = '\\n'")
 
     with subtest("plain http redirects to https"):
         droplet.succeed("curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' http://ddm.cathe.dev/ | grep -q '308 https://ddm.cathe.dev/'")

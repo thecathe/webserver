@@ -33,6 +33,7 @@
 				Content-Signal: search=yes, ai-input=no, ai-train=no
 				Allow: /
 				Disallow: /
+				
 				ROBOTS 200
 		}
 		handle_path /_ddm/* {
@@ -77,6 +78,7 @@
 				Allow: /*.js$
 				Allow: /*.xsl$
 				Disallow: /
+				
 				ROBOTS 200
 		}
 		handle_path /_ddm/* {
@@ -108,6 +110,7 @@
 				User-agent: *
 				Content-Signal: search=no, ai-input=no, ai-train=no
 				Disallow: /
+				
 				ROBOTS 200
 		}
 		handle_path /_ddm/* {
@@ -141,6 +144,7 @@
 				User-agent: *
 				Content-Signal: search=no, ai-input=yes, ai-train=no
 				Disallow: /
+				
 				ROBOTS 200
 		}
 		handle_path /_ddm/* {
@@ -183,6 +187,7 @@
 					User-agent: *
 					Content-Signal: search=no, ai-input=no, ai-train=no
 					Disallow: /
+					
 					ROBOTS 200
 			}
 			handle_path /_ddm/* {
@@ -219,6 +224,7 @@ a.b.cathe.dev {
 			User-agent: *
 			Content-Signal: search=no, ai-input=no, ai-train=no
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -258,6 +264,7 @@ jpears.me {
 			Allow: /*.js$
 			Allow: /*.xsl$
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -295,6 +302,7 @@ the.cathe.dev {
 				User-agent: *
 				Content-Signal: search=no, ai-input=no, ai-train=no
 				Disallow: /
+				
 				ROBOTS 200
 		}
 		handle_path /_ddm/* {

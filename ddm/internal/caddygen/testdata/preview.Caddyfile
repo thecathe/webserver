@@ -32,6 +32,7 @@ http://a.b.cathe.dev.localhost:8080 {
 			User-agent: *
 			Content-Signal: search=no, ai-input=no, ai-train=no
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -64,6 +65,7 @@ http://docs.cathe.dev.localhost:8080 {
 			Content-Signal: search=yes, ai-input=no, ai-train=no
 			Allow: /
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -109,6 +111,7 @@ http://forest.cathe.dev.localhost:8080 {
 			Allow: /*.js$
 			Allow: /*.xsl$
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -149,6 +152,7 @@ http://jpears.me.localhost:8080 {
 			Allow: /*.js$
 			Allow: /*.xsl$
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -181,6 +185,7 @@ http://lib.cathe.dev.localhost:8080 {
 			User-agent: *
 			Content-Signal: search=no, ai-input=no, ai-train=no
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -215,6 +220,7 @@ http://ocaml.cathe.dev.localhost:8080 {
 			User-agent: *
 			Content-Signal: search=no, ai-input=yes, ai-train=no
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -238,6 +244,7 @@ http://secret.the.cathe.dev.localhost:8080 {
 			User-agent: *
 			Content-Signal: search=no, ai-input=no, ai-train=no
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
@@ -261,6 +268,7 @@ http://the.cathe.dev.localhost:8080 {
 			User-agent: *
 			Content-Signal: search=no, ai-input=no, ai-train=no
 			Disallow: /
+			
 			ROBOTS 200
 	}
 	handle_path /_ddm/* {
