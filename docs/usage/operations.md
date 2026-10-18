@@ -164,7 +164,18 @@ internet, so only the droplet can check those.
 
     Commit `secrets/keys/droplet.pub` and the `.age` files, and push `main`: the droplet builds sites, and
     rebuilds itself, from GitHub. Keep `~/droplet-keys` private until the install, then delete it.
-2. **Install.** This **wipes** the machine at that address:
+2. **Install.** nixos-anywhere logs in as root by key. The old Ubuntu droplet disables root SSH and asks `cathe`
+   for a sudo password, so first, once, copy your key to root (it asks for that password):
+
+    ```sh
+    ssh -t digi 'sudo install -D -m 600 ~/.ssh/authorized_keys /root/.ssh/authorized_keys &&
+      echo "PermitRootLogin prohibit-password" | sudo tee /etc/ssh/sshd_config.d/00-root.conf &&
+      sudo systemctl reload ssh'
+    ssh -i ~/.ssh/digitalocean_key root@<droplet IP> true   # should print nothing
+    ```
+
+    Check the addresses in `nix/hosts/droplet/hardware.nix` still match the droplet (a new droplet gets new
+    ones). Then install. This **wipes** the machine at that address:
 
     ```sh
     nix run github:nix-community/nixos-anywhere -- --flake .#droplet \
