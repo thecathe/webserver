@@ -193,6 +193,9 @@ func mounts(w func(int, string, ...any), depth int, host string, ms []mount, r s
 	for _, l := range strings.Split(strings.TrimSuffix(robots.Text(host, r, sm, private), "\n"), "\n") {
 		w(depth+2, "%s", l)
 	}
+	// A heredoc drops the newline before its closing marker: this blank
+	// line gives the file its final newline.
+	w(depth+2, "")
 	w(depth+2, "ROBOTS 200")
 	w(depth, "}")
 	w(depth, "handle_path /_ddm/* {")
