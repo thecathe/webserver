@@ -467,7 +467,7 @@ build on every link to a private tree, which you didn't want).
 Your design. On the generated directory pages (`sites.cathe.dev`, `docs.cathe.dev`, the private site map), a plain
 click on a site keeps the directory on the left, at a third of the width, and opens the site in a pane filling the
 right. Between them sits a divider with:
-- **a grip** to drag (knurled, like a tool handle). It is a real separator control, so you can also focus it and
+- **a grip** to drag: knurled like a tool handle, and as wide as the buttons above it. It is a real separator control, so you can also focus it and
   use the arrow keys (Shift for bigger steps; Home and End for the limits). Double-click resets it to a third.
   The width you choose is remembered in your browser.
 - **✕** closes the pane; **↗** opens the pane's current page in a tab of its own; **◀** minimizes the directory
@@ -484,6 +484,9 @@ How it works, and why:
   the pane, it hides the pillar links, which the directory's bar already shows.
 - **Only ddm's own pages open in the pane**: the origins the page links to, plus those in `nav.json`. A crafted
   `#open=` link can't put someone else's page inside the directory.
+- **Links that leave ddm's sites leave the pane**, into the whole window. GitHub, like most sites, refuses to be
+  framed, so it would show only an error inside the pane. The toolbar in the pane does this, for any origin not in
+  its `nav.json` (found by you, on a GitHub link in INDIMO's notes).
 - **Ordinary links stay ordinary.** Ctrl-, middle- and shift-clicks open a tab as usual. Below 800px wide there's
   no split: a click navigates, and an `#open=` link goes straight to the page. Without JavaScript the links simply
   navigate.
