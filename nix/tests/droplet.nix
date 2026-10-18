@@ -27,6 +27,32 @@
       sed 's/^\tacme_dns cloudflare .*/\tlocal_certs/' ${config.services.ddm.caddyfile} > $out
     '');
     networking.hosts."127.0.0.1" = ["ddm.cathe.dev" "the.cathe.dev" "nosuch.cathe.dev"];
+    # A second network, addressed inside a webSources range, for the
+    # outsider below.
+    virtualisation.vlans = [1 2];
+    networking.interfaces.eth2.ipv4.addresses = lib.mkForce [
+      {
+        address = "173.245.48.1";
+        prefixLength = 20;
+      }
+    ];
+  };
+
+  # A client on the internet: from 192.168.1.x it is anyone, from
+  # 173.245.48.2 it is Cloudflare.
+  nodes.outsider = {
+    lib,
+    pkgs,
+    ...
+  }: {
+    virtualisation.vlans = [1 2];
+    networking.interfaces.eth2.ipv4.addresses = lib.mkForce [
+      {
+        address = "173.245.48.2";
+        prefixLength = 20;
+      }
+    ];
+    environment.systemPackages = [pkgs.netcat];
   };
 
   testScript = ''
@@ -77,6 +103,15 @@
     with subtest("a private mount refuses a client outside the tailnet"):
         # Caddy aborts the connection: curl's "empty reply" (52), not a TLS error.
         droplet.succeed(f"code=0; {curl} --http1.1 https://the.cathe.dev/ || code=$?; test $code -eq 52")
+
+    with subtest("only webSources reach the web ports; SSH stays open"):
+        outsider.wait_for_unit("multi-user.target")
+        # The droplet's addresses on the outsider's networks (by node order).
+        for port in [80, 443]:
+            outsider.succeed(f"nc -z -w 5 173.245.48.1 {port}")
+            for addr in ["192.168.1.1", "2001:db8:1::1"]:
+                outsider.fail(f"nc -z -w 5 {addr} {port}")
+        outsider.succeed("nc -z -w 5 192.168.1.1 22")
 
     with subtest("a deploy unit builds and publishes a site, and records it"):
         # docs has no repo, so it builds offline. It replaces the fake publish above.

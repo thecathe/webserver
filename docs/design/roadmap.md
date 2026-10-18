@@ -173,9 +173,9 @@ VM first. Then point teammates at project sites.
 ## Later
 - **Enforced bot blocking through Cloudflare's proxy** (asked for 2026-10-18). Proxying the public hosts (orange
   cloud) would let Cloudflare's AI-crawler blocking and bot rules refuse scrapers that ignore robots.txt (D50).
-  To work out first: certificates (Cloudflare to origin, and whether Caddy's DNS-01 setup stays), the real client
-  address Caddy sees, caching of the generated sites, and keeping the private domain unproxied (tailnet IPs can't be
-  proxied).
+  The hosts are proxied, and only Cloudflare reaches the web ports (D53), so what's left is turning the blocking
+  on in Cloudflare. To work out: the real client address Caddy sees, caching of the generated sites, and keeping
+  the private domain unproxied (tailnet IPs can't be proxied).
 - The identity widget (after S4).
 - Webhooks for instant rebuilds.
 - Migrating GitHub Pages sites (each old repo becomes a redirect stub).
