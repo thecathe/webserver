@@ -14,13 +14,17 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
-- [ ] **Delete the old deploy secrets from GitHub** (added 2026-10-16). The `deploy-dots` Action that used them was
-  removed (D19).
-    - In `thecathe/webserver` (formerly `cathe-org/dots`) → Settings → Secrets and variables → Actions, delete
-      `WEBSERVER_IP`, `WEBSERVER_USER`, `WEBSERVER_SSH_PRIVATE_KEY` and `WEBSERVER_SSH_PASSPHRASE`.
-    - The per-repo docs Actions (in `cloakaml`, `demos`, …; see `_example_yamls/`) use the same secret names and
-      a `SITE` variable. Delete those once ddm builds those sites (M2/M3 onwards), together with the Actions
-      themselves.
+- [ ] **Push `main` and rebuild the droplet** (added 2026-10-18): `systemctl start ddm-rebuild`. It brings the
+  firewall that lets only Cloudflare reach the web ports (D53) and the devlog site (D54). Afterwards,
+  `curl -m 5 http://<droplet address>/` from outside should time out, while the sites still load.
+- [ ] **Check that the May 2026 Cloudflare token is revoked** (added 2026-10-18). It was a *user* token
+  (`cfut_…`, My Profile → API Tokens), committed in the first Caddyfile; the token rolled on 2026-10-18 was the
+  account token. The history no longer contains it, but it was public for months.
+- [ ] **Reset other clones of this repo** (added 2026-10-18), e.g. on the laptops: the history was rewritten, so
+  `git fetch && git reset --hard origin/main` (after checking they hold nothing unpushed). Optionally, ask GitHub
+  Support to purge cached views of the old commits; nothing links to them any more.
+- [ ] **Keep `thecathe/devlog` private** (added 2026-10-18). Its public site is built from it with `publish.yaml`
+  (D54); the repo and its history keep everything.
 - [ ] **Update links to `cathe.work`** before it lapses (D20): CV PDFs, profiles, email signatures, GitHub bios,
   papers.
 - [ ] **Activate the new global Claude rules** (design write-ups, AI-content marking) by rebuilding/switching from
@@ -51,6 +55,10 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Done
 
+- [x] Old deploy secrets: none left in this repo or `demos`; `cloakaml`'s four and its `SITE` variable deleted,
+  and its docs Action removed from `docs` and `main` (Claude, at your request, 2026-10-18).
+- [x] The leaked Cloudflare token scrubbed from this repo's history, force-pushed, and every quoted commit hash
+  updated (Claude, at your request, 2026-10-18).
 - [x] DNS: `test.the.cathe.dev` → the tailnet address, and a proxied `*.jpears.me` wildcard, which covers
   `cv.jpears.me` (you, 2026-10-18).
 - [x] Pushed `ocaml-forester`, `vscode-forester` and the forest for the publish-by-tag rule (you, 2026-10-18).
