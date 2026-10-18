@@ -6,9 +6,10 @@
 #   cloudflare.age    CLOUDFLARE_API_TOKEN=<token>   (Zone:DNS:Edit, cathe.dev and jpears.me)
 #   github-token.age  <token>                        (read access to the private site repos)
 let
-  cathe = builtins.readFile ./keys/cathe.pub;
+  read = f: builtins.replaceStrings ["\n"] [""] (builtins.readFile f);
+  cathe = read ./keys/cathe.pub;
   # The droplet's host key, generated before the install (docs: Operations).
-  droplet = let f = ./keys/droplet.pub; in if builtins.pathExists f then [(builtins.readFile f)] else [];
+  droplet = let f = ./keys/droplet.pub; in if builtins.pathExists f then [(read f)] else [];
   everyone = [cathe] ++ droplet;
 in {
   "cloudflare.age".publicKeys = everyone;
