@@ -154,6 +154,9 @@ Things M3a and after settled that M5 must provide:
 - Tested in a NixOS VM test before any real droplet exists.
 
 ## M7: cutover
+Installed in staging first (D49): only a dummy site, and no automatic deploys. Before going live, the forest's
+public view is reviewed and the bot policy (D50) is built.
+
 Reinstall the existing droplet in place (D21): wipe it, install NixOS from this flake, let ddm build every site. DNS
 keeps pointing at the same IP. Downtime lasts from the wipe until the first deploy, kept short by proving M5/M6 in a
 VM first. Then point teammates at project sites.
@@ -168,6 +171,11 @@ VM first. Then point teammates at project sites.
   [open questions](open-questions.md#shared-styling-across-sites).
 
 ## Later
+- **Enforced bot blocking through Cloudflare's proxy** (asked for 2026-10-18). Proxying the public hosts (orange
+  cloud) would let Cloudflare's AI-crawler blocking and bot rules refuse scrapers that ignore robots.txt (D50).
+  To work out first: certificates (Cloudflare to origin, and whether Caddy's DNS-01 setup stays), the real client
+  address Caddy sees, caching of the generated sites, and keeping the private domain unproxied (tailnet IPs can't be
+  proxied).
 - The identity widget (after S4).
 - Webhooks for instant rebuilds.
 - Migrating GitHub Pages sites (each old repo becomes a redirect stub).

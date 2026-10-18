@@ -399,6 +399,22 @@ certificates, the tailnet gate and a deploy with nothing at stake. **Rejected:**
 switching the timer off. One manual `ddm-deploy` would then publish everything, and Caddy would serve every host
 anyway.
 
+### D50. Bot policy (2026-10-18; not built yet)
+Your policy for crawlers, before going live:
+- **AI training: blocked everywhere.** Every known training crawler (GPTBot, ClaudeBot, Google-Extended, CCBot,
+  Applebot-Extended, Meta-ExternalAgent, Bytespider, …) gets `Disallow: /`, and every host's robots.txt carries
+  `Content-Signal: ai-train=no`.
+- **AI assistants fetching for a user** (ChatGPT-User, Claude-User, Perplexity-User, …): **allowed on the
+  documentation** (`cloakaml`, mebi's API docs), refused elsewhere.
+- **Search engines: allowed on the root sites**: your profile (`cathe.dev`, `jpears.me`), your CV, and the pages
+  the toolbar links to.
+- **Private sites: never**, for anything. They are tailnet-only anyway. They also send `X-Robots-Tag: noindex` in
+  case a link leaks.
+
+**Why:** much more is going public than before, and you want a say in what is scraped. **Limits:** robots.txt is
+honoured voluntarily. Real blocking is future work (Cloudflare's proxy). Open details are in open questions,
+"Bots".
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16.* Every page Claude generates carries front matter:

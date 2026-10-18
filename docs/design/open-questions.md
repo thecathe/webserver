@@ -78,11 +78,17 @@ move it to the [decision record](record.md) and note it in the [development log]
   host needs a `robots.txt`. Separate groups can cover search engines, AI-training crawlers (GPTBot, ClaudeBot,
   Google-Extended, CCBot, …) and assistants fetching a page for a user (ChatGPT-User, Claude-User, …). Cloudflare's
   Content Signals (`Content-Signal: search=yes, ai-train=no`) state the same policy in one line.
-- **Lean:** one policy for every public host, kept in the spec (a `robots:` section) and served by Caddy at
-  `/robots.txt`, so no site repo has to carry one. A site can override it later if one needs to. Private hosts send
-  `Disallow: /` and `X-Robots-Tag: noindex`, though only the tailnet can reach them anyway.
-- **Limits:** robots.txt is a request, not enforcement. Enforcement would mean proxying through Cloudflare (orange
-  cloud) and its AI-bot blocking. That changes how certificates and the tailnet gate work, so it's a separate decision.
+- **Policy decided (D50).** Mechanism, as leaned: kept in the spec, generated per host, served by Caddy at
+  `/robots.txt`, so no site repo carries one.
+- **Still open:**
+    - On a host that serves the whole forest (`forest.cathe.dev`), may search engines index every public note, or
+      only the entry pages (profile, CV, the toolbar's pages)? robots.txt works per host and path, so "only the
+      entry pages" means listing their paths.
+    - Which hosts count as documentation for AI assistants: `cloakaml.cathe.dev` and `ocaml.cathe.dev` (where
+      mebi's API docs live) surely; `ddm.cathe.dev`, `demos.cathe.dev`?
+    - Where the CV lives, so its path can be allowed.
+- **Limits:** robots.txt is a request, not enforcement. Enforcement through Cloudflare's proxy is future work
+  (roadmap, "Later").
 - **Stake:** must be in place before going live (D49).
 
 ## ddm runtime details
