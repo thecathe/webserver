@@ -16,8 +16,8 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 - [ ] **Delete the old deploy secrets from GitHub** (added 2026-10-16). The `deploy-dots` Action that used them was
   removed (D19).
-    - In `cathe-org/dots` → Settings → Secrets and variables → Actions, delete `WEBSERVER_IP`,
-      `WEBSERVER_USER`, `WEBSERVER_SSH_PRIVATE_KEY` and `WEBSERVER_SSH_PASSPHRASE`.
+    - In `thecathe/webserver` (formerly `cathe-org/dots`) → Settings → Secrets and variables → Actions, delete
+      `WEBSERVER_IP`, `WEBSERVER_USER`, `WEBSERVER_SSH_PRIVATE_KEY` and `WEBSERVER_SSH_PASSPHRASE`.
     - The per-repo docs Actions (in `cloakaml`, `demos`, …; see `_example_yamls/`) use the same secret names and
       a `SITE` variable. Delete those once ddm builds those sites (M2/M3 onwards), together with the Actions
       themselves.
@@ -44,9 +44,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `secrets/github-token.age`, and it's the only GitHub credential ddm needs.
 - [ ] **For M5: a trial droplet, or straight to M7?** (added 2026-10-18). Installing on the real droplet wipes the
   live sites. A throwaway droplet for an hour proves the install first, for a few cents (open questions).
-- [ ] **Push `main`** when you're happy with it (added 2026-10-18). GitHub's `cathe-org/dots` is still at
-  `8ae185a`, so the droplet (and `ddm deploy`'s `ddm` site) would see the old repo.
-
 - [ ] **Decide membranes' dune version** (added 2026-10-17). membranes declares `(lang dune 3.24)`, but Rocq 9.2.0
   (mebi_plugin) needs dune below 3.24, so the two can't share the OCaml docs pool. If membranes uses nothing from
   dune 3.24, lowering it to `(lang dune 3.23)` (and regenerating `membranes.opam`) lets it join: uncomment it in
@@ -56,6 +53,8 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `\taxon{Summary}` commented out, so I left it; indimo and mebi are now Projects.
 
 ## Done
+
+- [x] Moved `cathe-org/dots` to `thecathe/webserver` (you, 2026-10-18); Claude pushed `main` there.
 
 - [x] Tailscale login `thecathe@github` (you, 2026-10-18), now `services.ddm.tailnetOwner`.
 - [x] Droplet size (you, 2026-10-18): Basic, 1 GB RAM, 25 GB disk, 1 vCPU.

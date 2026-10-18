@@ -95,7 +95,6 @@ move it to the [decision record](record.md) and note it in the [development log]
   would prove the install, DHCP, certificates and the tailnet gate for a few cents. The lean is yes, once the
   secrets exist.
 - **Secrets:** agenix (D46).
-- **Repo name** after the transfer (`server-dots` is a placeholder).
 - **DNS:** a wildcard `*.cathe.dev`, `cathe.dev` and `jpears.me` to the public IP, plus `the.cathe.dev` and
   `*.the.cathe.dev` to the tailnet IP (D29). Wildcard certificates for both come from the same Cloudflare token.
 - **Remote access:** should `the.cathe.dev`'s tailnet IP be in public DNS at all, or only in Tailscale's split DNS?

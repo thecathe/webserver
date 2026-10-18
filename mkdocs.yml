@@ -1,7 +1,7 @@
 site_name: ddm
 site_description: Design and usage docs for ddm, the deployment manager behind cathe.dev and jpears.me
 site_url: https://ddm.cathe.dev/ # planned host; see docs/design/open-questions.md
-repo_url: https://github.com/cathe-org/dots
+repo_url: https://github.com/thecathe/webserver
 edit_uri: ""
 
 docs_dir: docs

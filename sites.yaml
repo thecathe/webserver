@@ -5,7 +5,7 @@
 # (bin/ddm build <site>), but publishes nothing until M3.
 
 system:
-  flake: github:cathe-org/dots   # becomes the personal-account repo after the transfer
+  flake: github:thecathe/webserver
   host: droplet                  # nixosConfigurations.droplet, written in M5
   poll: 10m
   # The least time between two builds of a site for new commits; a site's own
@@ -155,7 +155,7 @@ sites:
     mounts: [ { host: docs.cathe.dev } ]
 
   ddm:
-    repo: cathe-org/dots
+    repo: thecathe/webserver
     workflow: mkdocs
     taxa: [docs, project, tool]
     description: Design and usage docs for ddm, the deployment manager behind these sites
