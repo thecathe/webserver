@@ -48,9 +48,10 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
        quit. Commit `secrets/github-token.age`.
 
     It only reaches repos `thecathe` owns. A site repo moved to an organisation would need its own token.
-- [ ] **After the install: DNS for the test site** (added 2026-10-18). `test.cathe.dev` → the droplet's public
-  address (`64.227.40.69`), and `test.the.cathe.dev` → its tailnet address (`100.x`, from `tailscale ip -4` on
-  the droplet once it has joined). Both DNS only (grey cloud) in Cloudflare.
+- [ ] **DNS for the test site** (added 2026-10-18). `test.cathe.dev` already works, through the proxied
+  `*.cathe.dev` wildcard. Add one record: `A test.the.cathe.dev → 100.109.198.17` (the droplet's tailnet address),
+  **DNS only (grey cloud)**. A specific record overrides the wildcard.
+- [ ] **At go-live: DNS for `cv.jpears.me`** (added 2026-10-18), like `jpears.me`'s record.
 - [ ] **Before going live: review what the forest makes public** (added 2026-10-18). Claude can build the public
   view locally and list every page in it, with the trees that are hidden, for you to check against your `private`
   tags. Nothing is published until you go live (D49).

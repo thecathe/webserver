@@ -82,11 +82,13 @@ move it to the [decision record](record.md) and note it in the [development log]
   `/robots.txt`, so no site repo carries one.
 - **Answered (2026-10-18):** search engines get only the entry pages, for now. "Documentation" means generated
   program docs (`cloakaml`, `ocaml`); not `ddm` or `demos`. The CV is `cv.tree`, at `/cv/` (all in D50).
-- **Still open:**
-    - Which host is the CV's canonical one: `cathe.dev/cv/`, `jpears.me/cv/`, or both? Every forest host serves
-      the whole forest, so robots.txt decides which address search engines see.
-    - May search engines index the program docs too, or only AI assistants (as now)?
-    - The `indexme` tag: its name, and how ddm learns which trees carry it.
+- **Answered (2026-10-18):** the CV's canonical host is `cv.jpears.me`. Search engines may index the program docs.
+  `indexme` comes from `forest.json` after each build (D50).
+- **Still open:** your DNS is **proxied** through Cloudflare today (orange cloud: `*.cathe.dev` and `jpears.me`
+  resolve to Cloudflare addresses, which forward to Caddy). It works: the droplet answered through it on
+  2026-10-18. That is already most of the future proxy setup (roadmap, "Later"). Decide at go-live whether the public
+  hosts stay proxied. The private domain must not be proxied: `test.the.cathe.dev` currently resolves through
+  Cloudflare to the public address, where Caddy refuses it, which is safe but unusable.
 - **Limits:** robots.txt is a request, not enforcement. Enforcement through Cloudflare's proxy is future work
   (roadmap, "Later").
 - **Stake:** must be in place before going live (D49).

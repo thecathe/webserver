@@ -409,10 +409,17 @@ Your policy for crawlers, before going live:
   pool). Refused elsewhere, including `ddm.cathe.dev` (design logs, not program docs) and `demos.cathe.dev` (a
   future curated post, once refined).
 - **Search engines: only the entry pages**, for now: the profiles (`cathe.dev/@cathe/`, `jpears.me/@jpears/`), the
-  CV (`cv.tree`, at `/cv/`), and each page the toolbar links to, at its entry path (e.g. `projects.cathe.dev`'s
-  `/taxon-project/`). Each host's robots.txt allows those paths, plus the assets they need to render, and disallows
-  the rest. Individual notes are not indexed. **Later:** a forest tag (likely `indexme`) marks curated posts as
-  indexable, and ddm adds them to the allowed paths at publish, the way it already lists the public build's pages.
+  CV at its own canonical host **`cv.jpears.me`** (a new forest mount, entry `/cv/`, from `cv.tree`), each page the
+  toolbar links to, at its entry path (e.g. `projects.cathe.dev`'s `/taxon-project/`), and the program docs.
+  Each host's robots.txt allows those paths, plus the assets they need to render, and disallows the rest.
+  Individual notes are not indexed.
+- **"Program docs"** means the odoc pool: `ocaml.cathe.dev` ("OCaml Package Documentation" and every package under
+  it, mebi's included) and `cloakaml.cathe.dev` (the same build, landing on cloakaml). Nothing else is generated
+  program documentation today.
+- **Later, `indexme`:** you tag curated trees `indexme`, likely all of `trees/indexed/` through a directory-tag rule
+  in `forest.toml`. After each forest build, ddm reads the build's own `forest.json`, which lists every visible tree
+  with its tags and route, and adds those routes to the allowed paths. That costs one small JSON read per build, and
+  hidden trees are never in that file. Until then, only the pages above are allowed.
 - **Private sites: never**, for anything. They are tailnet-only anyway. They also send `X-Robots-Tag: noindex` in
   case a link leaks.
 
