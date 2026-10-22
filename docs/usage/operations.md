@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
-  effort: medium
+  model: Sonnet 5.5
+  effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-18
+  edited: 2026-10-22
 ---
 
 # Operations
@@ -79,6 +79,13 @@ matching one. A public page therefore never sees a private address. The bar is d
 `<body>`, so no site's CSS or layout can affect it. Its look is a placeholder for the styling session.
 
 "Up to date or not" isn't shown yet: that needs the daemon's polling (M6).
+
+### The AI-generated marker
+
+Pages that say they were written by an AI get a yellow header that stays at the top while you scroll (D56). Mark a
+whole site, or regions of it, with `generated:` in `sites.yaml` ([spec](spec.md#generated-ai-generated-pages)), or a
+single page with `generated` front matter. Publishing adds `/_ddm/ai.css` and `/_ddm/ai.js` to every page, and a meta
+tag to the pages a site's block covers; to see it, use `ddm preview` (`mkdocs serve` doesn't add them).
 
 ### Publishing
 

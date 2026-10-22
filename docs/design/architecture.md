@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
-  effort: medium
+  model: Sonnet 5.5
+  effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-18
+  edited: 2026-10-22
 ---
 
 # Architecture
@@ -100,6 +100,8 @@ hand-written file (deleted, D19) and its per-request filesystem probing (`@has_o
 
 - **Toolbar** (D36): a script tag added at publish, plus JSON that ddm writes per audience under `/_ddm/`. See
   [operations](../usage/operations.md#the-toolbar).
+- **AI-generated marker** (D56): `ai.css` and `ai.js`, added to every page at publish like the toolbar's script, and a
+  `<meta>` on each page a site's `generated:` block covers. The page's own `generated` front matter overrides it.
 - **Pool hosts:** a pool member's own host (`cloakaml.cathe.dev`) serves the whole pooled build, so odoc's
   `Index` link (`../index.html`) and its links to other packages would show the pool from cloakaml's address. The
   generated Caddyfile therefore redirects everything on that host outside `/<package>/` and `/odoc.support/` to the

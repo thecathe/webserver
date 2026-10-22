@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
-  effort: medium
+  model: Sonnet 5.5
+  effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-18
+  edited: 2026-10-22
 ---
 
 # Roadmap
@@ -77,6 +77,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   `ocaml.cathe.dev`, with build cost measured on your machine.
 - Forest addresses `indimo.cathe.dev`, `mebi.cathe.dev`, `projects.cathe.dev`; INDIMO's mkdocs notes at
   `indimo-notes.cathe.dev` (D35).
+- The **AI-generated marker** (D56, 2026-10-22): a yellow header, set per site or region in `sites.yaml`, drawn by a
+  script ddm adds at publish.
 - The **toolbar** on every page, with view switches and a status line (D36). `sites.cathe.dev` is the directory and
   `docs.cathe.dev` the documentation index (D37). On a package's own host, odoc's `Index` now opens
   `ocaml.cathe.dev`.

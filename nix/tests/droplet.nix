@@ -134,5 +134,6 @@
         droplet.succeed(f"{curl} -o /tmp/body -w '%{{http_code}}' https://nosuch.cathe.dev/ | grep -q 404")
         droplet.fail("grep -q not-found-page /tmp/body")
         droplet.succeed("grep -q '/_ddm/bar.js' /tmp/body")
+        droplet.succeed("grep -q '/_ddm/ai.js' /tmp/body")
   '';
 }
