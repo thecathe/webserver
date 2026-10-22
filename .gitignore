@@ -9,3 +9,4 @@ site/
 # nix build output links
 result
 result-*
+__pycache__/
