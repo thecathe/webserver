@@ -218,19 +218,18 @@ A workflow whose output links are root-absolute (forester) is marked `root_only:
 mounting it under a path prefix. **Why:** S2 showed forest output can't live under a prefix; this makes that a
 validation error instead of a broken site.
 
-### D34. OCaml docs are built as one pool (2026-10-17)
-*Answers* the cross-linking question. A workflow can be `pool: true`. Every site using it is built in one run: each
-member's checkout is copied into one dune workspace, and one `dune build @doc` documents every package, cross-linked.
-Every member's mounts serve the one result. The spec is the inclusion rule. The environment is one opam switch,
-cached between builds: the members' lockfiles if they agree, else one solve over their `.opam` files. **Why:** odoc
-only links packages built together, and this needs no per-link machinery. A dune workspace is dune's standard
-multi-project mechanism. **Rejected:** a site with several `repos:`, since your framing, where each repo stays its
-own site and the workflow pools them, is simpler; vendoring shared libraries; rewriting odoc's unresolved
-references. **Found:** a pool needs **one version of every shared tool**. Rocq 9.2.0 (mebi_plugin) requires
-`dune < 3.24`, and membranes requires `dune >= 3.24`, so no switch can build both: membranes is out of the pool
-(commented out in `sites.yaml`) until one of them moves. The first build is far heavier than a warm rebuild, so
-deploy units are capped at `MemoryMax=75%` with `OOMPolicy=continue` (an out-of-memory build fails only its own
-site) and the droplet has 4 GB of swap.
+### D34. OCaml docs are built as one pool (2026-10-17) *Answers* the cross-linking question. A workflow can be `pool:
+true`. Every site using it is built in one run: each member's checkout is copied into one dune workspace, and one
+`dune build @doc` documents every package, cross-linked. Every member's mounts serve the one result. The spec is the
+inclusion rule. The environment is one opam switch, cached between builds: the members' lockfiles if they agree, else
+one solve over their `.opam` files. **Why:** odoc only links packages built together, and this needs no per-link
+machinery. A dune workspace is dune's standard multi-project mechanism. **Rejected:** a site with several `repos:`,
+since your framing, where each repo stays its own site and the workflow pools them, is simpler; vendoring shared
+libraries; rewriting odoc's unresolved references. **Found:** a pool needs **one version of every shared tool**. Rocq
+9.2.0 (mebi_plugin) requires `dune < 3.24`, and membranes requires `dune >= 3.24`, so no switch can build both:
+membranes is out of the pool (commented out in `sites.yaml`) until one of them moves. The first build is far heavier
+than a warm rebuild, so deploy units are capped at `MemoryMax=75%` with `OOMPolicy=continue` (an out-of-memory build
+fails only its own site) and the droplet has 4 GB of swap.
 
 ### D35. Addresses after the first preview (2026-10-17)
 - `indimo.cathe.dev`, `mebi.cathe.dev` and `projects.cathe.dev` are forest addresses. They land on the forest's
@@ -305,8 +304,8 @@ backlinks, related and contributions, and links to them (author credits included
 transclusion of them renders nothing, and the forest's generated timeline skips them (`forest_gen.py`). It isn't a
 `--strict-private` leak, since nothing about them is published. **Why:** you never want a person's page public,
 including before you've set up their redirect. **Rejected:** a `hide` tag on `trees/people` (tested). Hiding makes
-every link to a person a leak, so the build fails, and it overrides redirects. On your forest the only people pages left are
-`@jpears` and `@cathe`, and the build passes `--strict-private`.
+every link to a person a leak, so the build fails, and it overrides redirects. On your forest the only people pages
+left are `@jpears` and `@cathe`, and the build passes `--strict-private`.
 
 ### D43. One look: Gruvbox, Source Serif + Sans, linked from `/_ddm/` (2026-10-17)
 *Closes* the styling session (D27). Decided with you, using the style lab:
@@ -328,15 +327,15 @@ every link to a person a leak, so the build fails, and it overrides redirects. O
 long notes and dense API docs. Linking from `/_ddm/` costs nothing now that every host serves it. **Implementation:**
 M3b's first item.
 
-### D44. The droplet: nixos-anywhere, disko, one root login (2026-10-18, M5)
-*Answers* the infrastructure question left open by D21. `nixosConfigurations.droplet` is installed with
-**nixos-anywhere** (kexec into an installer over SSH, then partition with **disko**). The disk is GPT with a BIOS boot
-partition and an ESP, so GRUB boots whichever mode the droplet starts in, plus ext4 root and a 2 GiB swap file.
-SSH is root-only, by key (your `digitalocean_key`), no passwords. **Why:** fully declarative from a bare Ubuntu box,
-with no hand-run steps between wipe and first boot. A single-purpose server gains nothing from a separate admin
-user. **Rejected:** DigitalOcean rebuild + nixos-infect, which leaves an imperative disk layout. The droplet's addresses are static, not DHCP, so `nix/hosts/droplet/hardware.nix` sets
-them with systemd-networkd, matched by the interface's MAC. Root login needs your key in `/root/.ssh` on the old
-Ubuntu once, since it disables root SSH (runbook, step 2).
+### D44. The droplet: nixos-anywhere, disko, one root login (2026-10-18, M5) *Answers* the infrastructure question
+left open by D21. `nixosConfigurations.droplet` is installed with **nixos-anywhere** (kexec into an installer over
+SSH, then partition with **disko**). The disk is GPT with a BIOS boot partition and an ESP, so GRUB boots whichever
+mode the droplet starts in, plus ext4 root and a 2 GiB swap file. SSH is root-only, by key (your `digitalocean_key`),
+no passwords. **Why:** fully declarative from a bare Ubuntu box, with no hand-run steps between wipe and first boot. A
+single-purpose server gains nothing from a separate admin user. **Rejected:** DigitalOcean rebuild + nixos-infect,
+which leaves an imperative disk layout. The droplet's addresses are static, not DHCP, so
+`nix/hosts/droplet/hardware.nix` sets them with systemd-networkd, matched by the interface's MAC. Root login needs
+your key in `/root/.ssh` on the old Ubuntu once, since it disables root SSH (runbook, step 2).
 
 ### D45. The Caddyfile is generated at build time (2026-10-18, M5)
 *Supersedes* D4's "ddm writes the Caddyfile and reloads". The NixOS module runs `ddm caddyfile` on the spec inside
