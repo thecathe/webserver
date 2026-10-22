@@ -10,8 +10,8 @@ generated:
 # Decision record
 
 The living list of decisions. Each says **what** was decided, **why**, and **when**. A decision that is replaced is
-marked *superseded* and kept, so the reasoning trail survives. For the story of how these were reached, see the
-[development log](../development.md). For what is still undecided, see [open questions](open-questions.md).
+marked *superseded* and kept, so the reasoning trail survives. The story of how they were reached is in the shared
+`devlog` repo (private), folder `webserver/`. For what is still undecided, see [open questions](open-questions.md).
 
 ## Current decisions
 
@@ -218,24 +218,18 @@ A workflow whose output links are root-absolute (forester) is marked `root_only:
 mounting it under a path prefix. **Why:** S2 showed forest output can't live under a prefix; this makes that a
 validation error instead of a broken site.
 
-### D34. OCaml docs are built as one pool (2026-10-17)
-*Answers* the cross-linking question. A workflow can be `pool: true`. Every site using it is built in one run: each
-member's checkout is copied into one dune workspace, and one `dune build @doc` documents every package, cross-linked.
-Every member's mounts serve the one result. The spec is the inclusion rule. The environment is one opam switch,
-cached between builds: the members' lockfiles if they agree, else one solve over their `.opam` files. **Why:** odoc
-only links packages built together, and this needs no per-link machinery. A dune workspace is dune's standard
-multi-project mechanism. **Rejected:** a site with several `repos:`, since your framing, where each repo stays its
-own site and the workflow pools them, is simpler; vendoring shared libraries; rewriting odoc's unresolved
-references. **Found:** a pool needs **one version of every shared tool**. Rocq 9.2.0 (mebi_plugin) requires
-`dune < 3.24`, and membranes requires `dune >= 3.24` (its `(lang dune 3.24)`), so no switch can build both, even
-ignoring the lockfiles. membranes is out of the pool (commented out in `sites.yaml`) until one of them moves.
-Lowering membranes to `(lang dune 3.23)` is the likely fix, if it uses nothing from 3.24.
-**Measured on the droplet (2026-10-18):** the 600 MB estimate held for a warm rebuild, not for the first one. The
-first build (opam switch, Rocq, mebi_plugin's Rocq files) took the whole 2 GB droplet: the kernel OOM-killed it and,
-with it, the entire deploy run. Two changes: deploy units are capped at `MemoryMax=75%` with `OOMPolicy=continue`,
-so an out-of-memory build fails only its own site; and swap went from 2 GB to 4 GB. With both, the pool published in
-11m56s. Some `rocqworker` processes were still OOM-killed in that build, which nonetheless succeeded; why isn't
-established (mebi_plugin's test files were being compiled, which the docs may not need).
+### D34. OCaml docs are built as one pool (2026-10-17) *Answers* the cross-linking question. A workflow can be `pool:
+true`. Every site using it is built in one run: each member's checkout is copied into one dune workspace, and one
+`dune build @doc` documents every package, cross-linked. Every member's mounts serve the one result. The spec is the
+inclusion rule. The environment is one opam switch, cached between builds: the members' lockfiles if they agree, else
+one solve over their `.opam` files. **Why:** odoc only links packages built together, and this needs no per-link
+machinery. A dune workspace is dune's standard multi-project mechanism. **Rejected:** a site with several `repos:`,
+since your framing, where each repo stays its own site and the workflow pools them, is simpler; vendoring shared
+libraries; rewriting odoc's unresolved references. **Found:** a pool needs **one version of every shared tool**. Rocq
+9.2.0 (mebi_plugin) requires `dune < 3.24`, and membranes requires `dune >= 3.24`, so no switch can build both:
+membranes is out of the pool (commented out in `sites.yaml`) until one of them moves. The first build is far heavier
+than a warm rebuild, so deploy units are capped at `MemoryMax=75%` with `OOMPolicy=continue` (an out-of-memory build
+fails only its own site) and the droplet has 4 GB of swap.
 
 ### D35. Addresses after the first preview (2026-10-17)
 - `indimo.cathe.dev`, `mebi.cathe.dev` and `projects.cathe.dev` are forest addresses. They land on the forest's
@@ -310,10 +304,8 @@ backlinks, related and contributions, and links to them (author credits included
 transclusion of them renders nothing, and the forest's generated timeline skips them (`forest_gen.py`). It isn't a
 `--strict-private` leak, since nothing about them is published. **Why:** you never want a person's page public,
 including before you've set up their redirect. **Rejected:** a `hide` tag on `trees/people` (tested). Hiding makes
-every link to a person a leak, so the build fails, and it overrides redirects. **Verified:** on your forest, the only
-people pages left are `@jpears` and `@cathe` (an `Alias`); no output file contains any other person's address; the
-build passes `--strict-private`. Fork tests cover planting, redirect precedence, the `publish` list, plain-text
-links, backlinks, transclusion and config parsing.
+every link to a person a leak, so the build fails, and it overrides redirects. On your forest the only people pages
+left are `@jpears` and `@cathe`, and the build passes `--strict-private`.
 
 ### D43. One look: Gruvbox, Source Serif + Sans, linked from `/_ddm/` (2026-10-17)
 *Closes* the styling session (D27). Decided with you, using the style lab:
@@ -335,16 +327,15 @@ links, backlinks, transclusion and config parsing.
 long notes and dense API docs. Linking from `/_ddm/` costs nothing now that every host serves it. **Implementation:**
 M3b's first item.
 
-### D44. The droplet: nixos-anywhere, disko, one root login (2026-10-18, M5)
-*Answers* the infrastructure question left open by D21. `nixosConfigurations.droplet` is installed with
-**nixos-anywhere** (kexec into an installer over SSH, then partition with **disko**). The disk is GPT with a BIOS boot
-partition and an ESP, so GRUB boots whichever mode the droplet starts in, plus ext4 root and a 2 GiB swap file.
-SSH is root-only, by key (your `digitalocean_key`), no passwords. **Why:** fully declarative from a bare Ubuntu box,
-with no hand-run steps between wipe and first boot. A single-purpose server gains nothing from a separate admin
-user. **Rejected:** DigitalOcean rebuild + nixos-infect, which leaves an imperative disk layout. **Checked before
-install (2026-10-18):** the droplet's addresses are static, not DHCP, so `nix/hosts/droplet/hardware.nix` sets
-them with systemd-networkd, matched by the interface's MAC. Root login needs your key in `/root/.ssh` on the old
-Ubuntu once, since it disables root SSH (runbook, step 2).
+### D44. The droplet: nixos-anywhere, disko, one root login (2026-10-18, M5) *Answers* the infrastructure question
+left open by D21. `nixosConfigurations.droplet` is installed with **nixos-anywhere** (kexec into an installer over
+SSH, then partition with **disko**). The disk is GPT with a BIOS boot partition and an ESP, so GRUB boots whichever
+mode the droplet starts in, plus ext4 root and a 2 GiB swap file. SSH is root-only, by key (your `digitalocean_key`),
+no passwords. **Why:** fully declarative from a bare Ubuntu box, with no hand-run steps between wipe and first boot. A
+single-purpose server gains nothing from a separate admin user. **Rejected:** DigitalOcean rebuild + nixos-infect,
+which leaves an imperative disk layout. The droplet's addresses are static, not DHCP, so
+`nix/hosts/droplet/hardware.nix` sets them with systemd-networkd, matched by the interface's MAC. Root login needs
+your key in `/root/.ssh` on the old Ubuntu once, since it disables root SSH (runbook, step 2).
 
 ### D45. The Caddyfile is generated at build time (2026-10-18, M5)
 *Supersedes* D4's "ddm writes the Caddyfile and reloads". The NixOS module runs `ddm caddyfile` on the spec inside
@@ -533,7 +524,8 @@ work login), set in a file rather than by deleting them, and the same rule for a
 - **The `devlog` workflow** (`scripts/devlog-build.py`, in `#mkdocs`): the public view keeps the opted-in pages,
   redacts them, turns links to private pages into plain text, then mkdocs builds it. Then **every denied term is
   searched for in the built site** (pages, search index, sitemap; not the theme's scripts). One match fails the
-  build, and nothing is published, as with the forest's check (D51). (The AI-generated header is the shared
+  build, and nothing is published, as with the forest's check (D51). **Since 2026-10-22 nothing is opted in:** the
+  public view is a placeholder until a glob is added to `publish.yaml`. (The AI-generated header is the shared
   marker's, D56; the script adds nothing of its own.)
 - **Rejected:** a diff-based pass that re-applies earlier removals to new text. Markers make the redaction
   deterministic on every build, so there is nothing to carry over. Also rejected: deleting the details outright,
@@ -592,19 +584,7 @@ header comes from the shared marker (D56), and other generators need only supply
 tag ([open question](open-questions.md#ai-marking-beyond-mkdocs)). The same rule is in your global Claude
 instructions.
 
-## Superseded (2026-09 curriculum sessions)
+## Superseded
 
-| Decision | Replaced by |
-|---|---|
-| Phased Nix: home-manager on Ubuntu, then NixOS | D3 |
-| Builds in `builders.go`, a fixed method map | D5 (the "not Nix derivations" part stays) |
-| Rebuild via the GH Action calling `webserver deploy`, plus a systemd timer | D2 + D14 (ddm polls; the Action is at most a "poke now") |
-| Domain roles: `cathe.dev` dev, `cathe.work` professional, `jpears.me` personal | D6 / D7 |
-| Caddyfile hand-maintained, filesystem probing per subdomain | Generated from mounts (roadmap M3); old file deleted (D19) |
-| Blue/green droplet swap | D21 (reinstall in place) |
-| `DomainLink` placeholder links | D13 |
-| `ocaml` method chains into mkdocs; `generate_docs.py` stays Python | Kept, as the `ocaml-notebook` workflow |
-| Curriculum mode | D15 |
-| `access: tailnet-owner` | D29 (`access: private` + `private_domain`) |
-| Private blocks `bind` to the tailnet IP | D30 (source-address check) |
-| `rewrite-links` as a workflow built-in | D28 (a publish stage) |
+The decisions of the 2026-09 curriculum sessions that were replaced, and what replaced each, are listed in the devlog
+entry `webserver/ddm-design.md` (private). Decisions replaced since are marked *superseded* where they stand.

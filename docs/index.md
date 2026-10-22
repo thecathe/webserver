@@ -62,7 +62,7 @@ Only two domains remain: `cathe.dev` and `jpears.me`. `cathe.work` is dropped.
 - **Why it looks like this**: [the decision record](design/record.md) and the [architecture](design/architecture.md).
 - **What's undecided**: [open questions](design/open-questions.md). This is the place to start a fresh design session.
 - **What happens next**: [the roadmap](design/roadmap.md).
-- **How we got here**: [the development log](development.md).
+- **How we got here**: the story of each part is in the shared `devlog` repo (private), not on this site.
 - **Waiting on you**: [your to-dos](tasks.md).
 
 !!! note "About the yellow pages"

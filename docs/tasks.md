@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
-  effort: medium
+  model: Sonnet 5.5
+  effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-18
+  edited: 2026-10-22
 ---
 
 # Your to-dos
@@ -14,6 +14,14 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
+- [ ] **Push, webserver first** (added 2026-10-22): `thecathe/webserver`, then `thecathe/devlog`. The webserver change
+  carries the AI-generated marker and the devlog placeholder; the devlog change makes it private by default. After
+  the deploy, check that `devlog.cathe.dev` shows only the placeholder (the old pages go dark; purge Cloudflare's
+  cache if it still serves them) and that `the.cathe.dev/devlog/` shows everything with the yellow header.
+- [ ] **Delete the old `WEBSERVER_*` GitHub secrets** in this repo's settings (added 2026-10-22). They are harmless,
+  and nothing uses them since the `deploy-dots` Action was removed.
+- [ ] **Opt devlog pages back in, if you want any public** (added 2026-10-22): list a glob in the devlog's
+  `publish.yaml`, after reading the pages with its `CLAUDE.md` in mind.
 - [ ] **Read `port-watch` after a week or two** (added 2026-10-18), on the droplet (runbook, "Who knocks on the
   public address"). Then decide on SSH over the tailnet only, a tunnel, or a new address (D55 says what to look
   for). It starts counting after the next rebuild.

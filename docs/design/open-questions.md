@@ -12,7 +12,7 @@ generated:
 The agenda for future design sessions. Each question has a **current lean** (what we'd do without further thought),
 **what decides it**, and **what's at stake**, so a fresh session can pick any of them up cold. Leans are not
 decisions: the landscape is expected to shift once real builds run, so revisit freely. When a question is settled,
-move it to the [decision record](record.md) and note it in the [development log](../development.md).
+move it to the [decision record](record.md) and note it in the devlog.
 
 ## Spec naming
 
