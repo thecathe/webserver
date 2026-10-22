@@ -564,7 +564,10 @@ a daily report from the firewall's refusals (now logged) and sshd's log; see the
 other site could have the yellow treatment.
 - **The look.** A solid yellow header that sticks while the page scrolls (beneath a sticky site header such as
   Material's), over a pale yellow tint of the page or of a region. It says who, which model, the effort level, first
-  generated and last edited. The huge faded note behind the text is gone.
+  generated and last edited. The huge faded note behind the text is gone. Under mkdocs-material only its palette
+  picks light or dark: with none configured (the generated config, as for the devlog) it stays light whatever the
+  system prefers. (Found 2026-10-22: a dark system preference had darkened the marker beneath Material's light
+  scheme, leaving dark text on dark yellow.)
 - **Set in the spec.** A site's `generated:` block marks all its pages; `regions:` (path globs in the published
   tree, and a CSS `selector` for part of a page) narrow it, and `exclude:` removes pages. The site's own repo needs
   nothing. Spec reference: [`generated`](../usage/spec.md#generated-ai-generated-pages).
