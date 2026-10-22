@@ -209,7 +209,7 @@ sites:
       - { host: the.cathe.dev, path: sites, view: private, access: private }
 
   # How the sites (and other projects) were built, with Claude: the stories
-  # behind the decision records. Public pages only by publish.yaml (D54).
+  # behind the decision records. Public pages only by publish.yaml (D54); none at present.
   devlog:
     repo: thecathe/devlog
     taxa: [blog, project]

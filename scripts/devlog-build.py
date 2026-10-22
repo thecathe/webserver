@@ -5,6 +5,7 @@ from the checkout at build time and never published, says what the public
 view may show:
 
     publish:      # the files the public view shows (globs); nothing else is
+                  # (none at all: a placeholder page is built instead)
       - index.md
       - webserver/*.md
     pseudonyms:   # replaced in the public view, longest first (literal text)
@@ -101,6 +102,11 @@ def build(view, repo, dest):
         out = os.path.join(dest, page)
         os.makedirs(os.path.dirname(out), exist_ok=True)
         open(out, "w").write(text)
+    if not chosen:
+        # mkdocs given no pages builds no home page; say so instead.
+        os.makedirs(dest, exist_ok=True)
+        with open(os.path.join(dest, "index.md"), "w") as f:
+            f.write("# Development logs\n\nNothing is published here yet.\n")
     print(f"devlog-build: {view} view, {len(chosen)} of {len(all_pages)} pages")
     if view == "public":
         check(repo, dest)
