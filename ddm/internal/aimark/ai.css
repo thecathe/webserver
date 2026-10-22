@@ -7,7 +7,9 @@
  *
  * Colours are plain custom properties so the shared tokens (D43) can take
  * them over later. Dark follows the system, a toggle's data-theme, or
- * mkdocs-material's palette.
+ * mkdocs-material's palette. Under Material only its palette counts: with
+ * none configured it stays light whatever the system prefers, and a dark
+ * marker under its light text would be unreadable.
  */
 
 :root {
@@ -18,7 +20,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(:has(.md-container)) {
     --ddm-ai-bg: #2b2817;
     --ddm-ai-bar-bg: #d79921;
     --ddm-ai-bar-fg: #1d2021;

@@ -4,10 +4,11 @@ The devlog repo is private and holds the whole record. Its publish.yaml, read
 from the checkout at build time and never published, says what the public
 view may show:
 
-    publish:      # the files the public view shows (globs); nothing else is
+    publish:      # the files the public view shows; nothing else is
                   # (none at all: a placeholder page is built instead)
-      - index.md
-      - webserver/*.md
+      - webserver/ddm-design.md          # a path: that file
+      - webserver/*.md                   # `*` and `?` stay inside one folder
+      - beam-bug-crawler/**              # `**` crosses folders: everything below
     pseudonyms:   # replaced in the public view, longest first (literal text)
       "Jane Doe": a colleague
     deny:         # the public build fails if any of these is anywhere in it
@@ -20,12 +21,19 @@ stand-in (an HTML comment, so hidden everywhere else) takes its place:
     <!-- private -->the whole passage<!-- /private -->
     <!-- public: what the public view says instead -->
 
+A page is private until a publish entry matches it. An entry is a path from
+the repo root, with `*` and `?` standing for part of one name and `**` for any
+number of folders (`a/*.md` is the pages directly in a/; `a/**` everything
+below it). A page's address /a/b/ is the file a/b.md, or a/b/index.md. An entry
+that matches nothing is reported, not fatal: it fails safe, to private. CLAUDE.md
+files (the rules for whoever writes here) are never published. If index.md is
+not published, the public home page is a list of the pages that are.
+
 Usage:
     devlog-build.py build public|private <repo> <dest>   # dest: inside the repo
     devlog-build.py check <repo> <built site>
 """
 
-import fnmatch
 import os
 import re
 import shutil
@@ -55,6 +63,76 @@ def load(repo):
     if unknown:
         fail(f"publish.yaml: unknown keys {sorted(unknown)}")
     return cfg
+
+
+def compile_glob(entry):
+    """A publish entry as a regex over a page's path from the repo root.
+
+    Not fnmatch: there `*` also matches `/`, so `a/*.md` would publish every
+    page below a/. Here `*` and `?` stay within one name, and only a `**`
+    segment crosses folders."""
+    entry = re.sub(r"^(\./|/)+", "", entry)
+    if not entry or entry.endswith("/"):
+        fail(f"publish.yaml: {entry!r} names a folder, not pages: write {entry}*.md or {entry}**")
+    parts = entry.split("/")
+    out = []
+    for i, part in enumerate(parts):
+        last = i == len(parts) - 1
+        if part == "**":
+            out.append(".+" if last else "(?:[^/]+/)*")
+            continue
+        out.append("".join({"*": "[^/]*", "?": "[^/]"}.get(c) or re.escape(c) for c in part))
+        if not last:
+            out.append("/")
+    return re.compile("".join(out) + r"\Z")
+
+
+def select(candidates, entries):
+    """The candidate pages some publish entry matches."""
+    if not isinstance(entries, list) or not all(isinstance(e, str) for e in entries):
+        fail("publish.yaml: `publish` is a list of paths or globs")
+    chosen = set()
+    for entry in entries:
+        matched = {p for p in candidates if compile_glob(entry).match(p)}
+        if not matched:
+            print(f"devlog-build: warning: publish entry {entry!r} matches no page", file=sys.stderr)
+        chosen |= matched
+    return chosen
+
+
+def title_of(text, page):
+    """A page's title as mkdocs would give it: front matter, first heading, file name."""
+    m = re.match(r"---\n(.*?)\n---\n", text, re.S)
+    if m:
+        try:
+            title = (yaml.safe_load(m.group(1)) or {}).get("title")
+        except (yaml.YAMLError, AttributeError):
+            title = None
+        if title:
+            return str(title)
+        text = text[m.end():]
+    m = re.search(r"^#\s+(.+?)\s*#*\s*$", text, re.M)
+    if m:
+        return m.group(1)
+    name = os.path.splitext(os.path.basename(page))[0]
+    return os.path.basename(os.path.dirname(page)) if name == "index" and os.path.dirname(page) else name.replace("-", " ")
+
+
+def home_page(titles):
+    """The public home page when index.md isn't published: the pages that are."""
+    folders = {}
+    for page in sorted(titles):
+        folders.setdefault(os.path.dirname(page), []).append(page)
+    lines = ["# Development logs", "",
+             "Written with Claude, from a private record: only the pages listed here are public.", ""]
+    for folder, members in sorted(folders.items()):
+        if folder:
+            lines += [f"## {folder.replace('/', ' / ')}", ""]
+        for page in members:
+            label = titles[page].replace("[", r"\[").replace("]", r"\]")
+            lines.append(f"- [{label}]({page})")
+        lines.append("")
+    return "\n".join(lines)
 
 
 def pages(repo, dest):
@@ -92,21 +170,34 @@ def build(view, repo, dest):
     if os.path.exists(dest):
         shutil.rmtree(dest)
     all_pages = list(pages(repo, dest))
-    globs = cfg.get("publish") or []
-    published = {p for p in all_pages if any(fnmatch.fnmatch(p, g) for g in globs)}
-    chosen = all_pages if view == "private" else sorted(published)
+    if view == "private":
+        chosen = all_pages
+    else:
+        # The rules for writers aren't a page of the log, whatever a glob says.
+        candidates = [p for p in all_pages if os.path.basename(p) != "CLAUDE.md"]
+        chosen = sorted(select(candidates, cfg.get("publish") or []))
+    # The public home page exists either way (published, or listed below), so
+    # a link to it stays a link.
+    published = set(chosen) | {"index.md"}
+    titles = {}
     for page in chosen:
         text = open(os.path.join(repo, page)).read()
         if view == "public":
             text = redact(text, page, published, cfg)
+            titles[page] = title_of(text, page)
         out = os.path.join(dest, page)
         os.makedirs(os.path.dirname(out), exist_ok=True)
         open(out, "w").write(text)
+    # mkdocs builds no home page unless there is an index.md, so write one.
+    home = None
     if not chosen:
-        # mkdocs given no pages builds no home page; say so instead.
+        home = "# Development logs\n\nNothing is published here yet.\n"
+    elif view == "public" and "index.md" not in chosen:
+        home = home_page(titles)
+    if home:
         os.makedirs(dest, exist_ok=True)
         with open(os.path.join(dest, "index.md"), "w") as f:
-            f.write("# Development logs\n\nNothing is published here yet.\n")
+            f.write(home)
     print(f"devlog-build: {view} view, {len(chosen)} of {len(all_pages)} pages")
     if view == "public":
         check(repo, dest)
