@@ -14,14 +14,21 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
-- [ ] **Push, webserver first** (added 2026-10-22): `thecathe/webserver`, then `thecathe/devlog`. The webserver change
-  carries the AI-generated marker and the devlog placeholder; the devlog change makes it private by default. After
-  the deploy, check that `devlog.cathe.dev` shows only the placeholder (the old pages go dark; purge Cloudflare's
-  cache if it still serves them) and that `the.cathe.dev/devlog/` shows everything with the yellow header.
+- [ ] **Redeploy the server, then check the devlog** (added 2026-10-22, reworded the same day). The live
+  `devlog.cathe.dev` still serves a build from before the AI-generated marker and the private-by-default change: it
+  has no yellow header, and it still shows pages that are now private. A push doesn't update the server's `ddm` or
+  its scripts; `ddm-rebuild` does, and it is started by hand (runbook, "Going live"). After pushing `thecathe/webserver`
+  and then `thecathe/devlog`:
+  `ssh root@<droplet IP> systemctl start ddm-rebuild`, then, once it has finished,
+  `systemctl start ddm-force@devlog`. Watch `journalctl -u ddm-rebuild -u ddm-deploy`; if the old site stays up, the
+  devlog's error is in `/var/lib/ddm/work/state.json`. Then check that `devlog.cathe.dev` is a home page listing only
+  *Funding and spend control* (every other devlog page is a 404; purge Cloudflare's cache if old ones still appear)
+  and that `the.cathe.dev/devlog/` shows everything, each page under the sticky yellow header.
 - [ ] **Delete the old `WEBSERVER_*` GitHub secrets** in this repo's settings (added 2026-10-22). They are harmless,
   and nothing uses them since the `deploy-dots` Action was removed.
-- [ ] **Opt devlog pages back in, if you want any public** (added 2026-10-22): list a glob in the devlog's
-  `publish.yaml`, after reading the pages with its `CLAUDE.md` in mind.
+- [ ] **Opt more devlog pages in, if you want any public** (added 2026-10-22): list a path or glob in the devlog's
+  `publish.yaml` (`a/*.md` is one folder, `a/**` everything below it), after reading the pages with its `CLAUDE.md`
+  in mind. Only *Funding and spend control* is listed today.
 - [ ] **Read `port-watch` after a week or two** (added 2026-10-18), on the droplet (runbook, "Who knocks on the
   public address"). Then decide on SSH over the tailnet only, a tunnel, or a new address (D55 says what to look
   for). It starts counting after the next rebuild.
