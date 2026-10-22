@@ -71,9 +71,20 @@
   } else {
     target.prepend(bar);
   }
-  if (sticky) {
-    const follow = () => bar.style.setProperty("--ddm-ai-top", `${header.getBoundingClientRect().height}px`);
-    follow();
-    if (window.ResizeObserver) new ResizeObserver(follow).observe(header);
+  // How far down the page the bar's bottom edge sits when stuck. The theme
+  // adapters in ai.css use it to move their own sticky parts (mkdocs-material's
+  // sidebars, anchor scrolling) out from under the bar.
+  const follow = () => {
+    const h = sticky ? header.getBoundingClientRect().height : 0;
+    if (sticky) bar.style.setProperty("--ddm-ai-top", `${h}px`);
+    if (wholePage) {
+      document.documentElement.style.setProperty("--ddm-ai-offset", `${h + bar.getBoundingClientRect().height}px`);
+    }
+  };
+  follow();
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(follow);
+    ro.observe(bar);
+    if (sticky) ro.observe(header);
   }
 })();

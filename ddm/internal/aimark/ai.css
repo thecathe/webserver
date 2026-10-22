@@ -70,6 +70,17 @@ body.ddm-ai-page {
   text-transform: uppercase;
 }
 
+/* mkdocs-material: its sticky sidebars, and where an anchor scrolls to, start
+   below its header; move them below the bar as well (ai.js sets the offset). */
+body.ddm-ai-page .md-sidebar {
+  /* !important: Material's script sets an inline top. */
+  top: var(--ddm-ai-offset, 2.4rem) !important;
+}
+
+html:has(body.ddm-ai-page) {
+  scroll-padding-top: calc(var(--ddm-ai-offset, 0px) + 0.75rem);
+}
+
 @media print {
   .ddm-ai-bar {
     position: static;
