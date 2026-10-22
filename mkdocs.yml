@@ -61,5 +61,4 @@ nav:
       - Architecture: design/architecture.md
       - Open questions: design/open-questions.md
       - Roadmap: design/roadmap.md
-  - Development log (to 2026-10-18): development.md
   - Your to-dos: tasks.md

@@ -23,8 +23,10 @@ wiped and reinstalled with NixOS, so nothing on it needs preserving.
 Periodically, and always before closing a session that changed or designed anything:
 - Record design work in the shared devlog, folder `webserver/` (`~/Documents/git/thecathe/devlog/webserver/`,
   index at `webserver/index.md`), per the global "Design write-ups" rule: update the mini-project's entry (or start
-  one) and its `index.md` line in the same devlog commit. `DEVELOPMENT.md` is the log up to 2026-10-18, migrated
-  there; don't append to it.
+  one) and its `index.md` line in the same devlog commit. `DEVELOPMENT.md` was moved there (`webserver/archive/`) on
+  2026-10-22 and no longer exists here. This repo's docs stay documentation (what is decided, how to use it, what is
+  open); the story, with the reasoning and what was found along the way, goes in the devlog. The devlog is private
+  by default.
 - Update `docs/design/record.md` (living decisions; mark superseded ones rather than deleting) and
   `docs/design/open-questions.md`. Update `docs/design/roadmap.md` when milestones move.
 - Bump `edited` in the `generated` front matter of every page touched.

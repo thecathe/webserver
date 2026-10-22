@@ -14,7 +14,7 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 
 | | Milestone | Status |
 |---|---|---|
-| M0 | Rules and docs: this site, the AI marking, `DEVELOPMENT.md`, global rules | **done** 2026-10-16 |
+| M0 | Rules and docs: this site, the AI marking, the development log, global rules | **done** 2026-10-16 |
 | M1 | Spec v2 + `ddm` skeleton | **done** 2026-10-16 |
 | M2 | Workflow runner + built-ins | **done** 2026-10-16 |
 | M3a | Publish, links, Caddy generation, local preview; one site of every kind | **done** 2026-10-17 |
@@ -86,20 +86,6 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
 - **The forest's public view** builds from `forest-public.toml` (D39), with notes and recents as public pages
   (D38). Its XSLT is rendered at build time (D40). This brings forward M4's first item.
 
-## The shared-styling design session (done 2026-10-17)
-Decided in D43: Gruvbox; Source Serif, Sans and Code Pro; a light/dark toggle in the toolbar; tokens and adapters
-linked from `/_ddm/`. The implementation is M3b's first item. The agenda below is kept as the record of what was
-discussed.
-
-### Agenda
-Run `nix develop -c bin/ddm preview --serve-only`, then compare the six kinds side by side. Agenda:
-- the palette, typography and AI marker ([shared styling](open-questions.md#shared-styling-across-sites), D27);
-- the **shared header toolbar** and **section indexes**, including `docs.cathe.dev` → `sites.cathe.dev`
-  ([site navigation](open-questions.md#site-navigation-a-shared-header-and-section-indexes));
-- how far each generator can be themed, odoc especially;
-- the status line (repo, branch, commit; "up to date" once the daemon exists);
-- the collated OCaml docs page beyond the pool ([OCaml docs](open-questions.md#ocaml-docs-landing-pages-a-shared-index-shared-libraries)).
-
 ## M3b: the rest
 - **Styling (D43), first:**
   - `theme/tokens.css`, the self-hosted Source fonts, and adapters for mkdocs, odoc and the forest;
@@ -163,15 +149,6 @@ Reinstall the existing droplet in place (D21): wipe it, install NixOS from this 
 keeps pointing at the same IP. Downtime lasts from the wipe until the first deploy, kept short by proving M5/M6 in a
 VM first. Then point teammates at project sites.
 
-## Shared styling (design session next; D27)
-- One source of truth for the palette (today: loose gruvbox in `docs/stylesheets/theme.css`), typography and the
-  AI-generated marker, served from one place (e.g. an `assets` site, or a path on `ddm.cathe.dev`).
-- Adapters per generator: mkdocs `extra_css`, the forester theme (`thecathe/forester-base-theme` XSLT and CSS), and
-  odoc's `odoc.css` (`--theme-uri` or a post-build override).
-- Possibly a shared header or nav linking the sites, using `site://` links.
-- Designed in its own session, after M3a, against the preview. See
-  [open questions](open-questions.md#shared-styling-across-sites).
-
 ## Later
 - **Enforced bot blocking through Cloudflare's proxy** (asked for 2026-10-18). Proxying the public hosts (orange
   cloud) would let Cloudflare's AI-crawler blocking and bot rules refuse scrapers that ignore robots.txt (D50).
@@ -194,21 +171,3 @@ VM first. Then point teammates at project sites.
 | S2 | Are forest output links root-absolute or relative? (one build, two hosts) | **Root-absolute** (M2): `base-url="/"`, `href="//"`, stylesheet `/default.xsl`. One build serves `jpears.me` and `forest.cathe.dev` unchanged. A forest can only be mounted at path `/`. |
 | S3 | Does `nix develop github:thecathe/forest/<sha> -c forester build` work on a clean machine? | **Yes for a clean checkout** (M2): about 10 s, with a warm Nix store. A cold store is verified in the M5 VM test. |
 | S4 | Can a public page `fetch` a tailnet-only host? (the widget) | later |
-
-## Where the old curriculum went
-
-The 2026-09 curriculum (Modules 1–14) was written for you to implement. Its content maps onto the milestones like this:
-
-| Old module | Now |
-|---|---|
-| 1 schema | M1 |
-| 2 md SSG | Later (`md-ssg` built-in) |
-| 3 mkdocs, 4 odoc, 5 ocaml | M2 (as workflows) |
-| 6 DomainLink rewriting | M3a (`site://`, resolved at publish) |
-| 7 GH Action rebuild, 8 systemd timer | M6 (ddm polling) |
-| 9 home-manager on Ubuntu | dropped (D3) |
-| 10 NixOS migration | M5 + M7 (in place, not blue/green: D21) |
-| 11 webhooks | Later |
-| 12 Caddyfile generation | M3a |
-| 13 GitHub Pages | Later |
-| 14 port `generate_docs.py` | Later |
