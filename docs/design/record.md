@@ -516,7 +516,7 @@ work login), set in a file rather than by deleting them, and the same rule for a
 - **The repo is the private copy.** It stays private and holds everything; only build output is published, never
   the repo or its history. So nothing needs a second copy, and a detail removed later needs no history rewrite.
 - **`publish.yaml` lives in the devlog repo,** read from ddm's checkout at build time, so the names it lists are
-  never public. It has three lists: `publish` (globs; a page is private until one matches), `pseudonyms`
+  never public. It has three lists: `publish` (paths or globs; a page is private until one matches), `pseudonyms`
   (literal replacements) and `deny` (strings or regexes).
 - **In a page,** `<!-- private -->…<!-- /private -->` is dropped from the public view, and a following
   `<!-- public: … -->` stand-in takes its place. Both are comments elsewhere, so the private view shows the
@@ -524,9 +524,21 @@ work login), set in a file rather than by deleting them, and the same rule for a
 - **The `devlog` workflow** (`scripts/devlog-build.py`, in `#mkdocs`): the public view keeps the opted-in pages,
   redacts them, turns links to private pages into plain text, then mkdocs builds it. Then **every denied term is
   searched for in the built site** (pages, search index, sitemap; not the theme's scripts). One match fails the
-  build, and nothing is published, as with the forest's check (D51). **Since 2026-10-22 nothing is opted in:** the
-  public view is a placeholder until a glob is added to `publish.yaml`. (The AI-generated header is the shared
-  marker's, D56; the script adds nothing of its own.)
+  build, and nothing is published, as with the forest's check (D51). **Since 2026-10-22 pages are private by
+  default:** the public view is a placeholder until `publish.yaml` lists a path or glob. (The AI-generated header is
+  the shared marker's, D56; the script adds nothing of its own.)
+- **Opting pages in (2026-10-22).** An entry is a path from the repo root, or a glob in which `*` and `?` stay inside
+  one folder and a `**` segment crosses folders: `a/*.md` is the pages directly in `a/`, `a/**` everything below. A
+  page's address `/a/b/` is the file `a/b.md` (or `a/b/index.md`). An entry that names a folder is refused with a
+  hint; one that matches nothing is warned about in the build log and publishes nothing, so a typo fails safe. Files
+  named `CLAUDE.md` are never published, whatever a glob says. If `index.md` isn't published, the public home page is
+  generated: a list of the published pages, with titles from the redacted text. Today one page is opted in, by path:
+  `beam-bug-crawler/phase2-orchestrator/funding-and-spend-control.md`.
+- **What went wrong first.** The first matcher was Python's `fnmatch`, where `*` also matches `/`, so the old entry
+  `beam-bug-crawler/*.md` published every page below that folder, not just its own. The devlog's `CLAUDE.md` said
+  the opposite. The matcher is now ours (`compile_glob` in `scripts/devlog-build.py`), with tests that pin the rules
+  (`nix develop -c python3 -m unittest discover -s scripts`). The live site had meanwhile not been rebuilt at all
+  (see `tasks.md`), so none of the devlog's privacy change was visible there.
 - **Rejected:** a diff-based pass that re-applies earlier removals to new text. Markers make the redaction
   deterministic on every build, so there is nothing to carry over. Also rejected: deleting the details outright,
   which loses them (the downstream-flake analysis that later work needs, for instance).

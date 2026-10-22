@@ -4,7 +4,8 @@ This repo is the server repo for **ddm**, the deployment manager: it pulls site 
 workflows, publishes them under `cathe.dev` / `jpears.me`, and (planned) rebuilds the server's own NixOS config.
 The design lives in the docs site (`mkdocs.yml`, `docs/`), which is itself planned to be served at `ddm.cathe.dev`.
 
-Code: `ddm/` (Go; `nix develop -c go -C ddm test ./...`; run it as `nix develop -c bin/ddm …`) reads `sites.yaml`. The legacy setup (`webserver/`,
+Code: `ddm/` (Go; `nix develop -c go -C ddm test ./...`; run it as `nix develop -c bin/ddm …`) reads `sites.yaml`. The
+Python in `scripts/` has tests too (`nix develop -c python3 -m unittest discover -s scripts`). The legacy setup (`webserver/`,
 `deploy.yaml`, the hand-written `Caddyfile`, the `deploy-dots` Action) was deleted on 2026-10-16: the droplet will be
 wiped and reinstalled with NixOS, so nothing on it needs preserving.
 
