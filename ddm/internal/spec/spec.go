@@ -166,6 +166,10 @@ type Site struct {
 	Search string `yaml:"search"`
 	// Assistants lets robots.Assistants fetch every public mount.
 	Assistants bool `yaml:"assistants"`
+	// Generated marks the site's pages as written by an AI: the shared
+	// marker is drawn on them (see Generated). Nil means no site-wide mark;
+	// a page's own `generated` front matter can still mark it.
+	Generated *Generated `yaml:"generated"`
 }
 
 // IsIndexed reports whether the site appears in the site directory.
@@ -322,6 +326,9 @@ func (s *Spec) normalise() {
 		}
 		if site.Access == "" {
 			site.Access = AccessPublic
+		}
+		if site.Generated != nil && site.Generated.By == "" {
+			site.Generated.By = DefaultGeneratedBy
 		}
 		for i := range site.Mounts {
 			m := &site.Mounts[i]

@@ -79,6 +79,38 @@ func TestPublishHead(t *testing.T) {
 	}
 }
 
+func TestPublishPageHead(t *testing.T) {
+	const page = "<html><head></head><body></body></html>"
+	r := setup(t, page)
+	os.MkdirAll(filepath.Join(r.From, "notes", "a"), 0o755)
+	os.MkdirAll(filepath.Join(r.From, "other"), 0o755)
+	os.WriteFile(filepath.Join(r.From, "notes", "a", "index.html"), []byte(page), 0o644)
+	os.WriteFile(filepath.Join(r.From, "other", "index.html"), []byte(page), 0o644)
+	r.Head = "<H/>"
+	r.PageHead = func(rel string) string {
+		if strings.HasPrefix(rel, "notes/") {
+			return "<M " + rel + "/>"
+		}
+		return ""
+	}
+	if _, err := Run(r); err != nil {
+		t.Fatal(err)
+	}
+	cur := Current(r.WWW, "public", "a")
+	for file, want := range map[string]string{
+		"index.html":         "<html><head><H/></head><body></body></html>",
+		"notes/a/index.html": "<html><head><H/><M notes/a/index.html/></head><body></body></html>",
+		"other/index.html":   "<html><head><H/></head><body></body></html>",
+	} {
+		if got, _ := os.ReadFile(filepath.Join(cur, file)); string(got) != want {
+			t.Errorf("%s:\n got %s\nwant %s", file, got, want)
+		}
+	}
+	if log := r.Log.(*bytes.Buffer).String(); !strings.Contains(log, "3 page(s), 1 marked") {
+		t.Errorf("log should count the marked page: %s", log)
+	}
+}
+
 func TestPublishKeepsTheNewest(t *testing.T) {
 	r := setup(t, "hi")
 	r.Keep = 2

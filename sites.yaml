@@ -214,6 +214,9 @@ sites:
     repo: thecathe/devlog
     taxa: [blog, project]
     description: Development logs, written with Claude, of how these projects were designed and built
+    # Every page is AI-written (D56): the shared marker is drawn on all of them,
+    # with the model, effort and dates from a page's own `generated:` front matter.
+    generated: { by: Claude }
     views:
       public:  { workflow: devlog }
       private: { workflow: devlog }

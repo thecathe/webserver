@@ -8,7 +8,6 @@ docs_dir: docs
 
 theme:
   name: material
-  custom_dir: overrides
   features:
     - navigation.sections
     - navigation.top
@@ -31,7 +30,11 @@ theme:
 
 extra_css:
   - stylesheets/theme.css
-  - stylesheets/ai-generated.css
+
+# The AI-generated marker (D56): this hook hands each page's `generated` front
+# matter to the script ddm adds at publish. See scripts/mkdocs_ddm_generated.py.
+hooks:
+  - scripts/mkdocs_ddm_generated.py
 
 markdown_extensions:
   - admonition
