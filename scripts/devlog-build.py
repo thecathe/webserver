@@ -36,7 +36,6 @@ PRIVATE = re.compile(r"<!--\s*private\s*-->(.*?)<!--\s*/private\s*-->", re.S)
 STRAY = re.compile(r"<!--\s*/?private\s*-->")
 PUBLIC = re.compile(r"<!--\s*public:\s*(.*?)\s*-->", re.S)
 LINK = re.compile(r"(!?)\[([^\]]*)\]\(([^)\s]+)\)")
-FRONT = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 # Where page text can end up: the pages, the search index, the sitemap. Not
 # the theme's own scripts and styles, which carry their authors' addresses.
 TEXT = (".html", ".md", ".json", ".xml", ".txt", ".svg")
@@ -64,24 +63,6 @@ def pages(repo, dest):
         for f in sorted(files):
             if f.endswith(".md"):
                 yield os.path.relpath(os.path.join(root, f), repo)
-
-
-def banner(text):
-    """A visible AI-generated marker for pages with `generated:` front matter."""
-    m = FRONT.match(text)
-    g = (yaml.safe_load(m.group(1)) or {}).get("generated") if m else None
-    if not isinstance(g, dict):
-        return text
-    by = ", ".join(str(g[k]) for k in ("model", "effort") if g.get(k))
-    note = (
-        f"> **AI-generated** by {g.get('by', 'an AI')}{f' ({by})' if by else ''}: "
-        f"first generated {g.get('date', 'unrecorded')}, last edited {g.get('edited', 'unrecorded')}.\n\n"
-    )
-    body = text[m.end():]
-    # After the first heading, so the page title stays first.
-    h = re.search(r"^# .*\n", body, re.M)
-    at = h.end() if h else 0
-    return text[: m.end()] + body[:at] + ("\n" if h else "") + note + body[at:]
 
 
 def redact(text, page, published, cfg):
@@ -119,7 +100,7 @@ def build(view, repo, dest):
             text = redact(text, page, published, cfg)
         out = os.path.join(dest, page)
         os.makedirs(os.path.dirname(out), exist_ok=True)
-        open(out, "w").write(banner(text))
+        open(out, "w").write(text)
     print(f"devlog-build: {view} view, {len(chosen)} of {len(all_pages)} pages")
     if view == "public":
         check(repo, dest)

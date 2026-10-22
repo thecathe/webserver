@@ -37,7 +37,9 @@ func notYet(when string) BuiltinFunc {
 // mkdocsConfig writes a minimal mkdocs.yml when the repo has none, as the
 // old demos-deploy-docs-md.yml Action did. Params: site_name (default: the
 // site name), input_dir (docs_dir; default "docs"), theme (default
-// "material").
+// "material"). When this repo has scripts/mkdocs_ddm_generated.py, the
+// config also lists it as a hook: it turns a page's `generated` front matter
+// into the tag the AI-generated marker reads (ddm/internal/aimark).
 func mkdocsConfig(_ context.Context, a BuiltinArgs) error {
 	repo := a.Plan.Vars.Repo
 	for _, name := range []string{"mkdocs.yml", "mkdocs.yaml"} {
@@ -55,6 +57,10 @@ func mkdocsConfig(_ context.Context, a BuiltinArgs) error {
 	}
 	cfg := fmt.Sprintf("# Written by ddm's mkdocs-config builtin: the repo has no mkdocs.yml.\nsite_name: %q\ndocs_dir: %q\ntheme:\n  name: %q\n",
 		param(a.Params, "site_name", a.Plan.Site), docsDir, param(a.Params, "theme", "material"))
+	hook := filepath.Join(a.Plan.Vars.System, "scripts", "mkdocs_ddm_generated.py")
+	if _, err := os.Stat(hook); err == nil {
+		cfg += fmt.Sprintf("hooks:\n  - %q\n", hook)
+	}
 	fmt.Fprintf(a.Log, "    no mkdocs.yml; writing a minimal one (docs_dir %s)\n", docsDir)
 	return os.WriteFile(filepath.Join(repo, "mkdocs.yml"), []byte(cfg), 0o644)
 }

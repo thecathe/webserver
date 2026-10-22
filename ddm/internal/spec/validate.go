@@ -181,6 +181,7 @@ func (s *Spec) validateSites(p *problems) {
 		if site.Search != "" && !validSearch(site.Search) {
 			p.add("%s: search %q must be %q, %q or %q", where, site.Search, SearchNone, SearchEntry, SearchAll)
 		}
+		validateGenerated(p, where, site.Generated)
 		for _, t := range site.Taxa {
 			if len(s.Taxa) > 0 && !slices.Contains(s.Taxa, t) {
 				p.add("%s: taxon %q is not declared in taxa", where, t)

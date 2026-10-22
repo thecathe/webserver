@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"ddm/internal/aimark"
 	"ddm/internal/bar"
 	"ddm/internal/build"
 	"ddm/internal/caddygen"
@@ -85,17 +86,24 @@ func buildAndPublish(ctx context.Context, req build.Request, t target) (string, 
 		return "", err
 	}
 	fmt.Fprintf(req.Log, "==> publishing %s (%s) at %s\n", res.Served, req.View, res.Commit)
+	pageHead, err := aimark.PageHead(req.Spec.Sites[req.Site].Generated)
+	if err != nil {
+		return "", err
+	}
 	dest, err := publish.Run(publish.Request{
 		Site: res.Served, View: req.View, Commit: res.Commit, From: res.Dir, WWW: t.caddy.WWW,
 		Links: links.Resolver{Spec: req.Spec, Base: t.base}, Strict: t.strict, Log: req.Log,
-		Head: bar.Script,
+		Head: bar.Script + aimark.Tags, PageHead: pageHead,
 	})
 	if err != nil {
 		return "", err
 	}
-	// The toolbar's files (nav.json follows the spec), this publish's status,
-	// and, for a public build, its page list.
+	// The toolbar's files (nav.json follows the spec), the AI marker's, this
+	// publish's status, and, for a public build, its page list.
 	if err := bar.Write(t.caddy.WWW, req.Spec, t.base, t.caddy.Preview); err != nil {
+		return "", err
+	}
+	if err := aimark.Write(t.caddy.WWW); err != nil {
 		return "", err
 	}
 	if req.View == spec.DefaultView {

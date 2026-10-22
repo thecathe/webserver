@@ -1,0 +1,88 @@
+/*
+ * ddm's AI-generated marker (see aimark.go and D56).
+ *
+ * ai.js draws .ddm-ai-bar, a solid yellow header that sticks while the page
+ * scrolls, as the first thing in the marked page or region. The marked page
+ * (body.ddm-ai-page) or region (.ddm-ai-region) gets a pale yellow tint.
+ *
+ * Colours are plain custom properties so the shared tokens (D43) can take
+ * them over later. Dark follows the system, a toggle's data-theme, or
+ * mkdocs-material's palette.
+ */
+
+:root {
+  --ddm-ai-bg: #fdf3c8;
+  --ddm-ai-bar-bg: #f9d567;
+  --ddm-ai-bar-fg: #3c3836;
+  --ddm-ai-bar-line: #d79921;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ddm-ai-bg: #2b2817;
+    --ddm-ai-bar-bg: #d79921;
+    --ddm-ai-bar-fg: #1d2021;
+    --ddm-ai-bar-line: #fabd2f;
+  }
+}
+
+:root[data-theme="light"],
+body[data-md-color-scheme="default"] {
+  --ddm-ai-bg: #fdf3c8;
+  --ddm-ai-bar-bg: #f9d567;
+  --ddm-ai-bar-fg: #3c3836;
+  --ddm-ai-bar-line: #d79921;
+}
+
+:root[data-theme="dark"],
+body[data-md-color-scheme="slate"] {
+  --ddm-ai-bg: #2b2817;
+  --ddm-ai-bar-bg: #d79921;
+  --ddm-ai-bar-fg: #1d2021;
+  --ddm-ai-bar-line: #fabd2f;
+}
+
+body.ddm-ai-page {
+  --md-default-bg-color: var(--ddm-ai-bg);
+  background-color: var(--ddm-ai-bg);
+}
+
+.ddm-ai-region {
+  background-color: var(--ddm-ai-bg);
+}
+
+.ddm-ai-bar {
+  /* --ddm-ai-top is set by ai.js to the height of a sticky site header (such
+     as mkdocs-material's), so the bar sticks beneath it, not behind it. */
+  position: sticky;
+  top: var(--ddm-ai-top, 0);
+  z-index: 3;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.35rem 0.8rem;
+  background-color: var(--ddm-ai-bar-bg);
+  color: var(--ddm-ai-bar-fg);
+  border-bottom: 1px solid var(--ddm-ai-bar-line);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* mkdocs-material: its sticky sidebars, and where an anchor scrolls to, start
+   below its header; move them below the bar as well (ai.js sets the offset). */
+body.ddm-ai-page .md-sidebar {
+  /* !important: Material's script sets an inline top. */
+  top: var(--ddm-ai-offset, 2.4rem) !important;
+}
+
+html:has(body.ddm-ai-page) {
+  scroll-padding-top: calc(var(--ddm-ai-offset, 0px) + 0.75rem);
+}
+
+@media print {
+  .ddm-ai-bar {
+    position: static;
+  }
+}
