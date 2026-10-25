@@ -584,16 +584,15 @@ other site could have the yellow treatment.
 without touching its pages. **Rejected:** a copy of the override per generator, and putting the marker's data in
 `nav.json` (it would depend on mounts, which publishing doesn't know).
 
-### D57. Site builds can read the GitHub token; keep it minimal (2026-10-25)
+### D57. Site builds can read the GitHub token; accepted (2026-10-25)
 Found in an audit of this repo, dots and hosts. Every workflow runs as the `ddm` user, in the same process
 environment as the fetch that needs the token: `NIX_CONFIG` carries it, and the git credential file sits in the
 unit's runtime directory, readable by that user. So any site repo's build steps (its flake, its scripts) can read
-the token. All the site repos are yours, so this is accepted for now, with the blast radius kept small:
-- **The token reads only what ddm builds.** A fine-grained token with Contents: read-only on **selected
-  repositories**, the private site repos (`forest`, `demos`, `INDIMO`, `membranes`), not "all repositories" as
-  this page's architecture first said. A public repo needs no token at all. (Your to-dos.)
-- **A new private site repo** has to be added to the token's repository list, or its clone fails, which is the
-  intended signal.
+the token. All the site repos are yours, so this is accepted for now.
+- **The token stays on all your repositories** (Contents: read-only), by choice: `sites.yaml` alone then decides
+  what ddm fetches, and a new private site needs no change to the token. Narrowing it to the private site repos
+  was weighed and declined; it would limit what a compromised site build could read, at the cost of a token edit
+  for every new private site.
 
 **Rejected for now:** dropping `NIX_CONFIG` from the build steps only. The credential file is still readable by the
 same user, so it would hide the token without protecting it. Real separation (builds as a user that can't read

@@ -14,12 +14,6 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
-- [ ] **Narrow the GitHub token to the private site repos** (added 2026-10-25, D57). Site builds can read it, so it
-  should reach nothing else. On GitHub: Settings → Developer settings → Fine-grained tokens → the ddm token →
-  Repository access: **Only select repositories**, and pick `forest`, `demos`, `INDIMO` and `membranes`
-  (Contents: read-only, nothing else). Editing the token keeps its value, so `secrets/github-token.age` stays as
-  it is; if you generate a new one instead, re-encrypt it as in the runbook. Then `systemctl start ddm-deploy` on
-  the droplet and check every site still builds (`journalctl -u ddm-deploy`).
 
 - [ ] **Redeploy the server, then check the devlog** (added 2026-10-22, reworded the same day). The live
   `devlog.cathe.dev` still serves a build from before the AI-generated marker and the private-by-default change: it
