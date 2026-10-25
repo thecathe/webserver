@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Sonnet 5.5
+  model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-22
+  edited: 2026-10-25
 ---
 
 # Open questions
@@ -93,6 +93,11 @@ move it to the [decision record](record.md) and note it in the devlog.
 - **Stake:** must be in place before going live (D49).
 
 ## ddm runtime details
+
+- **Builds separated from the GitHub token (D57).** Builds run as `ddm`, which can read the token. Fetching as
+  `ddm` and building as a second user (no access to `/run/ddm-*`, `NIX_CONFIG` unset) would keep a compromised
+  site repo from reading it. The lean: do it with the daemon (M6), when ddm runs builds itself rather than through
+  one shell script, and only if a site repo that isn't yours is ever built.
 
 - **Poll interval:** 10m? Per-site overrides?
 - **Notifications:** these replace the dead `email_notifications` field. Email, ntfy, or a status page? The lean is

@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Sonnet 5.5
+  model: Opus 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-22
+  edited: 2026-10-25
 ---
 
 # Architecture
@@ -168,7 +168,7 @@ config in a subdirectory. If they start to drift, the scripts in `thecathe/vscod
 ## Secrets
 
 All held once, in this repo, encrypted with agenix (or sops-nix; still open):
-- a fine-grained GitHub token (Contents: read-only, all your repos);
+- a fine-grained GitHub token (Contents: read-only, only the private site repos, D57);
 - the Cloudflare DNS token;
 - the Tailscale auth key.
 
