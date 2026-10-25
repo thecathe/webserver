@@ -168,7 +168,7 @@ config in a subdirectory. If they start to drift, the scripts in `thecathe/vscod
 ## Secrets
 
 All held once, in this repo, encrypted with agenix (or sops-nix; still open):
-- a fine-grained GitHub token (Contents: read-only, only the private site repos, D57);
+- a fine-grained GitHub token (Contents: read-only, all your repos; D57);
 - the Cloudflare DNS token;
 - the Tailscale auth key.
 
