@@ -186,7 +186,7 @@ sites:
     search: entry
     mounts:
       - { host: forest.cathe.dev, entry: /index/ }
-      - { host: cathe.dev, entry: /@cathe/ }
+      - { host: cathe.dev, entry: /index/ }
       - { host: jpears.me, entry: /@jpears/ }
       - { host: cv.jpears.me, entry: /cv/ }
       - { host: projects.cathe.dev, entry: /taxon-project/ }
