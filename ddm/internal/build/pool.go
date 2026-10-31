@@ -74,7 +74,7 @@ func runPool(ctx context.Context, r Request, work, wf string) (*Result, error) {
 			continue
 		}
 		checkout := filepath.Join(work, "src", name)
-		if err := gitsync.Sync(url, branch, commit, checkout); err != nil {
+		if err := gitsync.Sync(url, branch, commit, checkout, site.SkipSubmodules...); err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
 		opams, _ := filepath.Glob(filepath.Join(checkout, "*.opam"))

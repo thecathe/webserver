@@ -145,6 +145,11 @@ type Site struct {
 	// generated sites such as the docs directory.
 	Repo   string `yaml:"repo"`
 	Branch string `yaml:"branch"`
+	// SkipSubmodules names (as .gitmodules does) submodules of the repo that are
+	// not fetched when it is checked out: a build that does not use one is not
+	// made to depend on it. Set on the server's checkout only, so a person's own
+	// `git submodule update` still gets it.
+	SkipSubmodules []string `yaml:"skip_submodules"`
 	// Workflow and Params are shorthand for a single "public" view.
 	Workflow string            `yaml:"workflow"`
 	Params   map[string]string `yaml:"params"`

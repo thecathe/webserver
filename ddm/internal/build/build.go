@@ -77,7 +77,7 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 		}
 		fmt.Fprintf(r.Log, "==> %s %s is at %s\n", url, branch, commit)
 		if !r.DryRun {
-			if err := gitsync.Sync(url, branch, commit, checkout); err != nil {
+			if err := gitsync.Sync(url, branch, commit, checkout, site.SkipSubmodules...); err != nil {
 				return nil, err
 			}
 		}

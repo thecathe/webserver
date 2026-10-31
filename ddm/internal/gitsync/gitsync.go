@@ -42,7 +42,12 @@ func RemoteHead(url, branch string) (string, error) {
 // Sync makes dir an exact, clean checkout of sha from url's branch. It clones
 // on first use, otherwise fetches. Untracked and ignored files are removed,
 // so leftovers from a previous build can't leak into the next one.
-func Sync(url, branch, sha, dir string) error {
+//
+// The submodules named in skip are registered but not cloned or checked out
+// (their directory stays empty), by `-c submodule.<name>.update=none` on this
+// one command: the repo's own .gitmodules is not changed, so a person who clones
+// it still gets them with `git submodule update --init`.
+func Sync(url, branch, sha, dir string, skip ...string) error {
 	if _, err := os.Stat(filepath.Join(dir, ".git")); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
 			return err
@@ -63,7 +68,12 @@ func Sync(url, branch, sha, dir string) error {
 	if _, err := git(dir, "checkout", "--force", "--detach", sha); err != nil {
 		return err
 	}
-	if _, err := git(dir, "submodule", "update", "--init", "--recursive", "--force"); err != nil {
+	update := []string{}
+	for _, name := range skip {
+		update = append(update, "-c", "submodule."+name+".update=none")
+	}
+	update = append(update, "submodule", "update", "--init", "--recursive", "--force")
+	if _, err := git(dir, update...); err != nil {
 		return err
 	}
 	_, err := git(dir, "clean", "-ffdx")

@@ -19,6 +19,9 @@ var hostRE = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
 // repoRE accepts "owner/name" (GitHub shorthand).
 var repoRE = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
 
+// submoduleRE is what a submodule's name may be here: it is put in a git config key.
+var submoduleRE = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_./-]*$`)
+
 // problems collects every validation error so the user sees them all at once.
 type problems []error
 
@@ -157,6 +160,11 @@ func (s *Spec) validateSites(p *problems) {
 		}
 		if site.Repo != "" && !repoRE.MatchString(site.Repo) && !strings.Contains(site.Repo, "://") && !strings.HasPrefix(site.Repo, "git@") && !filepath.IsAbs(site.Repo) {
 			p.add("%s: repo %q must be owner/name, a clone URL or an absolute path", where, site.Repo)
+		}
+		for _, sub := range site.SkipSubmodules {
+			if !submoduleRE.MatchString(sub) {
+				p.add("%s: skip_submodules: %q is not a submodule name (as in .gitmodules)", where, sub)
+			}
 		}
 		if site.Workflow != "" {
 			p.add("%s: use either workflow (one public view) or views, not both", where)

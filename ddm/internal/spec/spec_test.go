@@ -165,6 +165,7 @@ func TestInvalid(t *testing.T) {
 		{"root_only under a path", "{ host: jpears.me, entry: /@jpears/ }", "{ host: jpears.me, path: forest, entry: /@jpears/ }", "root_only"},
 		{"no mounts", "    mounts: [ { host: docs.cathe.dev, path: guide/ } ]\n", "", "no mounts"},
 		{"bad repo", "repo: thecathe/forest", "repo: forest", `repo "forest" must be owner/name`},
+		{"bad skip_submodules", "repo: thecathe/forest", "repo: thecathe/forest\n    skip_submodules: [\"a b\"]", `skip_submodules: "a b" is not a submodule name`},
 		{"use unknown", "- builtin: mkdocs-config", "- use: nope", `uses unknown workflow "nope"`},
 		{"bad poll", "domains:", "system: { poll: soon }\ndomains:", "invalid duration"},
 		{"nav to nowhere", "taxa: [docs, notes]", "taxa: [docs, notes]\nnav: [ { title: x, link: \"mount://nope.cathe.dev/\" } ]", "nothing is mounted on nope.cathe.dev"},

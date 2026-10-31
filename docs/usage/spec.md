@@ -132,6 +132,7 @@ letters, digits and `-`, because it also becomes a directory name.
 |---|---|---|
 | `repo` | none | `owner/name` on GitHub, a full clone URL, or an absolute path, cloned with the server's single read-only token. Omit it for generated sites (e.g. `docs`). |
 | `branch` | `main` | |
+| `skip_submodules` | none | Names (as in `.gitmodules`) of submodules of the repo that are **not** fetched when ddm checks it out: for a build that does not use one, so it never waits on it or fails for it (a pointer to a repo not yet pushed, a private repo of their own). Only ddm's checkout is affected: the repo's `.gitmodules` is not changed, so a person's own `git submodule update --init` still gets it. |
 | `workflow` + `params` | | Shorthand for a single `public` view. Use either this or `views`, not both. |
 | `views.<view>` | | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each needs a `workflow`, and may have `params`. |
 | `mounts[]` | | Where outputs are served. At least one is required, except for a site built only by a pooled workflow: the pool's other mounts serve it. See below. |

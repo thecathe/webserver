@@ -155,6 +155,18 @@ workflows:
       - run: python3 -P {{system}}/scripts/devlog-build.py check . {{out}}
         unless: { view: private }
 
+  # SPIKE (not live). The files a forest's deck-pdf kept (thecathe/forest-artifacts), a private repo. The public view
+  # shows a file only if the repo's publish.toml lists it AND the file is eligible (built for the public view, clean, not the
+  # speaker's notes, its manifest's sha256 matches); the private view shows everything, at the same paths. See
+  # scripts/artifacts-build.py. Needs only python3 (tomllib), which the mkdocs shell has.
+  artifacts:
+    env: { flake: "{{system}}#mkdocs" }
+    steps:
+      - run: python3 -P {{system}}/scripts/artifacts-build.py build {{view}} . _site
+      - run: python3 -P {{system}}/scripts/artifacts-build.py check . _site
+        unless: { view: private }
+      - output: _site
+
   # A repo that already is a static site.
   static:
     params: { input_dir: ./ }
@@ -171,6 +183,9 @@ workflows:
 sites:
   forest:
     repo: thecathe/forest
+    # The forest builds without artifacts/ (its kept PDFs are their own site below): not fetched here, so a forest build
+    # never waits on, or fails for, a repo it does not use. A person's own checkout still gets it.
+    skip_submodules: [artifacts]
     taxa: [personal, notes]
     description: Notes, profile, CV, posts and papers
     # Public uses forest-public.toml: people's redirects are followed, and
@@ -223,6 +238,21 @@ sites:
     mounts:
       - { host: devlog.cathe.dev }
       - { host: the.cathe.dev, path: devlog, view: private, access: private }
+
+  # SPIKE (not live). The forest's kept PDFs. Served as a path on the hosts the forest already has, so no new DNS name:
+  # site://artifacts/<deck>/public/<file>.pdf is forest.cathe.dev/artifacts/... in a public page and the.cathe.dev/artifacts/...
+  # in a private one. Not in the directory (indexed: false): a file here is found from a link, not by browsing the site list.
+  artifacts:
+    repo: thecathe/forest-artifacts
+    taxa: [resource]
+    description: PDFs of talks, as given
+    indexed: false
+    views:
+      public:  { workflow: artifacts }
+      private: { workflow: artifacts }
+    mounts:
+      - { host: forest.cathe.dev, path: artifacts }
+      - { host: the.cathe.dev, path: artifacts, view: private, access: private }
 
   # The documentation sites (taxon docs).
   docs:
