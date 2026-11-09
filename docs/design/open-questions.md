@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
+  model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-25
+  edited: 2026-11-09
 ---
 
 # Open questions
@@ -190,6 +190,11 @@ Still open:
 - **The forest.** Its pages need `\meta{generated}{…}` (model, effort, dates) and the theme XSLT to emit
   `<meta name="ddm:generated" content="Claude" data-model=… data-effort=… data-date=… data-edited=…>`. Until then a
   forest page can be marked only by the site-level block, which would mark every page.
+- **A repo's own `mkdocs.yml`.** `mkdocs-config` leaves an existing config alone and so doesn't add the hook, whose
+  path is inside this repo. A site that owns its config (`membranes-curricula`, which needs `exclude_docs` to keep
+  its PDFs out) therefore can't pass pages' `generated` front matter on, and is marked only by the site-level block,
+  with one date range for all its pages. One way out: `mkdocs-config` appends the hook to an existing config's
+  `hooks`.
 - **Readers without JavaScript** see no header, only the meta tags. If that matters, ddm could add a static line
   at publish for site-wide marks; page-level ones would need the generators.
 - **Light/dark follows the toolbar toggle** only once D43's `data-theme` exists; until then it follows the system

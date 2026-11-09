@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
+  model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-25
+  edited: 2026-11-09
 ---
 
 # Your to-dos
@@ -14,6 +14,12 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
+- [ ] **Publish the membranes curricula** (added 2026-11-09). `the.cathe.dev/membranes/` is built and checked locally
+  (the three pages and an index, no PDFs, under the yellow header) but not live. Once the `site/membranes-curricula`
+  branch here and `docs/publish-curricula` in `thecathe/membranes` (which ddm builds from its `main`) are merged:
+  push `thecathe/membranes` first, then this repo, then `ssh root@<droplet IP> systemctl start ddm-rebuild` (a new
+  mount changes the Caddyfile, which is built with the system). From the tailnet, check that the page lists the three
+  pages and that `the.cathe.dev/sites/` shows `membranes-curricula` as private.
 
 - [ ] **Redeploy the server, then check the devlog** (added 2026-10-22, reworded the same day). The live
   `devlog.cathe.dev` still serves a build from before the AI-generated marker and the private-by-default change: it
