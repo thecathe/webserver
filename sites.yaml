@@ -294,3 +294,23 @@ sites:
     taxa: [notes]
     description: INDIMO project notes
     mounts: [ { host: indimo-notes.cathe.dev } ]
+
+  # The membranes curricula and orientation prompts (docs/ of the private
+  # thecathe/membranes): plain markdown in mkdocs, served only on the tailnet,
+  # so it has a private view and no public one. The repo owns its mkdocs.yml,
+  # which leaves the PDFs in docs/ out (ddm writes a config only when there is
+  # none). That also means no `generated` front matter: the hook that reads it
+  # is a path inside this repo, which another repo's config can't name. So the
+  # site-level mark covers every page, with dates spanning them: the curricula
+  # are from 2026-07-20 (the files' date, the earliest known), the index page
+  # from 2026-11-09. Written with Claude; the model is not recorded.
+  membranes-curricula:
+    repo: thecathe/membranes
+    access: private
+    taxa: [notes, project]
+    description: The membranes curricula and orientation prompts
+    generated: { by: Claude, date: "2026-07-20", edited: "2026-11-09" }
+    views:
+      private: { workflow: mkdocs }
+    mounts:
+      - { host: the.cathe.dev, path: membranes, view: private }
