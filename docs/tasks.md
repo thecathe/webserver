@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-11-09
+  edited: 2026-11-12
 ---
 
 # Your to-dos
@@ -13,6 +13,23 @@ Things only you can do: outside this repo, in accounts Claude doesn't touch. Tic
 moving it to **Done** with a date. Claude adds to this page whenever work leaves something for you.
 
 ## Open
+
+- [ ] **Finish removing `ocaml-demos`' legacy deploy Action** (added 2026-11-12). Its push on 2026-11-12 failed at
+  the `Create subdomain directory on server` step (`unable to authenticate`): the workflow still logged in to the old
+  droplet with the `WEBSERVER_*` secrets (set 2026-05-12), and the NixOS droplet lets only your own key in, as root.
+  It had nothing to do with the opam changes in that push. ddm already builds this repo (it is the `ocaml` submodule
+  of `demos`) and serves it at `demos.cathe.dev`, so the Action is redundant. Claude removed the workflow and merged
+  it locally (`5b8a7e2`, in `~/Documents/git/thecathe/demos/ocaml`), but the session's permission checks blocked both
+  the push and the secret deletion, so they are left to you:
+  1. `git -C ~/Documents/git/thecathe/demos/ocaml push origin main`. Do this first: the pushed commit has no workflow,
+     so no run starts.
+  2. Delete the secrets `WEBSERVER_IP`, `WEBSERVER_USER`, `WEBSERVER_SSH_PRIVATE_KEY` and `WEBSERVER_SSH_PASSPHRASE`,
+     and the variable `SITE`, from `thecathe/ocaml-demos` (Settings, Secrets and variables, Actions; or
+     `gh secret delete <name> -R thecathe/ocaml-demos` and `gh variable delete SITE -R thecathe/ocaml-demos`).
+  3. The live `demos.cathe.dev` was last built on 2026-11-09; `demos` already points at the new commit (`7e3a654`),
+     so `ssh root@<droplet IP> systemctl start ddm-force@demos` publishes it. Afterwards `demos` shows its `ocaml`
+     submodule as moved by the merge commit; bumping the pointer is optional, since the removed file is not part of
+     the built site.
 
 - [ ] **Publish the membranes curricula** (added 2026-11-09). `the.cathe.dev/membranes/` is built and checked locally
   (the three pages and an index, no PDFs, under the yellow header) but not live. Once the `site/membranes-curricula`
@@ -80,7 +97,9 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [x] The May 2026 Cloudflare user token (`cfut_…`, from the old Caddyfile) deleted from My Profile; nothing used
   it any more. The server uses only the account token in `secrets/cloudflare.age` (you, 2026-10-18).
 - [x] Old deploy secrets: none left in this repo or `demos`; `cloakaml`'s four and its `SITE` variable deleted,
-  and its docs Action removed from `docs` and `main` (Claude, at your request, 2026-10-18).
+  and its docs Action removed from `docs` and `main` (Claude, at your request, 2026-10-18). This missed
+  `ocaml-demos`, the separate repo `demos` mounts as its `ocaml` submodule: its Action and secrets were still there
+  (found 2026-11-12; see Open).
 - [x] The leaked Cloudflare token scrubbed from this repo's history, force-pushed, and every quoted commit hash
   updated (Claude, at your request, 2026-10-18).
 - [x] DNS: `test.the.cathe.dev` → the tailnet address, and a proxied `*.jpears.me` wildcard, which covers
