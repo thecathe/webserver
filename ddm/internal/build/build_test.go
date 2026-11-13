@@ -52,6 +52,14 @@ sites:
 	}
 
 	work := t.TempDir()
+	// An earlier build of this view is gone afterwards; another view's stays.
+	stale := filepath.Join(work, "out", "s", "public", "0ldc0mm1t")
+	otherView := filepath.Join(work, "out", "s", "private", "0ldc0mm1t")
+	for _, d := range []string{stale, otherView} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
 	var log bytes.Buffer
 	res, err := Run(context.Background(), Request{Spec: s, Site: "s", View: "public", System: t.TempDir(), Work: work, Log: &log})
 	if err != nil {
@@ -59,6 +67,12 @@ sites:
 	}
 	if res.Commit != sha || res.Dir != filepath.Join(work, "out", "s", "public", sha) {
 		t.Fatalf("result %+v, want commit %s", res, sha)
+	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Errorf("the earlier build of this view was kept (stat: %v)", err)
+	}
+	if _, err := os.Stat(otherView); err != nil {
+		t.Errorf("another view's build was removed: %v", err)
 	}
 	if b, err := os.ReadFile(filepath.Join(res.Dir, "sub", "page.txt")); err != nil || string(b) != "hello" {
 		t.Fatalf("copied page: %q, %v", b, err)
@@ -111,6 +125,10 @@ sites:
 		t.Fatal(err)
 	}
 	work := t.TempDir()
+	stale := filepath.Join(work, "out", "@docs", "public", "pool-0ld")
+	if err := os.MkdirAll(stale, 0o755); err != nil {
+		t.Fatal(err)
+	}
 	var log bytes.Buffer
 	res, err := Run(context.Background(), Request{Spec: s, Site: "b", View: "public", System: t.TempDir(), Work: work, Log: &log})
 	if err != nil {
@@ -118,6 +136,9 @@ sites:
 	}
 	if res.Served != "@docs" || !strings.HasPrefix(res.Commit, "pool-") {
 		t.Errorf("result: %+v", res)
+	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Errorf("an earlier pool build was kept (stat: %v)", err)
 	}
 	listing, _ := os.ReadFile(filepath.Join(res.Dir, "listing.txt"))
 	for _, want := range []string{"a.opam", "b.ml", "(lang dune"} {
@@ -135,5 +156,66 @@ sites:
 		t.Errorf("result not writable: %v", err)
 	} else {
 		f.Close()
+	}
+}
+
+// keep leaves exactly the build it just made in its view: the others are
+// removed, another view and anything that is not a build are not, and making
+// the same commit again replaces it.
+func TestKeepRemovesOlderBuilds(t *testing.T) {
+	work, built := t.TempDir(), t.TempDir()
+	write := func(path, body string) {
+		t.Helper()
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	root := filepath.Join(work, "out", "s", "public")
+	write(filepath.Join(root, "old1", "page.txt"), "old")
+	write(filepath.Join(root, "old2", "page.txt"), "old")
+	write(filepath.Join(root, ".keepme", "page.txt"), "hidden")
+	write(filepath.Join(root, "notes.txt"), "a file, not a build")
+	write(filepath.Join(work, "out", "s", "private", "old1", "page.txt"), "other view")
+	write(filepath.Join(work, "out", "other", "public", "old1", "page.txt"), "other site")
+	write(filepath.Join(built, "page.txt"), "new")
+
+	var log bytes.Buffer
+	dest, err := keep(built, work, "s", "public", "new", &log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Join(root, "new"); dest != want {
+		t.Fatalf("dest %s, want %s", dest, want)
+	}
+	for _, gone := range []string{"old1", "old2"} {
+		if _, err := os.Stat(filepath.Join(root, gone)); !os.IsNotExist(err) {
+			t.Errorf("%s was kept (stat: %v)", gone, err)
+		}
+	}
+	for _, left := range []string{
+		filepath.Join(root, "new", "page.txt"),
+		filepath.Join(root, ".keepme", "page.txt"),
+		filepath.Join(root, "notes.txt"),
+		filepath.Join(work, "out", "s", "private", "old1", "page.txt"),
+		filepath.Join(work, "out", "other", "public", "old1", "page.txt"),
+	} {
+		if _, err := os.Stat(left); err != nil {
+			t.Errorf("%s was removed: %v", left, err)
+		}
+	}
+	if log.Len() != 0 {
+		t.Errorf("unexpected log output: %s", log.String())
+	}
+
+	// The same commit again: replaced, not duplicated or lost.
+	write(filepath.Join(built, "page.txt"), "newer")
+	if _, err := keep(built, work, "s", "public", "new", &log); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := os.ReadFile(filepath.Join(root, "new", "page.txt")); err != nil || string(b) != "newer" {
+		t.Errorf("rebuilt commit: %q, %v", b, err)
 	}
 }

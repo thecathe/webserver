@@ -1,6 +1,7 @@
 // Package build runs one view of one site end to end: find the commit, check
 // it out, resolve and execute the workflow, and keep the result under
 // <work>/out/<site>/<view>/<commit>/. Publishing that directory is M3's job.
+// Only the newest build of a view is kept there (see keep).
 package build
 
 import (
@@ -9,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"ddm/internal/fsutil"
 	"ddm/internal/gitsync"
@@ -104,7 +106,7 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 		return nil, err
 	}
 
-	dest, err := keep(built, work, r.Site, r.View, commit)
+	dest, err := keep(built, work, r.Site, r.View, commit, r.Log)
 	if err != nil {
 		return nil, err
 	}
@@ -119,16 +121,53 @@ func Run(ctx context.Context, r Request) (*Result, error) {
 	return &Result{Commit: commit, Dir: dest, Served: r.Site, Members: []Member{m}}, nil
 }
 
-// keep copies a build result to <work>/out/<served>/<view>/<commit>.
-func keep(built, work, served, view, commit string) (string, error) {
-	dest := filepath.Join(work, "out", served, view, commit)
+// keep copies a build result to <work>/out/<served>/<view>/<commit> and then
+// removes every other build of that view.
+//
+// out is the hand-off from a build to its publish. Publishing copies the
+// build to the web root, which keeps the history (publish.DefaultKeep), and
+// nothing reads an older build in out again: the build state records
+// commits, not paths. Keeping them all only filled the disk (a forest build is
+// about 250 MB; the droplet's 24 GB filled up on 2026-11-13 with 29 of them).
+//
+// Builds of one site and view do not overlap, since they share a scratch
+// directory, so removing the others cannot pull a build from under a publish.
+func keep(built, work, served, view, commit string, log io.Writer) (string, error) {
+	root := filepath.Join(work, "out", served, view)
+	dest := filepath.Join(root, commit)
 	if err := os.RemoveAll(dest); err != nil {
 		return "", err
 	}
 	if err := fsutil.CopyTree(built, dest); err != nil {
 		return "", fmt.Errorf("copying result: %w", err)
 	}
+	// A failure here must not fail a finished build, but it must be seen.
+	if err := pruneBuilds(root, commit); err != nil {
+		fmt.Fprintf(log, "    warning: removing older builds: %v\n", err)
+	}
 	return dest, nil
+}
+
+// pruneBuilds removes every build under root except live. Names starting
+// with a dot, and anything that is not a directory, are left alone.
+func pruneBuilds(root, live string) error {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return err
+	}
+	var errs []string
+	for _, e := range entries {
+		if !e.IsDir() || e.Name() == live || strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(root, e.Name())); err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
+	return nil
 }
 
 // Head returns what building r now would build, without checking anything
