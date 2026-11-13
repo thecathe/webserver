@@ -649,6 +649,22 @@ the deploy it restarts. The bug had a silent face too: an example whose target *
   like a tag holding a link; and a script that hides its own closing tag in a `<!-- … -->`. `injectHead`'s "first
   `</head>`" heuristic is a related weakness, not touched.
 
+### D60. The journal is capped at 200 MB (2026-11-13)
+After the disk filled (D58), a read-only look at where the space goes found the journal at 809 MB after 23 days (about
+35 MB a day on disk), with no limit set, so systemd's default applied: 10% of the disk, 2.4 GB. Of the 55 MB of log
+text written in a week, 46 MB was the firewall's refused-connection lines (about 38,500 a day, mostly scanners on
+port 443 and 23); `ddm`'s own output was about 4 MB.
+- **Decision:** `services.journald.extraConfig = "SystemMaxUse=200M"` in the droplet's config. It keeps about six days
+  of journal and frees about 600 MB. A switch restarts journald when `journald.conf` changes, so it takes effect at the
+  next `ddm-rebuild`; `journalctl --vacuum-size=200M` trims at once if it has not.
+- **Why this is safe:** `port-watch` (D55) reads the refused connections once a day, at 00:10, for the day before, and
+  keeps its own text reports for 90 days; the last error of every build is in `state.json`. What is lost is journal
+  history older than about six days. The devlog failed for 16 days before anyone saw it, and by then its first failure
+  would have aged out of the journal; what that gap needs is a warning (open questions), not a longer journal.
+- **Rejected:** turning off refused-connection logging (it is port-watch's data, and the cap already bounds the cost);
+  400 MB (about 11 days, for history nothing reads).
+- **Checked:** the droplet VM test asserts the setting reaches `journald.conf`.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16; how pages and sites are shown is D56.* Every page Claude generates carries front matter:

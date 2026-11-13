@@ -157,7 +157,7 @@ measured after that cleanup (16 GB used):
 | `/var/swapfile` | 4 GB | enlarged after the pool ran out of memory on 2026-10-18; keep |
 | `/var/lib/ddm/work/cache` | 1.3 GB | the OCaml pool's opam switch and root; keep, rebuilding it takes 12 to 30 minutes |
 | `/var/www` | 1 GB | the last three publishes of each view |
-| journal | 0.8 GB | not limited yet |
+| journal | 0.8 GB, then at most 0.2 GB | capped at 200 MB since D60 (about six days; most of it is the firewall's refused connections, which `port-watch` summarises) |
 | `/var/lib/ddm/work/{out,src,scratch}` | 0.7 GB | the newest build of each view (D58), the checkouts, the last build's scratch |
 
 ```sh

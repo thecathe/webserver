@@ -127,6 +127,10 @@
         droplet.succeed("ls /var/lib/port-watch/*.txt")
         droplet.succeed("port-watch > /tmp/pw && grep -q 'port-watch: ' /tmp/pw")
 
+    with subtest("the journal is capped, so logging cannot grow without bound"):
+        droplet.succeed("systemd-analyze cat-config systemd/journald.conf | grep -qx 'SystemMaxUse=200M'")
+        droplet.succeed("journalctl --disk-usage")
+
     with subtest("a deploy unit builds and publishes a site, and records it"):
         # docs has no repo, so it builds offline. It replaces the fake publish above.
         droplet.succeed("systemctl start ddm-force@docs")
