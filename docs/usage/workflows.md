@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
-  effort: medium
+  model: Sonnet 5.5
+  effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-18
+  edited: 2026-11-13
 ---
 
 # Workflows
@@ -27,8 +27,9 @@ nix develop -c bin/ddm build ddm --src .              # build from a local repo'
 nix develop -c bin/ddm build indimo --set theme=readthedocs   # override a param
 ```
 
-The result lands in `.ddm/out/<site>/<view>/<commit>/`, which is gitignored. Every step's output is shown as it
-runs, and the command fails on the first failing step.
+The result lands in `.ddm/out/<site>/<view>/<commit>/`, which is gitignored. Only the newest build of a view is kept
+there: building again removes the older ones (D58). Every step's output is shown as it runs, and the command fails on
+the first failing step.
 
 ## Step kinds
 

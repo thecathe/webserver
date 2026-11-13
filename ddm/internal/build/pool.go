@@ -125,7 +125,7 @@ func runPool(ctx context.Context, r Request, work, wf string) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	dest, err := keep(result, work, pool, r.View, id)
+	dest, err := keep(result, work, pool, r.View, id, r.Log)
 	if err != nil {
 		return nil, err
 	}
