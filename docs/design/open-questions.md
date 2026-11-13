@@ -123,8 +123,12 @@ move it to the [decision record](record.md) and note it in the devlog.
   so the GC removes only superseded versions. The journal was unlimited (0.8 GB); it is capped
   ([D60](record.md#d60-the-journal-is-capped-at-200-mb-2026-11-13)), and the private forest keeps one publish (D61).
   Still open: nothing warns before the disk fills (see the email item above); a bigger disk, if 24 GB stays tight;
-  and a 703 MB `chromium` in the store that is not rooted and that nobody identified (a workflow dependency, or a
-  leftover).
+  and the 737 MB Chromium (703 MiB in the store listing) in the forest's toolchain. It is `deck-pdf`'s browser:
+  `vscode-forester` puts `deck-pdf` in the forest's own dev shell, which is the `{{repo}}` env the production build
+  runs in, though the build never runs it. It is therefore not removable (the next forest build would fetch it again), and
+  D62 roots it with the rest. To get it back, the forest would need a dev shell for the build without `deck-pdf`, and
+  `sites.yaml` would point the forest workflow's env at that; that is a change in the forest and `vscode-forester`
+  repos, and about 14% of the forest's 5 GB toolchain.
 - **Rebuild hygiene:** cleaning stale `/var/www` roots left by sites removed from the spec, and their cache directories,
   whose `gcroots/` (D62) would otherwise keep a removed site's toolchain alive.
 - **The OCaml pool holds up everything else** (seen 2026-10-18). Any change to `sites.yaml` or to ddm rebuilds the
