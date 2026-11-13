@@ -87,8 +87,9 @@ tag to the pages a site's block covers; to see it, use `ddm preview` (`mkdocs se
 ```
 
 `current` is swapped with an atomic rename, so a reader never sees a half-copied site. The newest three publishes
-are kept. Rolling back by hand means pointing `current` at an older directory (`ln -sfn <dir> current.tmp && mv -T
-current.tmp current`); `ddm rollback` will do this (M6).
+are kept, or the view's `keep` (the private forest keeps only the live one, D61: to undo a bad private forest publish,
+revert the commit in the forest's repo and let the next poll rebuild it). Rolling back by hand means pointing `current`
+at an older directory (`ln -sfn <dir> current.tmp && mv -T current.tmp current`); `ddm rollback` will do this (M6).
 
 `--target prod` writes to the spec's `paths.www` (`/var/www`), with `https://` links, and fails on any unresolved
 `site://` link. On your machine `/var/www` won't be writable; that target is for the server.
@@ -156,7 +157,7 @@ measured after that cleanup (16 GB used):
 | `/nix/store` | 7.5 GB | the system, and the toolchains the workflows build with (the forest's alone is about 5 GB); the Monday `nix-gc` removes the unused ones and the next deploy rebuilds them |
 | `/var/swapfile` | 4 GB | enlarged after the pool ran out of memory on 2026-10-18; keep |
 | `/var/lib/ddm/work/cache` | 1.3 GB | the OCaml pool's opam switch and root; keep, rebuilding it takes 12 to 30 minutes |
-| `/var/www` | 1 GB | the last three publishes of each view |
+| `/var/www` | 2.1 GB (about 0.9 GB with D61) | the last three publishes of each view. On 2026-11-13, 1.85 GB of it was the private forest (3 × 616 MB); it keeps one now (D61) |
 | journal | 0.8 GB, then at most 0.2 GB | capped at 200 MB since D60 (about six days; most of it is the firewall's refused connections, which `port-watch` summarises) |
 | `/var/lib/ddm/work/{out,src,scratch}` | 0.7 GB | the newest build of each view (D58), the checkouts, the last build's scratch |
 

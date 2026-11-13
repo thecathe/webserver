@@ -109,8 +109,13 @@ move it to the [decision record](record.md) and note it in the devlog.
     `OnFailure=` and by ddm itself. The lean is to add it in M6, with one digest a day rather than a mail per event.
 - **Health check:** for rollback, what does "the new generation is healthy" mean? `caddy validate`, ddm answering on
   its socket, and a fetch of each mount's entry?
-- **Retention:** builds in `work/out` are settled (D58: the newest only). Publishes stay at three per view
-  (`/var/www` was about 1 GB on 2026-11-13); revisit if that grows.
+- **Retention:** builds in `work/out` are settled (D58: the newest only). Publishes stay at three per view, except
+  where a view says `keep` (the private forest keeps one, D61). `/var/www` was 2.1 GB on 2026-11-13, nearly all of it
+  that view. Still open: record each build's site commit and stamp in `state.json` (it keeps only the latest now), so
+  that a rollback of any view can be a rebuild of a past commit, which `ddm rollback` (M6) could use instead of kept
+  copies. Rebuilds are seconds for most views, about 3 minutes for the forest with its toolchain present, and 12 to 30
+  minutes for the OCaml pool from scratch; a build also depends on the spec, the tools and ddm (the stamp), which are
+  all one commit of this repo, and on whatever the network gives (opam).
 - **Disk headroom and the weekly GC** (seen 2026-11-13). The toolchains workflows build with are not GC roots: the
   forest's `forester` and OCaml stack is about 5 GB in the Nix store, built from source. The Monday `nix-gc` deletes
   it, and the next `ddm-deploy` rebuilds it, so a GC frees about 5 GB that the next deploy takes back. On 2026-11-13,

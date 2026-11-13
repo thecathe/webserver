@@ -665,6 +665,27 @@ port 443 and 23); `ddm`'s own output was about 4 MB.
   400 MB (about 11 days, for history nothing reads).
 - **Checked:** the droplet VM test asserts the setting reaches `journald.conf`.
 
+### D61. A view can keep fewer publishes; the private forest keeps one (2026-11-13)
+`publish` kept the newest three publishes of every view (`DefaultKeep`, chosen with the first publisher and never
+argued), so that `current` could be pointed back at an older one. Nothing reads them yet (`ddm rollback` is M6, and a
+rollback today is a by-hand `ln -sfn`). On 2026-11-13 `/var/www` was 2.1 GB: 1.85 GB was `private/forest` (three
+publishes of 616 MB), and all other views together were 0.26 GB. Pruning happens after the swap, so a forest publish
+briefly held four (2.4 GB).
+- **Decision:** a view may say `keep: N` (default 3; validated as 1 or more), and the private forest says `keep: 1`.
+  Steady state is one publish (616 MB), and the peak during a publish is two (1.2 GB): a saving of about 1.2 GB.
+- **Why that view, and why it is safe:** the public forest is its own view and keeps three (13 MB), so what must stay
+  up publicly keeps its history. The private view is what the owner alone reads. A build that fails, or fails the
+  strict link check, never replaces `current` (as the devlog showed), so `keep` matters only for a publish that built
+  fine but is wrong, and then the answer is to revert the commit in the forest repo and let the poll rebuild it. That is
+  about 3 minutes with the toolchain present and about 40 without it, which is why the toolchains being collected every
+  Monday (open questions) counts against this.
+- **Rejected:** replacing kept copies with a record of the commits for every view (a rollback becomes a rebuild: seconds
+  for most views, about 3 minutes for the forest, 12 to 30 for the OCaml pool, and a build also depends on the spec,
+  the tools, ddm and the network); that stays an open question, worth doing with `ddm rollback`. Lowering the default
+  to two (it saves 0.1 GB; only the forest matters). A size-based limit (more machinery for one view).
+- **Checked:** `keep: 1` on a view leaves one publish and `current` after three publishes, through `ddm publish`; the
+  spec rejects a negative `keep`.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16; how pages and sites are shown is D56.* Every page Claude generates carries front matter:
