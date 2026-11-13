@@ -14,6 +14,16 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
+- [ ] **Redeploy for the disk tuning, before Monday 00:00 UTC (2026-11-16)** (added 2026-11-13). Three changes are on
+  `main` and not live: the journal capped at 200 MB (D60), the private forest keeping one publish (D61), and the
+  workflow toolchains kept alive by GC roots (D62). Push this repo, then `ssh root@<droplet IP> systemctl start
+  ddm-rebuild`. **The deadline matters:** the toolchains are only rooted once the first deploy after the rebuild has run
+  each workflow (a ddm change rebuilds every site, so it does), and a Monday GC before that collects them once more
+  (the 40-minute rebuild again). Then check: `journalctl --disk-usage` is 200 MB or less (if not,
+  `journalctl --vacuum-size=200M`); `ls /var/www/private/forest` shows one build and `current`; `nix-store --gc
+  --print-roots | grep gcroots` lists the toolchains (`system-mkdocs`, `system-xslt`, ...); `df -h /` has more than the
+  4.5 GB free of 2026-11-13 (about 1.8 GB should come back). On Tuesday, after the GC: the same roots are still listed
+  and the next forest build takes minutes, not 40.
 - [ ] **Redeploy the droplet: the kitty terminfo entry and the `out` pruning** (added 2026-11-13). Two changes are on
   `main` and not live. (1) `ssh root@<droplet IP>` from kitty gave `unknown terminal type` for `clear`, `tput` and
   anything built on ncurses (nano, for one), because the droplet has no `xterm-kitty` entry (nixpkgs' ncurses has
