@@ -3,6 +3,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   # Encrypted secrets are wired in once they exist (see secrets/secrets.nix):
@@ -50,6 +51,15 @@ in {
   users.users.root.openssh.authorizedKeys.keys = [
     (builtins.readFile ../../../secrets/keys/cathe.pub)
   ];
+
+  # Kitty's terminfo entry, so an ssh login from kitty finds the terminal.
+  # Kitty hands its entry to programs it starts through $TERMINFO, but ssh
+  # forwards only $TERM, and nixpkgs' ncurses has `kitty` but not `xterm-kitty`.
+  # Without it zsh cannot move the cursor or set colours and redraws over itself.
+  # root is the only login, so the system-wide copy is the one that matters (the
+  # per-user ~/.terminfo the dots hosts use would not reach it). Same line as
+  # dots' modules/nixos/terminfo.nix; this config does not import dots.
+  environment.systemPackages = [pkgs.kitty.terminfo];
 
   nix.gc = {
     automatic = true;

@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-11-12
+  edited: 2026-11-13
 ---
 
 # Your to-dos
@@ -14,6 +14,14 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 
 ## Open
 
+- [ ] **Deploy the droplet's kitty terminfo entry** (added 2026-11-13). `ssh root@<droplet IP>` from kitty gave
+  `unknown terminal type` for `clear`, `tput` and anything built on ncurses (nano, for one), because the droplet has
+  no `xterm-kitty` entry (nixpkgs' ncurses has `kitty` only) and ssh forwards `TERM` but not kitty's `TERMINFO`.
+  `nix/hosts/droplet/default.nix` now installs the entry system-wide (root is the only login); it is merged locally
+  and built, and the VM check passes, but it is not live. Push this repo, then
+  `ssh root@<droplet IP> systemctl start ddm-rebuild`. That rebuild also brings in whatever else on `main` is not
+  live yet (see the membranes and devlog items below). Check, from kitty: `ssh -t root@<droplet IP> clear` prints no
+  error and `ssh -t root@<droplet IP> tput colors` gives 256 (`-t` matters: without a pty `TERM` is empty).
 - [ ] **Finish removing `ocaml-demos`' legacy deploy Action** (added 2026-11-12). Its push on 2026-11-12 failed at
   the `Create subdomain directory on server` step (`unable to authenticate`): the workflow still logged in to the old
   droplet with the `WEBSERVER_*` secrets (set 2026-05-12), and the NixOS droplet lets only your own key in, as root.
