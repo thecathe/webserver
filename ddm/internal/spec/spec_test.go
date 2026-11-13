@@ -275,3 +275,149 @@ func TestCooldown(t *testing.T) {
 		}
 	}
 }
+
+const twinSrc = `
+domains: [cathe.dev, jpears.me]
+private_domain: the.cathe.dev
+workflows:
+  w: { steps: [ { run: x } ] }
+sites:
+  forest:
+    views: { public: { workflow: w }, private: { workflow: w } }
+    search: entry
+    mounts:
+      - { host: cathe.dev, entry: /index/ }
+      - { host: projects.cathe.dev, entry: /taxon-project/ }
+      - { host: jpears.me, entry: /@jpears/ }
+  docs:
+    workflow: w
+    assistants: true
+    mounts:
+      - { host: docs.cathe.dev }
+      - { host: docs.cathe.dev, path: guide }
+  notes:
+    access: private
+    views: { private: { workflow: w } }
+    mounts: [ { host: notes.the.cathe.dev, view: private } ]
+`
+
+func mountsOf(s *Spec, site string) map[string]Mount {
+	out := map[string]Mount{}
+	for _, m := range s.Sites[site].Mounts {
+		out[m.Host+m.Path] = m
+	}
+	return out
+}
+
+// Every public mount on the private domain's parent gets a private twin with
+// "the." inserted (D63): same path and entry, never indexed, and the site's
+// private view if it has one, else the public build.
+func TestPrivateTwins(t *testing.T) {
+	s, err := Parse([]byte(twinSrc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	forest := mountsOf(s, "forest")
+	for host, want := range map[string]Mount{
+		"the.cathe.dev/":          {View: "private", Entry: "/index/", Mirrors: "cathe.dev"},
+		"projects.the.cathe.dev/": {View: "private", Entry: "/taxon-project/", Mirrors: "projects.cathe.dev"},
+	} {
+		got, ok := forest[host]
+		if !ok {
+			t.Errorf("forest has no mount %s: %v", host, forest)
+			continue
+		}
+		if got.Access != AccessPrivate || got.Search != SearchNone || got.Assistants ||
+			got.View != want.View || got.Entry != want.Entry || got.Mirrors != want.Mirrors {
+			t.Errorf("%s: got %+v", host, got)
+		}
+	}
+	if len(forest) != 5 {
+		t.Errorf("forest should have its 3 mounts and 2 twins (jpears.me has none): %v", forest)
+	}
+	// A site with no private view is served as it is, behind the gate, paths kept.
+	docs := mountsOf(s, "docs")
+	for _, host := range []string{"docs.the.cathe.dev/", "docs.the.cathe.dev/guide"} {
+		if m, ok := docs[host]; !ok || m.View != DefaultView || m.Access != AccessPrivate {
+			t.Errorf("docs: %s = %+v, %v", host, m, ok)
+		}
+	}
+	// Twins come after the written mounts, so they never become a view's canonical address.
+	ms := s.Sites["docs"].Mounts
+	if ms[0].Access != AccessPublic || ms[len(ms)-1].Mirrors == "" {
+		t.Errorf("twins should follow the written mounts: %+v", ms)
+	}
+	// A private-only site has no public mount to mirror.
+	if n := len(s.Sites["notes"].Mounts); n != 1 {
+		t.Errorf("notes: %d mounts, want 1", n)
+	}
+}
+
+func TestTwinHosts(t *testing.T) {
+	s, err := Parse([]byte(twinSrc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct{ public, private string }{
+		{"cathe.dev", "the.cathe.dev"},
+		{"docs.cathe.dev", "docs.the.cathe.dev"},
+		{"a.b.cathe.dev", "a.b.the.cathe.dev"},
+	} {
+		if got := s.PrivateTwin(c.public); got != c.private {
+			t.Errorf("PrivateTwin(%s) = %q, want %q", c.public, got, c.private)
+		}
+		if got := s.PublicTwin(c.private); got != c.public {
+			t.Errorf("PublicTwin(%s) = %q, want %q", c.private, got, c.public)
+		}
+	}
+	// Other domains have no private domain, and a private host has no private twin.
+	for _, h := range []string{"jpears.me", "cv.jpears.me", "the.cathe.dev", "docs.the.cathe.dev", "other.dev"} {
+		if got := s.PrivateTwin(h); got != "" {
+			t.Errorf("PrivateTwin(%s) = %q, want none", h, got)
+		}
+	}
+	for _, h := range []string{"cathe.dev", "docs.cathe.dev", "jpears.me", "other.the.jpears.me"} {
+		if got := s.PublicTwin(h); got != "" {
+			t.Errorf("PublicTwin(%s) = %q, want none", h, got)
+		}
+	}
+}
+
+// A mount written at a twin's address replaces the derived one; another
+// site's mount there is a conflict, named by the public mount it collides with.
+func TestTwinOverrideAndConflict(t *testing.T) {
+	over := strings.Replace(twinSrc, "      - { host: docs.cathe.dev }\n",
+		"      - { host: docs.cathe.dev }\n      - { host: docs.the.cathe.dev, entry: /own/, access: private }\n", 1)
+	s, err := Parse([]byte(over))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := mountsOf(s, "docs")["docs.the.cathe.dev/"]; m.Entry != "/own/" || m.Mirrors != "" {
+		t.Errorf("the written mount should win: %+v", m)
+	}
+	clash := strings.Replace(twinSrc, "notes.the.cathe.dev", "docs.the.cathe.dev", 1)
+	_, err = Parse([]byte(clash))
+	if err == nil || !strings.Contains(err.Error(), "the private twin of docs.cathe.dev") ||
+		!strings.Contains(err.Error(), "already mounted") {
+		t.Errorf("want a conflict naming the twin, got %v", err)
+	}
+}
+
+// With no private domain, nothing is mirrored.
+func TestNoTwinsWithoutRoom(t *testing.T) {
+	for _, pd := range []string{"private_domain: the.cathe.dev", ""} {
+		src := strings.Replace(twinSrc, "private_domain: the.cathe.dev", pd, 1)
+		src = strings.Replace(src, "  notes:\n    access: private\n    views: { private: { workflow: w } }\n    mounts: [ { host: notes.the.cathe.dev, view: private } ]\n", "", 1)
+		s, err := Parse([]byte(src))
+		if err != nil {
+			t.Fatalf("%q: %v", pd, err)
+		}
+		want := 3
+		if pd == "private_domain: the.cathe.dev" {
+			want = 5
+		}
+		if got := len(s.Sites["forest"].Mounts); got != want {
+			t.Errorf("%q: forest has %d mounts, want %d", pd, got, want)
+		}
+	}
+}

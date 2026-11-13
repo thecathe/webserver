@@ -195,6 +195,10 @@ func (s *Spec) validateSites(p *problems) {
 		}
 		for i, m := range site.Mounts {
 			at := fmt.Sprintf("%s.mounts[%d]", where, i)
+			if m.Mirrors != "" {
+				// Derived, so not in the file: say which public mount it came from.
+				at = fmt.Sprintf("%s: the private twin of %s", where, m.Mirrors)
+			}
 			if !hostRE.MatchString(m.Host) {
 				p.add("%s: host %q is not a valid domain name", at, m.Host)
 			} else if s.DomainOf(m.Host) == "" {

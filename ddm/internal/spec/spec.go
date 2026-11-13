@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -209,10 +210,14 @@ type Mount struct {
 	Search string `yaml:"search"`
 	// Assistants is the site's assistants (set when the spec is parsed).
 	Assistants bool `yaml:"-"`
+	// Mirrors is the public host this mount is the private twin of. Set only
+	// on the mounts ddm derives (see mirror), never written in sites.yaml.
+	Mirrors string `yaml:"-"`
 }
 
 const (
 	DefaultView   = "public"
+	PrivateView   = "private"
 	DefaultBranch = "main"
 
 	AccessPublic  = "public"
@@ -361,6 +366,92 @@ func (s *Spec) normalise() {
 		}
 		s.Sites[name] = site
 	}
+	s.mirror()
+}
+
+// mirror adds the private twin of every public mount: the same site, path
+// and entry, on the host with the private domain's extra label inserted
+// (docs.cathe.dev gets docs.the.cathe.dev, cathe.dev gets the.cathe.dev). A
+// twin serves the site's private view if it has one, else the public mount's
+// own view, so a site with nothing private to show is served as it is, behind
+// the gate. A mount written at the twin's address replaces the derived one.
+//
+// Derived mounts come after the written ones. A view's first mount is its
+// canonical address (site:// links), so a twin never takes that from a public
+// mount of the same view.
+func (s *Spec) mirror() {
+	if s.mirrorBase() == "" {
+		return
+	}
+	type key struct{ host, path string }
+	for name, site := range s.Sites {
+		have := map[key]bool{}
+		for _, m := range site.Mounts {
+			have[key{m.Host, m.Path}] = true
+		}
+		_, hasPrivate := site.Views[PrivateView]
+		for _, m := range slices.Clone(site.Mounts) {
+			twin := s.PrivateTwin(m.Host)
+			if m.Access != AccessPublic || twin == "" || have[key{twin, m.Path}] {
+				continue
+			}
+			view := m.View
+			if hasPrivate {
+				view = PrivateView
+			}
+			site.Mounts = append(site.Mounts, Mount{
+				Host: twin, Path: m.Path, View: view, Entry: m.Entry,
+				Access: AccessPrivate, Search: SearchNone, Mirrors: m.Host,
+			})
+		}
+		s.Sites[name] = site
+	}
+}
+
+// mirrorBase is the declared domain the private domain sits under
+// ("cathe.dev" for "the.cathe.dev"), or "" if there is no private domain or no
+// room for an extra label, in which case no mount has a twin.
+func (s *Spec) mirrorBase() string {
+	pd := s.PrivateDomain
+	if pd == "" || !hostRE.MatchString(pd) {
+		return ""
+	}
+	if base := s.DomainOf(pd); base != pd {
+		return base
+	}
+	return ""
+}
+
+// PrivateTwin returns the private-domain host that mirrors public host h
+// (docs.cathe.dev -> docs.the.cathe.dev), or "" if h has none: it is already
+// private, or not under the domain the private domain sits beneath.
+func (s *Spec) PrivateTwin(h string) string {
+	base := s.mirrorBase()
+	switch {
+	case base == "" || !hostRE.MatchString(h) || s.IsPrivateHost(h):
+		return ""
+	case h == base:
+		return s.PrivateDomain
+	case strings.HasSuffix(h, "."+base):
+		return strings.TrimSuffix(h, base) + s.PrivateDomain
+	}
+	return ""
+}
+
+// PublicTwin is PrivateTwin's inverse: the public host a private-domain host
+// mirrors (docs.the.cathe.dev -> docs.cathe.dev), or "" if it mirrors none.
+// Whether anything is mounted there is for the caller to find out.
+func (s *Spec) PublicTwin(h string) string {
+	base := s.mirrorBase()
+	switch {
+	case base == "":
+		return ""
+	case h == s.PrivateDomain:
+		return base
+	case strings.HasSuffix(h, "."+s.PrivateDomain):
+		return strings.TrimSuffix(h, s.PrivateDomain) + base
+	}
+	return ""
 }
 
 // normalisePath makes "", "docs", "/docs/" all into "/" or "/docs".
