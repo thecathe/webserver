@@ -67,4 +67,11 @@ in {
     options = "--delete-older-than 14d";
   };
   nix.settings.auto-optimise-store = true;
+
+  # Cap the journal. It was uncapped, so systemd's default (10% of the disk, 2.4 GB)
+  # applied: 809 MB after 23 days, about 35 MB a day, and 46 of the 55 MB of
+  # text written in a week was the firewall's refused-connection lines (port-watch
+  # reads them, once a day, for the day before). 200 MB keeps about six days. The
+  # last error of every build is in state.json, so a longer journal buys little.
+  services.journald.extraConfig = "SystemMaxUse=200M";
 }

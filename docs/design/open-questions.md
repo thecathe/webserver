@@ -116,8 +116,8 @@ move it to the [decision record](record.md) and note it in the devlog.
   it, and the next `ddm-deploy` rebuilds it, so a GC frees about 5 GB that the next deploy takes back. On 2026-11-13,
   with the stale builds still in `out`, that refilled a disk freed by hand within half an hour. Candidates: leave it (about 16 GB of 24 GB is used
   with the toolchains present); keep the workflow shells as GC roots (saves the rebuild, costs the 5 GB permanently);
-  a bigger disk. Also open: the journal is unlimited (0.8 GB on 2026-11-13), and nothing warns before the disk fills
-  (see the email item above).
+  a bigger disk. Also open: nothing warns before the disk fills (see the email item above). The journal was unlimited
+  (0.8 GB on 2026-11-13); it is capped now ([D60](record.md#d60-the-journal-is-capped-at-200-mb-2026-11-13)).
 - **Rebuild hygiene:** cleaning stale `/var/www` roots left by sites removed from the spec.
 - **The OCaml pool holds up everything else** (seen 2026-10-18). Any change to `sites.yaml` or to ddm rebuilds the
   pool ("the spec or ddm changed"): 12 to 30 minutes. The pool builds first (`@odoc-pool` sorts first), so every
