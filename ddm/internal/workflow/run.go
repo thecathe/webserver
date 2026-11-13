@@ -58,11 +58,17 @@ func describe(st Step) string {
 }
 
 // run executes a shell command in the checkout, inside `nix develop <env>`
-// when the step has an env.
+// when the step has an env. That toolchain is kept alive by a GC root (see
+// gcroots.go), so the weekly nix-gc does not delete what the next build needs.
 func (p *Plan) run(ctx context.Context, st Step, log io.Writer) error {
 	argv := []string{"sh", "-euc", st.Run}
 	if st.Env != "" {
-		argv = append([]string{"nix", "develop", st.Env, "--command"}, argv...)
+		develop := []string{"nix", "develop", st.Env}
+		if root := p.gcRoot(st.Env, log); root != "" {
+			develop = append(develop, "--profile", root)
+			defer dropOldGenerations(ctx, root, log)
+		}
+		argv = append(append(develop, "--command"), argv...)
 	}
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	cmd.Dir = p.Vars.Repo
