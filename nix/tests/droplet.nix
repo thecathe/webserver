@@ -26,7 +26,7 @@
     services.caddy.configFile = lib.mkForce (pkgs.runCommand "Caddyfile" {} ''
       sed 's/^\tacme_dns cloudflare .*/\tlocal_certs/' ${config.services.ddm.caddyfile} > $out
     '');
-    networking.hosts."127.0.0.1" = ["ddm.cathe.dev" "the.cathe.dev" "nosuch.cathe.dev"];
+    networking.hosts."127.0.0.1" = ["ddm.cathe.dev" "the.cathe.dev" "devlog.the.cathe.dev" "nosuch.cathe.dev"];
     # A second network, addressed inside a webSources range, for the
     # outsider below.
     virtualisation.vlans = [1 2];
@@ -103,6 +103,12 @@
     with subtest("a private mount refuses a client outside the tailnet"):
         # Caddy aborts the connection: curl's "empty reply" (52), not a TLS error.
         droplet.succeed(f"code=0; {curl} --http1.1 https://the.cathe.dev/ || code=$?; test $code -eq 52")
+
+    with subtest("a private twin is a host of its own, behind the same gate"):
+        # devlog.the.cathe.dev is written nowhere in sites.yaml: ddm derives it
+        # from devlog.cathe.dev (D63). Before that, nothing served it and the
+        # handshake failed (curl 35, "internal error"); now the gate refuses it.
+        droplet.succeed(f"code=0; {curl} --http1.1 https://devlog.the.cathe.dev/ || code=$?; test $code -eq 52")
 
     with subtest("only webSources reach the web ports; SSH stays open"):
         outsider.wait_for_unit("multi-user.target")
