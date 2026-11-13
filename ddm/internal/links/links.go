@@ -3,6 +3,12 @@
 // generated pages use them to list every address). It runs at publish time, not as a workflow step, because the URL a
 // link becomes depends on where the build is published (prod or a local
 // preview), not on the build itself.
+//
+// A link is an address right after a quote or "(" (see linkRE), found where
+// the file type has links. In HTML that is only a tag's attribute values and
+// the content of <script> and <style>; page text and comments are never
+// searched, so a page can show an example of the syntax in a code span. Other
+// file types are searched whole.
 package links
 
 import (
@@ -13,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"ddm/internal/spec"
 )
@@ -26,9 +33,13 @@ func Prod(host string) string { return "https://" + host }
 
 // linkRE matches site://name[/path] and mount://host[/path] where a link
 // can start: right after a quote (an attribute or string value) or "(" (CSS
-// url(...)). The same text in prose, such as <code>site://x/</code> in a
-// page documenting the syntax, is left alone. The path stops at whitespace,
-// quotes, brackets and parentheses.
+// url(...)). The same text after anything else, such as <code>site://x/</code>
+// in a page documenting the syntax, is left alone. The path stops at
+// whitespace, quotes, brackets and parentheses.
+//
+// In an HTML file it is applied only inside linkRegions: page text is not a
+// link position, so an example written with a bracket or a quote, which this
+// pattern would match on its own, is never rewritten.
 var linkRE = regexp.MustCompile("([\"'(])(site|mount)://([a-z0-9][a-z0-9.-]*)(/[^\\s\"'`<>()]*)?")
 
 // rewritable are the file types that can contain links.
@@ -44,6 +55,31 @@ var rewritable = map[string]bool{
 func isTextIndex(path string) bool {
 	return filepath.Base(path) == "search_index.json" && filepath.Base(filepath.Dir(path)) == "search"
 }
+
+// isHTML reports whether path is an HTML file, in which links are recognised
+// only where HTML has them (linkRegions).
+func isHTML(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return ext == ".html" || ext == ".htm"
+}
+
+// lineOf returns the 1-based line of offset in data.
+func lineOf(data []byte, offset int) int {
+	return bytes.Count(data[:offset], []byte("\n")) + 1
+}
+
+// nearby returns the link at data[start:end] with up to nearbyBefore bytes of
+// what precedes it, so an error shows where in a page the link is (a
+// minified page is one line long).
+func nearby(data []byte, start, end int) string {
+	from := max(0, start-nearbyBefore)
+	for from < start && !utf8.RuneStart(data[from]) {
+		from++
+	}
+	return string(data[from:end])
+}
+
+const nearbyBefore = 40
 
 // Resolver turns a link found in one site's view into a URL.
 type Resolver struct {
@@ -128,7 +164,8 @@ func (r Resolver) hasPublicMount(served, view string) bool {
 
 // Rewrite replaces every site:// and mount:// link in the text files under dir, in place.
 // It returns how many links it rewrote. Links that can't be resolved are
-// left as they are and reported together in the error.
+// left as they are and reported together in the error, each once (the first
+// place it was found) with its file, line and the text just before it.
 func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 	n := 0
 	var problems []string
@@ -141,26 +178,38 @@ func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 		if err != nil || (!bytes.Contains(data, []byte("site://")) && !bytes.Contains(data, []byte("mount://"))) {
 			return err
 		}
-		changed := false
-		out := linkRE.ReplaceAllFunc(data, func(m []byte) []byte {
-			sub := linkRE.FindSubmatch(m)
+		var out []byte
+		changed, last := false, 0
+		for _, m := range findLinks(data, isHTML(path)) {
+			// m holds offsets into data: the whole match, then the
+			// character before the link, the scheme, the name and the
+			// path (-1 when there is none).
+			out = append(out, data[last:m[0]]...)
+			last = m[1]
 			resolve := r.Resolve
-			if string(sub[2]) == "mount" {
+			if string(data[m[4]:m[5]]) == "mount" {
 				resolve = r.ResolveMount
 			}
-			url, err := resolve(site, view, string(sub[3]), string(sub[4]))
+			var linkPath string
+			if m[8] >= 0 {
+				linkPath = string(data[m[8]:m[9]])
+			}
+			url, err := resolve(site, view, string(data[m[6]:m[7]]), linkPath)
 			if err != nil {
 				if msg := err.Error(); !seen[msg] {
 					seen[msg] = true
 					rel, _ := filepath.Rel(dir, path)
-					problems = append(problems, fmt.Sprintf("%s: %s", rel, msg))
+					problems = append(problems, fmt.Sprintf("%s:%d: %s (near %q)", rel, lineOf(data, m[0]), msg, nearby(data, m[0], m[1])))
 				}
-				return m
+				out = append(out, data[m[0]:m[1]]...)
+				continue
 			}
 			n++
 			changed = true
-			return append(sub[1], url...)
-		})
+			out = append(out, data[m[2]:m[3]]...)
+			out = append(out, url...)
+		}
+		out = append(out, data[last:]...)
 		if !changed {
 			return nil
 		}

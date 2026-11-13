@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-22
+  edited: 2026-11-13
 ---
 
 # Site spec (v2)
@@ -226,8 +226,22 @@ target's URL:
   could land on the wrong one.
 - **Never public → private.** A publicly served build that links to a private mount fails, since the link would
   publish a private hostname.
-- **Unknown names** are left as they are and reported. That is a warning, or an error with `--strict`, and always
-  an error for prod.
+- **Unknown names** are left as they are and reported, with the file, the line and the text just before the address.
+  That is a warning, or an error with `--strict`, and always an error for prod.
+
+**Where an address counts as a link** depends on the file type:
+- **HTML** (`.html`, `.htm`): only in a tag, that is in an attribute value (`href`, `src`, a `style` with a `url()`),
+  and in the content of a `<script>` or `<style>` element. Page text and comments are never links. So a page can show
+  the syntax in a paragraph, a code span or a code block, written however you like, with nothing to escape, and the
+  example stays exactly as written and is never reported. This is what makes `[text](site://…)` in markdown work:
+  the converter turns it into an anchor, and the anchor's `href` is a tag. An anchor inside a `<code>` element is
+  still a link.
+- **XML, XSL, CSS, JS, JSON and SVG**: anywhere, if the address comes right after a quote or an opening bracket
+  (an `href="…"`, a CSS `url(…)`, a JSON string). The same address after anything else is left alone.
+
+mkdocs' full-text search index (`search/search_index.json`) is page text, so it is skipped. The reasons, and the
+earlier rule this refines, are in
+[D59](../design/record.md#d59-in-html-links-live-in-tags-scripts-and-styles-not-in-page-text-2026-11-13).
 
 Links are resolved at publish time, not in a workflow step, because the result depends on where the build is
 published. In a [local preview](operations.md#local-preview) the same link becomes
