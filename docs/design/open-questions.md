@@ -101,7 +101,7 @@ move it to the [decision record](record.md) and note it in the devlog.
 
 - **Poll interval:** 10m? Per-site overrides?
 - **Notifications:** these replace the dead `email_notifications` field. Email, ntfy, or a status page? The lean is
-  a status page first, most naturally the private site map (`the.cathe.dev/sites/`, D29), extended with each
+  a status page first, most naturally the private site map (`sites.the.cathe.dev`, D29, D63), extended with each
   mount's live commit and last build from `state.json` (D48).
   - **Email** (you asked, 2026-10-18), for at least: a build failing, the server building more than half the day
     (D48 already measures this), and a failed system rebuild. It needs an SMTP account (e.g. a Fastmail or Gmail

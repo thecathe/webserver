@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-22
+  edited: 2026-11-13
 ---
 
 # Roadmap
@@ -58,8 +58,8 @@ transfers, droplets, DNS, Tailscale, tokens, cutover) stop and wait for your go-
   DNS-01, entry redirects, the shared 404 page, and the private gate (D30). It carries over everything useful from the
   deleted hand-written file, and drops its filesystem probing. It passes `caddy validate` with the Cloudflare plugin,
   which the devShell now builds.
-- `site-directory`: the public directory (`docs.cathe.dev`) and the **private site map** (`the.cathe.dev/sites/`,
-  D29).
+- `site-directory`: the public directory (`docs.cathe.dev`) and the **private site map** (`sites.the.cathe.dev`,
+  D29, D63).
 - Spec: `access: public | private`, site-level `access`, `private_domain`, `root_only` (D33), and the `demos` site.
 - `ddm publish`, `ddm caddyfile`, `ddm preview` (D31).
 - One site of every kind publishes and serves in the preview:

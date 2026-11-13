@@ -34,7 +34,7 @@ exactly as the server will lay them out, and serves them with Caddy. Every host 
 
 ```text
 https://forest.cathe.dev/   →   http://forest.cathe.dev.localhost:8080/
-https://the.cathe.dev/sites/ →  http://the.cathe.dev.localhost:8080/sites/
+https://sites.the.cathe.dev/ → http://sites.the.cathe.dev.localhost:8080/
 ```
 
 Browsers send `*.localhost` to your own machine, so no DNS or `/etc/hosts` changes are needed. Caddy listens on

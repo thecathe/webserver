@@ -185,7 +185,7 @@ examples.
 ### D29. `access: public | private`, a private domain, and a private site map (2026-10-17, M3a)
 *Replaces* the `tailnet-owner` access value. A site-level `access:` is the default for its mounts.
 `private_domain: the.cathe.dev` is where every private mount must live, and no public mount may. The `docs` site
-gains a private view, the **site map** at `the.cathe.dev/sites/`: every site and mount, grouped by host, each marked
+gains a private view, the **site map** (at `the.cathe.dev/sites/`, now `sites.the.cathe.dev`, D63): every site and mount, grouped by host, each marked
 public or private. **Why:** you asked to declare privacy in the yaml and never lose track of what's deployed. Tying
 privacy to one domain makes DNS simple (one record plus a wildcard to the tailnet IP), and makes a typo a validation
 error instead of an exposure.
@@ -714,6 +714,40 @@ musl-gcc, python and merlin among them.
   (open questions, rebuild hygiene). Deploys run under one `flock`, so two builds never update a profile at once.
   The first run of each env after this ships creates its root (a ddm change rebuilds every site, so all of them do), and
   it has to happen before a Monday 00:00 UTC GC or that GC collects the toolchains once more.
+### D63. Every public host has a private twin, `the.` inserted (2026-11-13)
+*Refines* D29 and D7.
+- **Decision:** every public mount on `cathe.dev` has a private mount on the same host with `the.` inserted
+  (`devlog.cathe.dev` and `devlog.the.cathe.dev`; `cathe.dev` and `the.cathe.dev`), with the same path and entry. ddm
+  derives them when it reads `sites.yaml`, so they are not written there. A twin serves the site's private view if it
+  has one, else the public build, behind the gate: no second build of anything. A mount written at a twin's address
+  replaces the derived one; another site's mount there is a spec error. `jpears.me` has no twin (you didn't want a
+  `the.jpears.me`; `private_domain` stays one value). Only a mount with no public side is written out:
+  `membranes.the.cathe.dev`.
+- **Why:** you wanted "private" to be a rule, not a map of hand-curated paths to remember. Before, the private forms
+  were `the.cathe.dev/devlog`, `/sites` and `/membranes`, and `devlog.the.cathe.dev` failed its TLS handshake: DNS
+  already sent `*.the.cathe.dev` to the tailnet address, but no mount was on that host, so Caddy had no site block or
+  certificate for it (found 2026-11-13). Path mounts on the apex could also shadow a forest tree of the same name.
+- **Dropped:** the old `the.cathe.dev/<name>/` URLs, with no redirects. The only visitor is you, and `site://` and
+  `mount://` links are rewritten on every build. The toolbar's site map link is now `mount://sites.the.cathe.dev/`.
+- **Consequences:**
+  - A twin of a site with no private view serves the public build, so its `site://` links resolve to public hosts
+    (a build with any public mount counts as public, D28). Following one leaves the private area; giving the site a
+    `private` view is how to stay in it. The toolbar's badge says "the public build, served only to you".
+  - The toolbar's switch goes to the exact counterpart host, from the rule (`twin` in `nav.json`), not to the site's
+    first mount of the other access. A public page's `nav.json` names no private host; only a preview's does.
+  - A pool member's twin redirects to the pool index's twin (`cloakaml.the.cathe.dev` to `ocaml.the.cathe.dev`).
+  - The public directory and the public nav never list twins; the private site map marks them.
+  - Twins one label below `the.cathe.dev` share one wildcard certificate, so no private name appears in
+    certificate-transparency logs. A host with more labels (`a.b.cathe.dev`) gets a certificate of its own, with its
+    name in them; none exist now.
+- **Rejected:** a second private build of every site (it doubles builds, and for the OCaml pool an opam and dune run;
+  a site can still opt in with a `private` view); redirects from the old URLs; a Caddy handler that derives the
+  site from the host name (which site and view a host serves is the spec's to say, and the root differs per mount);
+  `the.jpears.me`.
+- **Checked:** the spec rules (both directions of the host mapping, view choice, override, conflict), the golden
+  Caddyfiles, `caddy validate` on the Caddyfile generated from the real `sites.yaml`, and the VM test: a twin is
+  refused at the gate (curl 52), where before it failed the handshake (curl 35). Not live until the droplet is
+  rebuilt.
 
 ## AI-generated content marking
 

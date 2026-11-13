@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-22
+  edited: 2026-11-13
 ---
 
 # ddm: the deployment manager
@@ -45,7 +45,8 @@ Two more goals run through the design:
 | `notes.cathe.dev`, `recents.cathe.dev` | the public forest's `notes` tag page, and its timeline | public |
 | `projects.cathe.dev`, `indimo.cathe.dev`, `mebi.cathe.dev` | the forest's Project taxon page, and its INDIMO and MeBi pages | public |
 | `the.cathe.dev` | the whole forest, private trees included; tailnet-only, your identity only | private |
-| `the.cathe.dev/sites/` | the full site map: every site and address, public and private | private |
+| `<host>.the.cathe.dev` | the private twin of every public `cathe.dev` host, with `the.` inserted: `devlog.the.cathe.dev` beside `devlog.cathe.dev` (D63) | private |
+| `sites.the.cathe.dev` | the full site map: every site and address, public and private | private |
 | `sites.cathe.dev` | a generated directory of every public site, grouped by taxon | public |
 | `docs.cathe.dev` | a generated index of the documentation sites | public |
 | `ocaml.cathe.dev` | every OCaml package's API docs, built together and cross-linked | public |
