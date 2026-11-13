@@ -141,10 +141,39 @@ func TestRewriteUnresolved(t *testing.T) {
 	dir := t.TempDir()
 	os.WriteFile(filepath.Join(dir, "a.html"), []byte(`<a href="site://nope/">x</a> <a href="site://cloakaml/">y</a>`), 0o644)
 	n, err := r.Rewrite(dir, "forest", "public")
-	if err == nil || !strings.Contains(err.Error(), `a.html: site://nope: no site named "nope"`) {
+	if err == nil || !strings.Contains(err.Error(), `a.html:1: site://nope: no site named "nope"`) {
 		t.Fatalf("want an unresolved-link error, got %v", err)
 	}
 	if n != 1 {
 		t.Errorf("the resolvable link should still be rewritten; n = %d", n)
+	}
+}
+
+// An unresolved link is reported with its line and the text just before it,
+// once per problem (at its first place), so a failed publish says where to
+// look.
+func TestRewriteUnresolvedWhere(t *testing.T) {
+	r := resolver(t)
+	dir := t.TempDir()
+	// 40 bytes before the link would cut the last-but-15th é in half; the text
+	// must start at a whole rune instead.
+	long := strings.Repeat("é", 30) + "x"
+	os.WriteFile(filepath.Join(dir, "a.html"), []byte("<p>one</p>\n<p>two</p>\n"+long+`<a href="site://nope/x">x</a>`+"\n"+`<a href="site://nope/y">y</a>`), 0o644)
+	os.WriteFile(filepath.Join(dir, "b.css"), []byte("a{}\n\nb{background:url(mount://nosuch.dev/i.png)}"), 0o644)
+	_, err := r.Rewrite(dir, "forest", "public")
+	if err == nil {
+		t.Fatal("want an unresolved-link error")
+	}
+	got := err.Error()
+	for _, want := range []string{
+		`a.html:3: site://nope: no site named "nope" (near "` + strings.Repeat("é", 15) + `x<a href=\"site://nope/x")`,
+		`b.css:3: mount://nosuch.dev: nothing is mounted on nosuch.dev (near "a{}\n\nb{background:url(mount://nosuch.dev/i.png")`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "site://nope/y") {
+		t.Errorf("the same problem should be reported once, at its first place:\n%s", got)
 	}
 }

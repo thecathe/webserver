@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"ddm/internal/spec"
 )
@@ -61,6 +62,24 @@ func isHTML(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))
 	return ext == ".html" || ext == ".htm"
 }
+
+// lineOf returns the 1-based line of offset in data.
+func lineOf(data []byte, offset int) int {
+	return bytes.Count(data[:offset], []byte("\n")) + 1
+}
+
+// nearby returns the link at data[start:end] with up to nearbyBefore bytes of
+// what precedes it, so an error shows where in a page the link is (a
+// minified page is one line long).
+func nearby(data []byte, start, end int) string {
+	from := max(0, start-nearbyBefore)
+	for from < start && !utf8.RuneStart(data[from]) {
+		from++
+	}
+	return string(data[from:end])
+}
+
+const nearbyBefore = 40
 
 // Resolver turns a link found in one site's view into a URL.
 type Resolver struct {
@@ -145,7 +164,8 @@ func (r Resolver) hasPublicMount(served, view string) bool {
 
 // Rewrite replaces every site:// and mount:// link in the text files under dir, in place.
 // It returns how many links it rewrote. Links that can't be resolved are
-// left as they are and reported together in the error.
+// left as they are and reported together in the error, each once (the first
+// place it was found) with its file, line and the text just before it.
 func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 	n := 0
 	var problems []string
@@ -179,7 +199,7 @@ func (r Resolver) Rewrite(dir, site, view string) (int, error) {
 				if msg := err.Error(); !seen[msg] {
 					seen[msg] = true
 					rel, _ := filepath.Rel(dir, path)
-					problems = append(problems, fmt.Sprintf("%s: %s", rel, msg))
+					problems = append(problems, fmt.Sprintf("%s:%d: %s (near %q)", rel, lineOf(data, m[0]), msg, nearby(data, m[0], m[1])))
 				}
 				out = append(out, data[m[0]:m[1]]...)
 				continue
