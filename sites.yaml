@@ -176,9 +176,12 @@ sites:
     # Public uses forest-public.toml: people's redirects are followed, and
     # private-tagged trees are hidden (--strict-private fails the build if a
     # visible tree links to one). Private uses forest.toml: everything shown.
+    # The private view is the big one (616 MB a publish, three kept was 1.85 GB of
+    # the 2.1 GB web root) and the one that needs the least redundancy: only the
+    # live publish is kept (D61). The public view keeps the default three.
     views:
       public:  { workflow: forester, params: { config: forest-public.toml } }
-      private: { workflow: forester }
+      private: { workflow: forester, keep: 1 }
     # The first mount of a view is its canonical address: site://forest/...
     # links resolve to forest.cathe.dev.
     # Search engines see each host's entry page only (D50); later, trees

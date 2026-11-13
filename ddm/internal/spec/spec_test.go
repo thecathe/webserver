@@ -69,6 +69,31 @@ func TestValid(t *testing.T) {
 	}
 }
 
+// A view can say how many of its publishes to keep; leaving it out means the
+// default (0), and so does asking about a site or view that is not there (a
+// pooled build is published under a name that is not in the spec).
+func TestViewKeep(t *testing.T) {
+	src := strings.Replace(base, "params: { view: private } }", "params: { view: private }, keep: 1 }", 1)
+	s, err := Parse([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		site, view string
+		want       int
+	}{
+		{"forest", "private", 1},
+		{"forest", "public", 0},
+		{"docs", DefaultView, 0},
+		{"@odoc-pool", DefaultView, 0},
+		{"forest", "nosuch", 0},
+	} {
+		if got := s.Keep(c.site, c.view); got != c.want {
+			t.Errorf("Keep(%s, %s) = %d, want %d", c.site, c.view, got, c.want)
+		}
+	}
+}
+
 // A site-level access is every mount's default; a mount can override it.
 func TestSiteAccessDefault(t *testing.T) {
 	src := strings.Replace(base, "    taxa: [docs]\n    mounts: [ { host: docs.cathe.dev, path: guide/ } ]",
@@ -170,6 +195,7 @@ func TestInvalid(t *testing.T) {
 		{"nav to nowhere", "taxa: [docs, notes]", "taxa: [docs, notes]\nnav: [ { title: x, link: \"mount://nope.cathe.dev/\" } ]", "nothing is mounted on nope.cathe.dev"},
 		{"nav bad scheme", "taxa: [docs, notes]", "taxa: [docs, notes]\nnav: [ { title: x, link: \"http://a\" } ]", "must be site://, mount:// or https://"},
 		{"flake without host", "domains:", "system: { flake: github:x/y }\ndomains:", "host is required"},
+		{"negative keep", "params: { view: private } }", "params: { view: private }, keep: -1 }", "sites.forest.views.private: keep must be 1 or more"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

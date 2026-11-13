@@ -133,7 +133,7 @@ letters, digits and `-`, because it also becomes a directory name.
 | `repo` | none | `owner/name` on GitHub, a full clone URL, or an absolute path, cloned with the server's single read-only token. Omit it for generated sites (e.g. `docs`). |
 | `branch` | `main` | |
 | `workflow` + `params` | | Shorthand for a single `public` view. Use either this or `views`, not both. |
-| `views.<view>` | | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each needs a `workflow`, and may have `params`. |
+| `views.<view>` | | Several builds of the same repo, e.g. `public` / `notes` / `private`. Each needs a `workflow`, and may have `params` and `keep`: how many publishes of the view stay in the web root, the live one included (default 3; `1` for a large view that needs no rollback copy, such as the private forest, D61). |
 | `mounts[]` | | Where outputs are served. At least one is required, except for a site built only by a pooled workflow: the pool's other mounts serve it. See below. |
 | `access` | `public` | The default `access` for every mount of this site: `public` or `private`. A mount can override it. |
 | `taxa` | | Classification, from the declared `taxa`. |

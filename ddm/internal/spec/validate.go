@@ -174,6 +174,9 @@ func (s *Spec) validateSites(p *problems) {
 			} else if _, ok := s.Workflows[v.Workflow]; !ok {
 				p.add("%s.views.%s: unknown workflow %q", where, vname, v.Workflow)
 			}
+			if v.Keep < 0 {
+				p.add("%s.views.%s: keep must be 1 or more (leave it out for the default)", where, vname)
+			}
 		}
 		if !validAccess(site.Access) {
 			p.add("%s: access %q must be %q or %q", where, site.Access, AccessPublic, AccessPrivate)

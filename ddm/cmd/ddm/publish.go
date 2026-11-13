@@ -94,6 +94,7 @@ func buildAndPublish(ctx context.Context, req build.Request, t target) (string, 
 		Site: res.Served, View: req.View, Commit: res.Commit, From: res.Dir, WWW: t.caddy.WWW,
 		Links: links.Resolver{Spec: req.Spec, Base: t.base}, Strict: t.strict, Log: req.Log,
 		Head: bar.Script + aimark.Tags, PageHead: pageHead,
+		Keep: req.Spec.Keep(req.Site, req.View),
 	})
 	if err != nil {
 		return "", err
