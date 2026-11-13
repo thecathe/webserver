@@ -116,14 +116,17 @@ move it to the [decision record](record.md) and note it in the devlog.
   copies. Rebuilds are seconds for most views, about 3 minutes for the forest with its toolchain present, and 12 to 30
   minutes for the OCaml pool from scratch; a build also depends on the spec, the tools and ddm (the stamp), which are
   all one commit of this repo, and on whatever the network gives (opam).
-- **Disk headroom and the weekly GC** (seen 2026-11-13). The toolchains workflows build with are not GC roots: the
-  forest's `forester` and OCaml stack is about 5 GB in the Nix store, built from source. The Monday `nix-gc` deletes
-  it, and the next `ddm-deploy` rebuilds it, so a GC frees about 5 GB that the next deploy takes back. On 2026-11-13,
-  with the stale builds still in `out`, that refilled a disk freed by hand within half an hour. Candidates: leave it (about 16 GB of 24 GB is used
-  with the toolchains present); keep the workflow shells as GC roots (saves the rebuild, costs the 5 GB permanently);
-  a bigger disk. Also open: nothing warns before the disk fills (see the email item above). The journal was unlimited
-  (0.8 GB on 2026-11-13); it is capped now ([D60](record.md#d60-the-journal-is-capped-at-200-mb-2026-11-13)).
-- **Rebuild hygiene:** cleaning stale `/var/www` roots left by sites removed from the spec.
+- **Disk headroom and the weekly GC** (seen 2026-11-13). The toolchains workflows build with were not GC roots: the
+  forest's `forester` and OCaml stack is about 5 GB in the Nix store, built from source, and the Monday `nix-gc`
+  deleted it for the next `ddm-deploy` to rebuild (40 minutes, and the rebuild is what refilled a disk freed by hand
+  within half an hour on 2026-11-13). They are GC roots now ([D62](record.md#d62-workflow-toolchains-are-gc-roots-2026-11-13)),
+  so the GC removes only superseded versions. The journal was unlimited (0.8 GB); it is capped
+  ([D60](record.md#d60-the-journal-is-capped-at-200-mb-2026-11-13)), and the private forest keeps one publish (D61).
+  Still open: nothing warns before the disk fills (see the email item above); a bigger disk, if 24 GB stays tight;
+  and a 703 MB `chromium` in the store that is not rooted and that nobody identified (a workflow dependency, or a
+  leftover).
+- **Rebuild hygiene:** cleaning stale `/var/www` roots left by sites removed from the spec, and their cache directories,
+  whose `gcroots/` (D62) would otherwise keep a removed site's toolchain alive.
 - **The OCaml pool holds up everything else** (seen 2026-10-18). Any change to `sites.yaml` or to ddm rebuilds the
   pool ("the spec or ddm changed"): 12 to 30 minutes. The pool builds first (`@odoc-pool` sorts first), so every
   other site in that run waits, which is why `devlog` took so long to appear. And a system rebuild during a deploy

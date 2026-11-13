@@ -109,7 +109,7 @@ built from; see [operations](operations.md#the-toolbar).
 
 | Field | Meaning |
 |---|---|
-| `env.flake` | Where build tools come from. `"{{repo}}"` is the site repo's own devShell, and `"{{system}}"` (or `"{{system}}#name"`) a devShell of this repo. Steps run inside `nix develop <ref> -c`. Omit it for steps that need no tools. |
+| `env.flake` | Where build tools come from. `"{{repo}}"` is the site repo's own devShell, and `"{{system}}"` (or `"{{system}}#name"`) a devShell of this repo. Steps run inside `nix develop <ref> -c`, and the toolchain is kept alive by a GC root in the site's cache (`<cache>/gcroots/`, D62), so the weekly `nix-gc` does not delete what the next build needs. Omit it for steps that need no tools. |
 | `params` | Defaults, which a site or view can override. Substituted as `{{name}}`. |
 | `steps` | Run in order. Each is **exactly one** of `run`, `builtin`, `use`, `output`. See [workflows](workflows.md). |
 | `pool` | `false` | Build every site that uses this workflow (in the same view) **together**: each site's repo is synced as usual, all the checkouts are copied into one workspace, and the steps run once with `{{repo}}` set to it. The one result is served by every member's mounts. A member then needs no mounts of its own. See [workflows](workflows.md#pooled-workflows). |
