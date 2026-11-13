@@ -27,6 +27,14 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   matters: without a pty `TERM` is empty). Then, after the next `ddm-deploy` has built something,
   `ls /var/lib/ddm/work/out/*/*` should list one build per view (two where the newest build was not the published
   one), not a growing list.
+- [ ] **Check the devlog publishes again after the links fix** (added 2026-11-13). ddm's link rewriter no longer treats
+  an example of the link syntax in page text as a link (D59). Until the droplet runs it, the private devlog stays on
+  its 2026-10-28 build and every deploy ends `Failed: devlog (private)`. It goes live with the redeploy above, once
+  this is on the pushed `main`. A ddm change rebuilds every site (D48), so expect a long deploy (40 minutes on
+  2026-11-13, with the forest's toolchain compiled from source): check `df -h /` first, and note that the Monday 00:00
+  UTC GC deletes those toolchains again. Then check: the deploy no longer ends `Failed: devlog (private)`;
+  `the.cathe.dev/devlog/` shows a build newer than 2026-10-28; the docs page `usage/spec` shows the redirect example's
+  target as written, not as a resolved address; and `ddm-rebuild` finishes without `failed`.
 - [ ] **Finish removing `ocaml-demos`' legacy deploy Action** (added 2026-11-12). Its push on 2026-11-12 failed at
   the `Create subdomain directory on server` step (`unable to authenticate`): the workflow still logged in to the old
   droplet with the `WEBSERVER_*` secrets (set 2026-05-12), and the NixOS droplet lets only your own key in, as root.

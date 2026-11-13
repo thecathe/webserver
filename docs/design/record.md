@@ -174,7 +174,9 @@ depends on the target (the server, or a local preview). The rules:
 - URLs are always absolute, because one build may be served on several hosts;
 - a publicly served build may never link to a private mount;
 - only text right after a quote or `(` is a link (attribute values, XML hrefs, JSON strings, CSS `url()`), so a page
-  documenting the syntax keeps its examples.
+  documenting the syntax keeps its examples. *Refined by [D59](#d59-in-html-links-live-in-tags-scripts-and-styles-not-in-page-text-2026-11-13):
+  that held for a bare address, but a bracket or a quote in page text still matched; in HTML only tags, scripts and
+  styles are searched.*
 
 `mount://host/path` names one exact mount, for ddm's generated pages. **Why:** builds stay target-neutral, and one
 build can be previewed and deployed without rebuilding. **Found:** the first version rewrote this site's own `<code>`
@@ -616,6 +618,36 @@ of it the private forest (29 builds of about 250 MB).
 - **Found on the way:** the OCaml pool's opam switch held 1.9 GB of build directories left from its first build
   (2026-10-18); `opam clean --switch-cleanup` removed them (3.1 GB to 1.1 GB, packages intact). And the Monday `nix-gc`
   deletes the toolchains the workflows build with, which the next deploy rebuilds (open questions).
+
+### D59. In HTML, links live in tags, scripts and styles, not in page text (2026-11-13)
+*Refines* D28. On 2026-11-13 the private devlog turned out to have been unable to publish since 2026-10-28. One of
+its pages explained the link syntax with an example in a code span: markdown link syntax whose target was a
+`site://…` address of a site that does not exist. D28's rule (an address right after a quote or `(` is a link) was
+applied to all page text, and nothing in text escapes a bracket or a quote, so the example matched. An unresolved link
+is always an error for prod, so the whole publish was refused, the live copy stayed on the last good build, and every
+deploy ended `Failed: devlog (private)`. That also made `ddm-rebuild` report `failed`, because the switch waits for
+the deploy it restarts. The bug had a silent face too: an example whose target *exists* was rewritten to a real URL
+(this site's own `usage/spec` page showed a resolved address in place of its `\meta{redirect}` example).
+- **Decision:** in `.html` and `.htm`, an address is a link only inside a tag (so in every attribute value) or in the
+  content of a `<script>` or `<style>` element; never in page text or in a comment. Inside those places D28's rule is
+  unchanged, so the set of links recognised there does not change: only the places searched shrink. Every other
+  rewritable type is searched whole, as before. A hand-written scanner finds the regions
+  (`ddm/internal/links/html.go`). The rule is easy to state to authors: *links live in attributes*.
+- **Why:** it needs nothing from the author (no escape syntax), and no example can match however it is written. In the
+  2026-11-13 builds every real link was an attribute value, and every bracket-preceded hit was a documentation example.
+- **Fails safe:** a file that ends inside a tag, a comment, a declaration or a script cannot be classified, so from
+  there it is searched as before. A real link left as a raw address on a page is a dead link nobody notices; a false
+  positive is only what happened before. Anchors nested in `<code>` are tags, so they stay links (odoc nests them).
+- **Also:** the unresolved-link error now names the file, the line and up to 40 bytes before the address. Finding the
+  incident's cause had taken a `grep` over the whole devlog.
+- **Rejected:** skipping only `<code>` and `<pre>` text (leaves prose and anything else that looks like a link);
+  `golang.org/x/net/html` (sturdier, but a new dependency and a recomputed `vendorHash` for a job a short scanner does,
+  held to the old matches by a fuzz test); an escape syntax for examples (asks every author to remember, and
+  forgetting is the failure we had).
+- **Not covered:** XML, XSL and SVG are still searched whole (forester's `.xml` carries its links in text positions
+  and had no false positives); `<title>` and `<textarea>` are scanned as markup, which only matters for text that looks
+  like a tag holding a link; and a script that hides its own closing tag in a `<!-- … -->`. `injectHead`'s "first
+  `</head>`" heuristic is a related weakness, not touched.
 
 ## AI-generated content marking
 
