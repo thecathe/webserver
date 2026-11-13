@@ -160,6 +160,11 @@ move it to the [decision record](record.md) and note it in the devlog.
   rules? Is revealing the hostname in public JS acceptable?
 - **Lean:** deferred (decision D10). If S4 is clean, `the.cathe.dev/whoami` behind `forward_auth`, with the widget
   inert unless the answer is your login.
+- **Changed by D63 (2026-11-13):** every public host now has a private twin by a fixed rule (`the.` inserted), so a
+  public page could compute its twin's address without a per-site list in its `nav.json`. What it would reveal is the
+  convention, and that every public page has a twin, not any one address. Today a public page's toolbar still has no
+  private button in production (only a preview's does). Whether to add one is undecided; the S4 questions above
+  still apply.
 
 ## Team project sites
 
