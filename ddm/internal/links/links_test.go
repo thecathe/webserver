@@ -177,3 +177,45 @@ func TestRewriteUnresolvedWhere(t *testing.T) {
 		t.Errorf("the same problem should be reported once, at its first place:\n%s", got)
 	}
 }
+
+// Private twins (D63) are extra mounts of the same sites. They must not become
+// a site's canonical address for a public build, and a private build links to
+// a twin where the target has a private view.
+func TestResolveWithTwins(t *testing.T) {
+	s, err := spec.Parse([]byte(`
+domains: [cathe.dev]
+private_domain: the.cathe.dev
+workflows:
+  w: { steps: [ { run: x } ] }
+sites:
+  devlog:
+    views: { public: { workflow: w }, private: { workflow: w } }
+    mounts: [ { host: devlog.cathe.dev } ]
+  ddm:
+    workflow: w
+    mounts: [ { host: ddm.cathe.dev } ]
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := Resolver{Spec: s, Base: Prod}
+	for _, c := range []struct{ from, view, target, want string }{
+		{"devlog", "public", "devlog", "https://devlog.cathe.dev/x/"},
+		{"devlog", "public", "ddm", "https://ddm.cathe.dev/x/"},
+		{"ddm", "public", "ddm", "https://ddm.cathe.dev/x/"},
+		{"devlog", "private", "devlog", "https://devlog.the.cathe.dev/x/"},
+		{"devlog", "private", "ddm", "https://ddm.cathe.dev/x/"}, // no private view: the public address
+	} {
+		got, err := r.Resolve(c.from, c.view, c.target, "/x/")
+		if err != nil || got != c.want {
+			t.Errorf("Resolve(%s, %s, %s) = %q, %v; want %q", c.from, c.view, c.target, got, err, c.want)
+		}
+	}
+	// A twin is a private address: a public build may never link to it.
+	if got, err := r.ResolveMount("ddm", "public", "ddm.the.cathe.dev", "/"); err == nil {
+		t.Errorf("a public build linked to a private twin: %q", got)
+	}
+	if got, err := r.ResolveMount("devlog", "private", "ddm.the.cathe.dev", "/"); err != nil || got != "https://ddm.the.cathe.dev/" {
+		t.Errorf("a private build should reach a twin: %q, %v", got, err)
+	}
+}

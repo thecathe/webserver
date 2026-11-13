@@ -17,6 +17,13 @@ domains: [cathe.dev, jpears.me]
 # Private mounts (access: private) live here and only here: the.cathe.dev and
 # its subdomains point at the server's tailnet address, and are served only to
 # your Tailscale identity.
+#
+# The rule (D63): every public mount on cathe.dev has a private twin with
+# `the.` inserted (devlog.cathe.dev is devlog.the.cathe.dev, cathe.dev is
+# the.cathe.dev), same path and entry. ddm adds the twins itself, so they are
+# not written below. A twin serves the site's private view if it has one, else
+# the public build, behind the gate. Mounts on jpears.me have no twin. A mount
+# only the tailnet should see, with no public side, is written out (below).
 private_domain: the.cathe.dev
 
 taxa: [docs, personal, work, project, tool, demo, media, presentation, resource, blog, notes]
@@ -33,7 +40,7 @@ nav:
   - { title: recents, link: "mount://recents.cathe.dev/" }
   - { title: sites, link: "mount://sites.cathe.dev/" }
   - { title: private, link: "mount://the.cathe.dev/" }
-  - { title: site map, link: "mount://the.cathe.dev/sites/" }
+  - { title: site map, link: "mount://sites.the.cathe.dev/" }
 
 # Crawlers (D50). Every host gets a generated robots.txt: these training
 # crawlers are refused everywhere; these assistants (fetching a page because
@@ -183,7 +190,8 @@ sites:
       public:  { workflow: forester, params: { config: forest-public.toml } }
       private: { workflow: forester, keep: 1 }
     # The first mount of a view is its canonical address: site://forest/...
-    # links resolve to forest.cathe.dev.
+    # links resolve to forest.cathe.dev (and, in the private view, to its twin
+    # forest.the.cathe.dev).
     # Search engines see each host's entry page only (D50); later, trees
     # tagged indexme too.
     search: entry
@@ -197,7 +205,6 @@ sites:
       - { host: mebi.cathe.dev, entry: /mebi/, search: none }
       - { host: notes.cathe.dev, entry: /tag-notes/ }
       - { host: recents.cathe.dev, entry: /timeline/ }
-      - { host: the.cathe.dev, view: private, entry: /index/, access: private }
 
   # Every public site, by taxon; its private view is the full site map.
   sites:
@@ -206,10 +213,9 @@ sites:
     views:
       public:  { workflow: site-directory }
       private: { workflow: site-directory, params: { page: map } }
-    mounts:
-      - { host: sites.cathe.dev }
-      # The full site map: every site, host and mount, public and private.
-      - { host: the.cathe.dev, path: sites, view: private, access: private }
+    # sites.the.cathe.dev, its twin, is the full site map: every site, host and
+    # mount, public and private.
+    mounts: [ { host: sites.cathe.dev } ]
 
   # How the sites (and other projects) were built, with Claude: the stories
   # behind the decision records. Public pages only by publish.yaml (D54); none at present.
@@ -223,9 +229,7 @@ sites:
     views:
       public:  { workflow: devlog }
       private: { workflow: devlog }
-    mounts:
-      - { host: devlog.cathe.dev }
-      - { host: the.cathe.dev, path: devlog, view: private, access: private }
+    mounts: [ { host: devlog.cathe.dev } ]
 
   # The documentation sites (taxon docs).
   docs:
@@ -315,5 +319,4 @@ sites:
     generated: { by: Claude, date: "2026-07-20", edited: "2026-11-09" }
     views:
       private: { workflow: mkdocs }
-    mounts:
-      - { host: the.cathe.dev, path: membranes, view: private }
+    mounts: [ { host: membranes.the.cathe.dev, view: private } ]

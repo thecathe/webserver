@@ -124,6 +124,7 @@ type mapMount struct {
 	Repo, RepoURL, Branch, Description  string
 	Indexed                             bool
 	Pool                                string // the pool it is built in, if any
+	Mirrors                             string // the public host this is the private twin of, if it is
 }
 
 type mapHost struct {
@@ -168,7 +169,7 @@ func mapData(s *spec.Spec) mapPage {
 				Site: name, View: m.View, Workflow: site.Views[m.View].Workflow, Entry: m.Entry,
 				Access: m.Access, Repo: site.Repo, RepoURL: repoURL(site.Repo), Branch: site.Branch,
 				Description: site.Description, Indexed: site.IsIndexed(),
-				Pool: s.PoolOf(name, m.View),
+				Pool: s.PoolOf(name, m.View), Mirrors: m.Mirrors,
 			}
 			if m.Access == spec.AccessPrivate {
 				page.Private++
@@ -315,7 +316,7 @@ Generated from <code>sites.yaml</code> on every build, so anything newly deploye
 <td>{{.View}}</td>
 <td>{{.Workflow}}</td>
 <td>{{if .RepoURL}}<a href="{{.RepoURL}}">{{.Repo}}</a> <span class="muted">({{.Branch}})</span>{{else if .Repo}}{{.Repo}}{{else}}<span class="muted">generated</span>{{end}}</td>
-<td>{{if .Pool}}built in the {{.Pool}} pool<br>{{end}}{{if not .Indexed}}<span class="muted">not in the directory</span>{{end}}</td>
+<td>{{if .Mirrors}}private twin of {{.Mirrors}}{{if eq .View "public"}}, the public build{{end}}<br>{{end}}{{if .Pool}}built in the {{.Pool}} pool<br>{{end}}{{if not .Indexed}}<span class="muted">not in the directory</span>{{end}}</td>
 </tr>
 {{end}}</table></div>
 </section>

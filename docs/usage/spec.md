@@ -73,6 +73,16 @@ It and its subdomains resolve to the server's tailnet address, so:
 A private site can therefore never end up on a public host by a typo, and a public one can never be hidden by
 accident.
 
+**Private twins (D63).** Every public mount on a host under `cathe.dev` has a private twin: the same host with the
+private domain's extra label inserted (`docs.cathe.dev` → `docs.the.cathe.dev`, `cathe.dev` → `the.cathe.dev`), with
+the same path and entry. ddm adds them when it reads the file, so you don't write them; `ddm sites` lists them, and
+the private site map marks them "private twin of …".
+- A twin serves the site's `private` view if it has one, else the same build as the public mount, behind the gate.
+  To make a twin show something different, give the site a `private` view.
+- A mount you write at a twin's address replaces the derived one. Another site's mount there is an error.
+- Mounts on other domains (`jpears.me`) have no twin.
+- A mount only the tailnet should see, with no public side, is written out in full, as `membranes.the.cathe.dev` is.
+
 `taxa` declares the vocabulary that sites may classify themselves with. It drives the `sites.cathe.dev` directory, and `docs.cathe.dev` lists the `docs` taxon.
 If `taxa` is omitted, any taxon is accepted.
 
@@ -98,7 +108,7 @@ The toolbar's links, shown at the top of every published page, in order:
 ```yaml
 nav:
   - { title: cathe.dev, link: "mount://cathe.dev/" }
-  - { title: site map, link: "mount://the.cathe.dev/sites/" }
+  - { title: site map, link: "mount://sites.the.cathe.dev/" }
 ```
 
 `link` is `site://name/path`, `mount://host/path` or an `https://` URL. A link to a private mount only appears on

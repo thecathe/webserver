@@ -265,7 +265,9 @@ func blocks(s *spec.Spec, t Target) []block {
 
 // poolIndex returns, for a pool member with a repo and an entry, its
 // package path (the entry's first segment) and the URL of the pool's index:
-// the first mount, in the same view, of a member without a repo.
+// the first mount, in the same view and with the same access, of a member
+// without a repo (so a private twin sends visitors to the index's private twin,
+// not to the public host).
 func poolIndex(s *spec.Spec, t Target, site string, m spec.Mount) (pkg, index string) {
 	wf := s.PoolOf(site, m.View)
 	if wf == "" || s.Sites[site].Repo == "" || m.Entry == "" {
@@ -277,7 +279,7 @@ func poolIndex(s *spec.Spec, t Target, site string, m spec.Mount) (pkg, index st
 			continue
 		}
 		for _, om := range s.Sites[other].Mounts {
-			if om.View == m.View {
+			if om.View == m.View && om.Access == m.Access {
 				return pkg, t.Base(om.Host) + strings.TrimSuffix(om.Path, "/")
 			}
 		}

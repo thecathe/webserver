@@ -27,13 +27,12 @@ sites:
     mounts:
       - { host: forest.cathe.dev, entry: /index/ }
       - { host: jpears.me, entry: /@jpears/ }
-      - { host: the.cathe.dev, view: private, entry: /index/, access: private }
+      - { host: cathe.dev, entry: /index/ }
   docs:
     search: all
     views: { public: { workflow: dir }, private: { workflow: dir } }
     mounts:
       - { host: docs.cathe.dev }
-      - { host: the.cathe.dev, path: sites, view: private, access: private }
   guide:
     workflow: w
     mounts: [ { host: docs.cathe.dev, path: guide, entry: /intro/ } ]

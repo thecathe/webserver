@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
+  model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-25
+  edited: 2026-11-13
 ---
 
 # Architecture
@@ -141,10 +141,16 @@ else 403, an unset owner 403, and a spoofed header 403. The real helper's socket
 
 **What's private is declared in `sites.yaml`** (D29): `access: private` on a site or a mount, and every private mount
 must sit on `private_domain` (`the.cathe.dev`). The spec refuses a private mount anywhere else and a public mount on
-it, so a typo can't move a site across the line. The full **site map** at `the.cathe.dev/sites/` lists every site
+it, so a typo can't move a site across the line. The full **site map** at `sites.the.cathe.dev` lists every site
 and mount, each marked public or private, and is regenerated on every build.
 
-The **public/private toggle** comes almost free, because paths match across views: the same path on another host.
+**Every public host has a private twin** (D63): `the.` inserted before `cathe.dev`, so `devlog.cathe.dev` is
+`devlog.the.cathe.dev`. ddm derives the twins from the public mounts when it reads the spec. Caddy then sees ordinary
+private mounts, and groups the one-label ones into a single `*.the.cathe.dev` block, behind the same gate and with one
+wildcard certificate. A twin serves the site's private view if it has one, else the public build. The gate runs before
+the host is matched, so a stranger on the tailnet learns nothing about which private names exist.
+
+The **public/private toggle** comes almost free, because paths match across views: the same path on the twin host.
 An identity-aware widget is deferred (decision D10, spike S4).
 
 ## Forest views

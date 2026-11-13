@@ -117,3 +117,37 @@ func TestWritePaths(t *testing.T) {
 		t.Errorf("page lists must stay out of the public directory")
 	}
 }
+
+// The switch needs each mount's counterpart host (D63). A public page's
+// nav.json must not name a private host, so it carries no twins; only a
+// preview's does, because that one lists the private mounts too.
+func TestTwins(t *testing.T) {
+	s, err := spec.Parse([]byte(specSrc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	read := func(private, preview bool) string {
+		t.Helper()
+		www := t.TempDir()
+		if err := Write(www, s, links.Prod, preview); err != nil {
+			t.Fatal(err)
+		}
+		b, err := os.ReadFile(filepath.Join(Dir(www, private), "nav.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(b)
+	}
+	if pub := read(false, false); strings.Contains(pub, `"twin"`) || strings.Contains(pub, "the.cathe.dev") {
+		t.Errorf("public nav.json names a private host:\n%s", pub)
+	}
+	priv := read(true, false)
+	for _, want := range []string{`"host": "forest.cathe.dev"`, `"twin": "forest.the.cathe.dev"`, `"host": "forest.the.cathe.dev"`, `"twin": "forest.cathe.dev"`} {
+		if !strings.Contains(priv, want) {
+			t.Errorf("private nav.json lacks %s:\n%s", want, priv)
+		}
+	}
+	if prev := read(false, true); !strings.Contains(prev, `"twin": "forest.the.cathe.dev"`) {
+		t.Errorf("a preview's public nav.json should carry twins:\n%s", prev)
+	}
+}

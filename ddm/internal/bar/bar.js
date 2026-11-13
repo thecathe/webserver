@@ -78,14 +78,21 @@
     const rel = here.path === "/" ? path : path.slice(here.path.length) || "/";
     const other = here.access === "private" ? "public" : "private";
     if (other === "public" || nav.preview) {
-      const target = nav.mounts.find((m) => m.site === here.site && m.access === other);
+      // The same site on the twin host (docs.cathe.dev and docs.the.cathe.dev),
+      // else its first mount of the other access.
+      const target =
+        nav.mounts.find((m) => m.site === here.site && m.access === other && here.twin && m.host === here.twin) ||
+        nav.mounts.find((m) => m.site === here.site && m.access === other);
       let ok = !!target;
       if (target && other === "public") {
         const pages = await get(`paths/public/${target.served}.json`);
         const page = rel.endsWith("/") ? rel + "index.html" : rel;
         ok = !pages || pages.includes(page) || pages.includes(page + "/index.html");
       }
-      views.append(el("b", { class: here.access }, here.access));
+      const badge = el("b", { class: here.access }, here.access);
+      // A private twin of a site with no private view serves the public build.
+      if (here.access === "private" && here.view === "public") badge.title = "The public build, served only to you";
+      views.append(badge);
       const label = other + (other === "private" ? " (preview only)" : "");
       if (ok) {
         const url = target.origin + (target.path === "/" ? "" : target.path) + rel + location.search + location.hash;

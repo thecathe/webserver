@@ -24,6 +24,14 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   --print-roots | grep gcroots` lists the toolchains (`system-mkdocs`, `system-xslt`, ...); `df -h /` has more than the
   4.5 GB free of 2026-11-13 (about 1.8 GB should come back). On Tuesday, after the GC: the same roots are still listed
   and the next forest build takes minutes, not 40.
+- [ ] **Check the private twins after the next redeploy** (added 2026-11-13, D63). Every public `cathe.dev` host now
+  has a private twin with `the.` inserted, and the old `the.cathe.dev/devlog/`, `/sites/` and `/membranes/` are gone
+  (no redirects). It needs no new account step: `*.the.cathe.dev` already resolves to the tailnet address (checked
+  2026-11-13), and the redeploy below builds the Caddyfile. From a tailnet device, once `ddm-rebuild` has finished:
+  `https://devlog.the.cathe.dev/`, `https://sites.the.cathe.dev/` and `https://ddm.the.cathe.dev/` should load (the
+  first TLS handshake waits for Caddy to get the `*.the.cathe.dev` certificate, up to a minute), and from a device off
+  the tailnet they should fail to connect. If Cloudflare's `*.the` record is proxied (orange cloud), switch it to
+  DNS only; those names must not go through the proxy.
 - [ ] **Redeploy the droplet: the kitty terminfo entry and the `out` pruning** (added 2026-11-13). Two changes are on
   `main` and not live. (1) `ssh root@<droplet IP>` from kitty gave `unknown terminal type` for `clear`, `tput` and
   anything built on ncurses (nano, for one), because the droplet has no `xterm-kitty` entry (nixpkgs' ncurses has
@@ -54,12 +62,12 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
      submodule as moved by the merge commit; bumping the pointer is optional, since the removed file is not part of
      the built site.
 
-- [ ] **Publish the membranes curricula** (added 2026-11-09). `the.cathe.dev/membranes/` is built and checked locally
+- [ ] **Publish the membranes curricula** (added 2026-11-09). `membranes.the.cathe.dev` (D63) is built and checked locally
   (the three pages and an index, no PDFs, under the yellow header) but not live. Once the `site/membranes-curricula`
   branch here and `docs/publish-curricula` in `thecathe/membranes` (which ddm builds from its `main`) are merged:
   push `thecathe/membranes` first, then this repo, then `ssh root@<droplet IP> systemctl start ddm-rebuild` (a new
   mount changes the Caddyfile, which is built with the system). From the tailnet, check that the page lists the three
-  pages and that `the.cathe.dev/sites/` shows `membranes-curricula` as private.
+  pages and that `sites.the.cathe.dev` shows `membranes-curricula` as private.
 
 - [ ] **Redeploy the server, then check the devlog** (added 2026-10-22, reworded the same day). The live
   `devlog.cathe.dev` still serves a build from before the AI-generated marker and the private-by-default change: it
@@ -70,7 +78,7 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
   `systemctl start ddm-force@devlog`. Watch `journalctl -u ddm-rebuild -u ddm-deploy`; if the old site stays up, the
   devlog's error is in `/var/lib/ddm/work/state.json`. Then check that `devlog.cathe.dev` is a home page listing only
   *Funding and spend control* (every other devlog page is a 404; purge Cloudflare's cache if old ones still appear)
-  and that `the.cathe.dev/devlog/` shows everything, each page under the sticky yellow header.
+  and that `devlog.the.cathe.dev` shows everything, each page under the sticky yellow header.
 - [ ] **Delete the old `WEBSERVER_*` GitHub secrets** in this repo's settings (added 2026-10-22). They are harmless,
   and nothing uses them since the `deploy-dots` Action was removed.
 - [ ] **Opt more devlog pages in, if you want any public** (added 2026-10-22): list a path or glob in the devlog's

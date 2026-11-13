@@ -53,6 +53,12 @@ type mount struct {
 	View   string `json:"view"`
 	Served string `json:"served"`
 	Access string `json:"access"`
+	Host   string `json:"host"`
+	// Twin is the host this mount's public or private counterpart is on, by
+	// the private-domain rule (docs.cathe.dev and docs.the.cathe.dev), so the
+	// switch lands on the same page of the same host. Public mounts only carry
+	// it where private mounts are listed too.
+	Twin string `json:"twin,omitempty"`
 }
 
 type link struct {
@@ -80,9 +86,16 @@ func Write(www string, s *spec.Spec, base links.BaseURL, preview bool) error {
 				if m.Access == spec.AccessPrivate && !private && !preview {
 					continue
 				}
+				twin := ""
+				if m.Access == spec.AccessPrivate {
+					twin = s.PublicTwin(m.Host)
+				} else if private || preview {
+					twin = s.PrivateTwin(m.Host)
+				}
 				n.Mounts = append(n.Mounts, mount{
 					Origin: base(m.Host), Path: m.Path, Site: name, View: m.View,
 					Served: s.Served(name, m.View), Access: m.Access,
+					Host: m.Host, Twin: twin,
 				})
 			}
 		}
