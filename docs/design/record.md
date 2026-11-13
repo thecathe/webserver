@@ -1,10 +1,10 @@
 ---
 generated:
   by: Claude
-  model: Opus 5.5
+  model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-25
+  edited: 2026-11-13
 ---
 
 # Decision record
@@ -597,6 +597,25 @@ the token. All the site repos are yours, so this is accepted for now.
 **Rejected for now:** dropping `NIX_CONFIG` from the build steps only. The credential file is still readable by the
 same user, so it would hide the token without protecting it. Real separation (builds as a user that can't read
 it) is an open question.
+
+### D58. `work/out` keeps the newest build of each view, nothing older (2026-11-13)
+On 2026-11-13 the droplet's 24 GB disk filled. `ddm-rebuild` failed in a step that only said it "may have been caused
+by lack of free disk space", and `ddm-deploy` could not save `state.json`. The largest single cause was
+`work/out/<site>/<view>/<commit>`: ddm copied every build there and nothing ever removed one, so it held 5.9 GB, 4.9 GB
+of it the private forest (29 builds of about 250 MB).
+- **Decision:** once a build is copied to `out`, `keep()` removes every other build of that site and view. `out` is the
+  hand-off from a build to its publish. The history is the web root's, kept by `publish` (three per view,
+  `publish.DefaultKeep`).
+- **Why it is safe:** `buildAndPublish` publishes the build it has just made; `state.json` records a commit and a
+  stamp, never a path; and a build whose publish failed is built again on the next run, not reused. Nothing read an
+  older build, so none had a use. Builds of one site and view share a scratch directory, so they never overlap, and
+  removing the others cannot pull a build from under a publish. A removal that fails is logged
+  (`removing older builds`), not fatal.
+- **Rejected:** keeping the last N like `publish` does (nothing would read the extras, and each forest build is 250 MB);
+  pruning by age (a timer to maintain, for no gain over "the one just made"); a bigger disk (it would only delay it).
+- **Found on the way:** the OCaml pool's opam switch held 1.9 GB of build directories left from its first build
+  (2026-10-18); `opam clean --switch-cleanup` removed them (3.1 GB to 1.1 GB, packages intact). And the Monday `nix-gc`
+  deletes the toolchains the workflows build with, which the next deploy rebuilds (open questions).
 
 ## AI-generated content marking
 

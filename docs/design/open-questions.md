@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-11-09
+  edited: 2026-11-13
 ---
 
 # Open questions
@@ -109,7 +109,15 @@ move it to the [decision record](record.md) and note it in the devlog.
     `OnFailure=` and by ddm itself. The lean is to add it in M6, with one digest a day rather than a mail per event.
 - **Health check:** for rollback, what does "the new generation is healthy" mean? `caddy validate`, ddm answering on
   its socket, and a fetch of each mount's entry?
-- **Retention:** how many builds to keep per site?
+- **Retention:** builds in `work/out` are settled (D58: the newest only). Publishes stay at three per view
+  (`/var/www` was about 1 GB on 2026-11-13); revisit if that grows.
+- **Disk headroom and the weekly GC** (seen 2026-11-13). The toolchains workflows build with are not GC roots: the
+  forest's `forester` and OCaml stack is about 5 GB in the Nix store, built from source. The Monday `nix-gc` deletes
+  it, and the next `ddm-deploy` rebuilds it, so a GC frees about 5 GB that the next deploy takes back. On 2026-11-13,
+  with the stale builds still in `out`, that refilled a disk freed by hand within half an hour. Candidates: leave it (about 16 GB of 24 GB is used
+  with the toolchains present); keep the workflow shells as GC roots (saves the rebuild, costs the 5 GB permanently);
+  a bigger disk. Also open: the journal is unlimited (0.8 GB on 2026-11-13), and nothing warns before the disk fills
+  (see the email item above).
 - **Rebuild hygiene:** cleaning stale `/var/www` roots left by sites removed from the spec.
 - **The OCaml pool holds up everything else** (seen 2026-10-18). Any change to `sites.yaml` or to ddm rebuilds the
   pool ("the spec or ddm changed"): 12 to 30 minutes. The pool builds first (`@odoc-pool` sorts first), so every

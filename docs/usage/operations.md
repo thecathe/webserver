@@ -4,7 +4,7 @@ generated:
   model: Sonnet 5.5
   effort: unrecorded
   date: 2026-10-16
-  edited: 2026-10-22
+  edited: 2026-11-13
 ---
 
 # Operations
@@ -16,7 +16,7 @@ From the repo root:
 ```sh
 nix develop -c bin/ddm check                    # validate the spec; one-line summary
 nix develop -c bin/ddm sites                    # table of every mount
-nix develop -c bin/ddm build <site> [--view v]  # build into .ddm/out/<site>/<view>/<commit>/
+nix develop -c bin/ddm build <site> [--view v]  # build into .ddm/out/<site>/<view>/<commit>/ (the newest only)
 nix develop -c bin/ddm publish <site> [--view v] [--target prod|preview]
 nix develop -c bin/ddm caddyfile [--target preview]   # print the generated Caddyfile
 nix develop -c bin/ddm preview [site ...]       # build, publish and serve everything locally
@@ -145,6 +145,37 @@ It boots the droplet's config offline and checks that Caddy runs the generated c
 its `current` publish, that http redirects to https, the shared 404 page, Caddy's access to the auth socket, and that
 a private host refuses a client outside the tailnet. Certificates, the tailnet itself and real builds need the
 internet, so only the droplet can check those.
+
+### Disk
+The disk is 24 GB. When it fills, `ddm-rebuild` fails in a step that only hints at it ("may have been caused by lack of
+free disk space"), and `ddm-deploy` cannot save `state.json` (this happened on 2026-11-13; D58). Where the space goes,
+measured after that cleanup (16 GB used):
+
+| Where | About | Notes |
+|---|---|---|
+| `/nix/store` | 7.5 GB | the system, and the toolchains the workflows build with (the forest's alone is about 5 GB); the Monday `nix-gc` removes the unused ones and the next deploy rebuilds them |
+| `/var/swapfile` | 4 GB | enlarged after the pool ran out of memory on 2026-10-18; keep |
+| `/var/lib/ddm/work/cache` | 1.3 GB | the OCaml pool's opam switch and root; keep, rebuilding it takes 12 to 30 minutes |
+| `/var/www` | 1 GB | the last three publishes of each view |
+| journal | 0.8 GB | not limited yet |
+| `/var/lib/ddm/work/{out,src,scratch}` | 0.7 GB | the newest build of each view (D58), the checkouts, the last build's scratch |
+
+```sh
+df -h /                                            # how full
+du -xh --max-depth=1 /var/lib/ddm/work | sort -h   # where ddm's own space is
+systemctl start nix-gc                             # what the Monday timer runs: unused store paths
+```
+
+`out` should hold one build per view; a `warning: removing older builds` in `journalctl -u ddm-deploy` means pruning
+failed. The pool's opam switch keeps its build directories after a from-scratch build (1.9 GB on 2026-10-18).
+`opam clean --switch-cleanup` removes them, with `--dry-run` first. Run it as the `ddm` user, so nothing in ddm's cache
+becomes root-owned, and with the store's opam (`ls -d /nix/store/*-opam-2*`):
+
+```sh
+c=/var/lib/ddm/work/cache/@odoc-pool
+runuser -u ddm -- env HOME=/var/lib/ddm PATH=/run/current-system/sw/bin OPAMROOT=$c/opam-root OPAMYES=1 \
+  /nix/store/…-opam-2.3.0/bin/opam clean --switch=$c/switch --switch-cleanup --dry-run
+```
 
 ### Who knocks on the public address (port-watch)
 
