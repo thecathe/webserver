@@ -111,6 +111,29 @@ func TestPublishPageHead(t *testing.T) {
 	}
 }
 
+// Keeping one is the live publish alone, even though the new one is copied in
+// beside the old (the old is pruned after the swap).
+func TestPublishKeepsOnlyTheLiveOne(t *testing.T) {
+	r := setup(t, "hi")
+	r.Keep = 1
+	var last string
+	for range 3 {
+		d, err := Run(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		last = filepath.Base(d)
+	}
+	entries, _ := os.ReadDir(Root(r.WWW, "public", "a"))
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	if want := last + " current"; strings.Join(names, " ") != want {
+		t.Errorf("after 3 publishes, keep 1: got %v, want %q", names, want)
+	}
+}
+
 func TestPublishKeepsTheNewest(t *testing.T) {
 	r := setup(t, "hi")
 	r.Keep = 2

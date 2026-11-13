@@ -179,6 +179,17 @@ func (s Site) IsIndexed() bool { return s.Indexed == nil || *s.Indexed }
 type View struct {
 	Workflow string            `yaml:"workflow"`
 	Params   map[string]string `yaml:"params"`
+	// Keep is how many publishes of this view stay in the web root (the live
+	// one and the newest before it). 0, the default, means the publisher's
+	// default (three). A big view that needs little redundancy can say 1.
+	Keep int `yaml:"keep"`
+}
+
+// Keep returns how many publishes of site's view to keep, 0 meaning the
+// default. A site or view that is not in the spec (a pooled build is published
+// under a name that is not) also gives 0.
+func (s *Spec) Keep(site, view string) int {
+	return s.Sites[site].Views[view].Keep
 }
 
 // Mount serves one view of a site at host+path.
