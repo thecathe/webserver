@@ -61,6 +61,10 @@ func TestSiteDirectory(t *testing.T) {
 			t.Errorf("the directory lists %s, which is unindexed or private", absent)
 		}
 	}
+	// Private twins of public mounts (D63) are not for the public page.
+	if strings.Contains(got, "the.cathe.dev") {
+		t.Errorf("the public directory mentions the private domain:\n%s", got)
+	}
 }
 
 func TestSiteDirectoryOneTaxon(t *testing.T) {
@@ -84,6 +88,9 @@ func TestSiteMap(t *testing.T) {
 		`href="mount://jpears.me/" data-split>jpears.me</a><br><span class="muted">→ /@jpears/</span>`,
 		`href="mount://hidden.cathe.dev/" data-split>hidden.cathe.dev</a>`,
 		`href="mount://secret.the.cathe.dev/" data-split>secret.the.cathe.dev</a>`,
+		// a public mount's private twin, served from the public build
+		`href="mount://hidden.the.cathe.dev/" data-split>hidden.the.cathe.dev</a>`,
+		"private twin of hidden.cathe.dev, the public build",
 		`<span class="badge private">private</span>`,
 		`<span class="badge public">public</span>`,
 		"3 sites",
