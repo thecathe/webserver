@@ -686,6 +686,35 @@ briefly held four (2.4 GB).
 - **Checked:** `keep: 1` on a view leaves one publish and `current` after three publishes, through `ddm publish`; the
   spec rejects a negative `keep`.
 
+### D62. Workflow toolchains are GC roots (2026-11-13)
+Workflow steps run in a plain `nix develop <env>`, and nothing roots that toolchain, so the Monday `nix-gc` deleted it
+and the next deploy rebuilt it from source: 40 minutes on 2026-11-13, and the rebuild is what filled the disk. Measured
+with `nix-store --gc --print-dead` that afternoon: 4.88 GB of dead store paths, OCaml for musl, three gcc versions,
+musl-gcc, python and merlin among them.
+- **Decision:** a step with an `env` runs `nix develop <env> --profile <cache>/gcroots/<key>`. The profile is a GC root
+  and its closure holds the toolchain. `<key>` names the environment, not its path: `system-mkdocs` for this repo's
+  devShell `mkdocs`, `repo` for the site's own flake, and any other ref as written, made safe for a file name
+  (`ddm/internal/workflow/gcroots.go`). The roots live in the site's cache directory, so removing a cache removes
+  them.
+- **A profile keeps every generation,** and a changed environment (a bumped flake input) adds one, so the old toolchain
+  would stay rooted for ever. After each step, if the profile has more than one generation, `nix profile wipe-history
+  --profile` removes all but the current one, and the next GC collects the superseded toolchain.
+- **Why not turn the GC off:** it also clears the superseded versions after a bump (three gcc versions were among the
+  dead paths), old system generations and the leftovers of failed builds; without it the store grows with every bump.
+  What was wrong was that it also took what the next build needs.
+- **Cost:** the toolchains now stay on disk all week. They were on it most of the week anyway (19 GB of 24 GB used with
+  them present), so the disk needs no more headroom than before, and the Monday dip and the 40-minute rebuild spike
+  are gone.
+- **Checked, on nix 2.34.9:** the profile is registered as a root and its closure holds the toolchain; an unchanged
+  environment adds no generation; a changed one adds a generation and the old stays rooted (hence the wipe); the wipe
+  removes it, and the superseded shell then appears in `--print-dead` while the current one does not. All of it through
+  a real `ddm build` of the devlog, not only a fake `nix` in the tests.
+- **Limits:** `nix-gc --delete-older-than 14d` only touches the profiles under `/nix/var/nix/profiles`, so it leaves
+  these alone. A site removed from the spec keeps its roots, and so its toolchain, until its cache is deleted by hand
+  (open questions, rebuild hygiene). Deploys run under one `flock`, so two builds never update a profile at once.
+  The first run of each env after this ships creates its root (a ddm change rebuilds every site, so all of them do), and
+  it has to happen before a Monday 00:00 UTC GC or that GC collects the toolchains once more.
+
 ## AI-generated content marking
 
 *Trial, 2026-10-16; how pages and sites are shown is D56.* Every page Claude generates carries front matter:

@@ -154,7 +154,7 @@ measured after that cleanup (16 GB used):
 
 | Where | About | Notes |
 |---|---|---|
-| `/nix/store` | 7.5 GB | the system, and the toolchains the workflows build with (the forest's alone is about 5 GB); the Monday `nix-gc` removes the unused ones and the next deploy rebuilds them |
+| `/nix/store` | 9.2 GB | the system (1.5 GB), and the toolchains the workflows build with (the forest's alone is about 5 GB). The toolchains are GC roots since D62, in `<cache>/gcroots/`, so the Monday `nix-gc` removes only superseded versions and a deploy no longer rebuilds them |
 | `/var/swapfile` | 4 GB | enlarged after the pool ran out of memory on 2026-10-18; keep |
 | `/var/lib/ddm/work/cache` | 1.3 GB | the OCaml pool's opam switch and root; keep, rebuilding it takes 12 to 30 minutes |
 | `/var/www` | 2.1 GB (about 0.9 GB with D61) | the last three publishes of each view. On 2026-11-13, 1.85 GB of it was the private forest (3 × 616 MB); it keeps one now (D61) |
@@ -165,6 +165,8 @@ measured after that cleanup (16 GB used):
 df -h /                                            # how full
 du -xh --max-depth=1 /var/lib/ddm/work | sort -h   # where ddm's own space is
 systemctl start nix-gc                             # what the Monday timer runs: unused store paths
+nix-store --gc --print-dead | wc -l                # what the next GC would delete (deletes nothing)
+nix-store --gc --print-roots | grep gcroots        # the toolchains kept alive by ddm (D62)
 ```
 
 `out` should hold one build per view; a `warning: removing older builds` in `journalctl -u ddm-deploy` means pruning
