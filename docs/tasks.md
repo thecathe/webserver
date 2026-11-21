@@ -2,9 +2,9 @@
 generated:
   by: Claude
   model: Sonnet 5.5
-  effort: unrecorded
+  effort: xhigh
   date: 2026-10-16
-  edited: 2026-11-13
+  edited: 2026-11-21
 ---
 
 # Your to-dos
@@ -82,7 +82,7 @@ moving it to **Done** with a date. Claude adds to this page whenever work leaves
 - [ ] **Delete the old `WEBSERVER_*` GitHub secrets** in this repo's settings (added 2026-10-22). They are harmless,
   and nothing uses them since the `deploy-dots` Action was removed.
 - [ ] **Opt more devlog pages in, if you want any public** (added 2026-10-22): list a path or glob in the devlog's
-  `publish.yaml` (`a/*.md` is one folder, `a/**` everything below it), after reading the pages with its `CLAUDE.md`
+  `publish.yaml` (`a/*.md` is one folder, `a/**` everything below it), after reading the pages with the devlog's `publishing.md`
   in mind. Only *Funding and spend control* is listed today.
 - [ ] **Read `port-watch` after a week or two** (added 2026-10-18), on the droplet (runbook, "Who knocks on the
   public address"). Then decide on SSH over the tailnet only, a tunnel, or a new address (D55 says what to look

@@ -2,9 +2,9 @@
 generated:
   by: Claude
   model: Sonnet 5.5
-  effort: unrecorded
+  effort: xhigh
   date: 2026-10-16
-  edited: 2026-11-13
+  edited: 2026-11-21
 ---
 
 # Decision record
@@ -544,8 +544,10 @@ work login), set in a file rather than by deleting them, and the same rule for a
 - **Rejected:** a diff-based pass that re-applies earlier removals to new text. Markers make the redaction
   deterministic on every build, so there is nothing to carry over. Also rejected: deleting the details outright,
   which loses them (the downstream-flake analysis that later work needs, for instance).
-- **The rules for writers** are in the devlog's `CLAUDE.md`, and pointed to from the global "Design write-ups"
-  rule in `thecathe/dots`, so a session in another project follows them too.
+- **The rules for writers** are in the devlog's `publishing.md` (its `CLAUDE.md` until 2026-11-21, when the author's
+  repositories stopped keeping one; the devlog's entry in the registry repeats the ones that matter most, as notes
+  that `orient` prints), and pointed to from the global "Design write-ups" rule in `thecathe/dots`, so a session in
+  another project follows them too (that pointer had gone missing and was restored on 2026-11-21).
 
 ### D55. Watch the public address before closing more of it (2026-10-18)
 With the web ports Cloudflare-only (D53), the droplet's public address still answers SSH (22) and Tailscale.
